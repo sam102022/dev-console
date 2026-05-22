@@ -7,6 +7,7 @@ use App\config\AppConfig;
 use App\exception\FunctionalException;
 use App\factory\LoggerFactory;
 use App\model\EnumEnvironment;
+use App\util\MonitoringUtils;
 use App\util\UtilsLog;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
@@ -15,9 +16,6 @@ use Monolog\Logger;
 
 class MonitoringService
 {
-    private const string PATTERN_DOMAIN_CLOUD_GCP = '%s.mdm-int.net';
-    private const string PATTERN_DOMAIN_RANCHER = 'app%s.xm';
-
     private Logger $logger;
 
     public function __construct(
@@ -47,44 +45,11 @@ class MonitoringService
 
         if ($project !== null) {
             $projectsInGke = $this->appConfig->getParamConfig()->getProjectsInGke();
-            $urlHealthCheck = $this->buildUrlHealthCheck($project, $env, $projectsInGke);
+            $urlHealthCheck = MonitoringUtils::buildUrlHealthCheck($project, $env, $projectsInGke);
 
             return $this->callAndCheck($urlHealthCheck);
         }
         return [];
-    }
-
-    private function buildUrlHealthCheck(array $project, EnumEnvironment $env, array $projectsInGke): string
-    {
-        $cloudGCP = $project['cloudGCP'];
-        $projectName = $project['name'];
-
-        // Construction de l'url health check
-        $envLocal = $env->value;
-        if ($cloudGCP) {
-            $domain = self::PATTERN_DOMAIN_CLOUD_GCP;
-        } else {
-            $domain = self::PATTERN_DOMAIN_RANCHER;
-            if ($env->value === EnumEnvironment::PROD->value && in_array($projectName, $projectsInGke, true)) {
-                $domain = self::PATTERN_DOMAIN_CLOUD_GCP;
-            } else {
-                $envLocal = $env->value === EnumEnvironment::PROD->value ? '' : '-' . $env->value;
-            }
-        }
-        // Si le projet est déployé automatiquement sur GKE
-        $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-            . '$cloudGCP: ' . $cloudGCP . '$env->value: ' . $env->value . '$env: ' . $envLocal . ', in_array:' . in_array($projectName, $projectsInGke, true));
-
-
-        $uriHealth = '';
-        if (str_starts_with($projectName, 'api')) {
-            $uriHealth .= '/v1';
-        }
-        $uriHealth .= '/actuator/health';
-
-        $urlHealthCheck = "https://management-$projectName.$domain$uriHealth";
-
-        return sprintf($urlHealthCheck, $envLocal);
     }
 
     /**
