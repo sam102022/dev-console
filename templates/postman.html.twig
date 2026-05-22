@@ -1,0 +1,135 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<style>
+#repoTree li {
+    cursor: pointer;
+}
+
+#repoTree li:hover {
+    background-color: #f1f3f5;
+}
+
+.repo-file-openapi {
+    font-weight: bold;
+    color: #28a745;
+}
+</style>
+
+<div class="card shadow rounded mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">🚀 Gestion Postman API</h5>
+    </div>
+
+    <div class="card-body">
+        <div id="output" class="alert alert-secondary d-none"></div>
+
+        <div class="row">
+            <!-- Formulaire création Workspace -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Créer un Workspace</h6>
+                    </div>
+                    <div class="card-body">
+                        <input id="workspaceName" class="form-control mb-2" placeholder="Nom du workspace">
+                        <input id="workspaceDesc" class="form-control mb-3" placeholder="Description">
+                        <button class="btn btn-primary btn-sm" onclick="createWorkspace()">Créer</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Formulaire création Environnement -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Créer un Environnement</h6>
+                    </div>
+                    <div class="card-body">
+                        <input id="envName" class="form-control mb-2" placeholder="Nom de l'environnement">
+                        <textarea id="envVars" class="form-control mb-2" rows="3"
+                                placeholder='Variables JSON, ex: {"base_url":"https://dev.api.com","api_key":"123"}'></textarea>
+                        <select id="workspaceIdEnv" class="form-control mb-3" placeholder="ID du workspace (optionnel)">
+                            <option value="">Aucun workspace</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="beforeCreateEnvironment()">Créer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Import OpenAPI -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">Importer un fichier OpenAPI</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <input type="text" id="titleOpenApi" class="form-control mb-2" value="" placeholder="Titre OpenAPI">
+                        <input type="file" id="openapiFile" class="form-control mb-2">
+                        <select id="workspaceIdOpenApi" class="form-control mb-3" placeholder="ID du workspace (optionnel)">
+                            <option value="">Aucun workspace</option>
+                        </select>
+                        <button class="btn btn-primary btn-sm" onclick="importOpenApi()">Importer</button>
+                    </div>
+                    <div class="col-md-4 border-left border-right">
+                        <!-- Liste gitlab -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">📂 Contrats existants</h6>
+                            <button id="btn-load-tree" class="btn btn-sm btn-outline-secondary" title="Recharger la liste" onclick="loadTree()">🔄</button>
+                        </div>
+
+                        <!-- Breadcrumbs -->
+                        <nav aria-label="breadcrumb">
+                            <ol id="breadcrumbs" class="breadcrumb bg-light p-2 mb-2 small rounded"></ol>
+                        </nav>
+
+                        <!-- Recherche -->
+                        <input type="text" id="treeSearch" class="form-control form-control-sm mb-2"
+                            placeholder="🔍 Filtrer un fichier ou dossier" />
+
+                        <div id="gitlabList" style="max-height: 250px; overflow-y: auto;">
+                            <ul id="repoTree" class="list-group list-group-flush small"></ul>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <!-- Zone d’aperçu -->
+                        <h6 class="mb-2">Aperçu du fichier OpenAPI</h6>
+                        <div id="filePreview" class="p-2 border rounded bg-light small" style="white-space: pre-wrap; min-height: 200px; max-height: 250px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des workspaces -->
+        <div class="card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">📂 Workspaces existants</h6>
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadWorkspaces()">🔄 Recharger</button>
+            </div>
+            <div class="card-body">
+                <div id="workspaceList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/yamljs@0.3.0/dist/yaml.min.js"></script>
+<script src="js/postman.js"></script>
+<script>
+    let currentPath = '';
+    let currentTree = [];
+
+    document.getElementById('openapiFile').addEventListener('change', onChangeFileTitle);
+    // Ajout de listener sur le bouton openapiFile
+    document.getElementById('openapiFile').addEventListener('change', onChangeFilePreview);
+    document.getElementById('treeSearch')
+        .addEventListener('input', () => renderTree(currentTree));
+
+    initWorkspacesList();
+    // Charger la liste au démarrage
+    loadWorkspaces();
+    loadTree();
+</script>
+{% endblock body %}

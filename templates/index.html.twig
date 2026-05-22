@@ -1,0 +1,395 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<style>
+.sortable-header {
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+.sortable-header:hover {
+    text-decoration: underline;
+}
+.sort-icon {
+    font-size: 0.8em;
+    margin-left: 5px;
+    opacity: 0.5;
+}
+</style>
+
+{% if messageScanResults is defined and messageScanResults %}
+    {{ messageScanResults|raw }}
+{% endif %}
+<div class="card shadow rounded">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">GitLab Scanner</h5>
+        <div>
+            <a href="?action=purge_cache" class="btn btn-danger btn-sm mr-2" onclick="return confirm('Êtes-vous sûr de vouloir supprimer le cache local ? Un scan complet (plus lent) sera effectué.')">Vider le cache local</a>
+            <a href="?page=index&amp;pathGroup=core%2Fdev%2Fpdv" class="btn btn-primary btn-sm">Scanner</a>
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0" id="projects-table">
+            <thead class="thead-dark">
+                <tr>
+                    <th>#</th>
+                    <th><a class="sortable-header" data-sort="sf">SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                    <th><a class="sortable-header" data-sort="subsf">sub SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                    <th><a class="sortable-header" data-sort="name">Projet <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                    <th><a class="sortable-header" data-sort="gcp">GCP <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                    <th><a class="sortable-header" data-sort="sb">Spring Boot <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                    <th><a class="sortable-header" data-sort="java">Java <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                    <th><a class="sortable-header" data-sort="status">Status <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th>
+                        <select id="filter_sf" class="form-control filter-input">
+                            <option value="all">Tous</option>
+{% for key, value in sfs %}
+                            <option value="{{ key }}">{{ value }}</option>
+{% endfor %}
+                        </select>
+                    </th>
+                    <th>
+                        <select id="filter_subsf" class="form-control filter-input">
+                            <option value="all">Tous</option>
+{% for key, value in subsfs %}
+                            <option value="{{ key }}">{{ value }}</option>
+{% endfor %}
+                        </select>
+                    </th>
+                    <th>
+                        <input id="filter_project_name" class="form-control filter-input" value="" placeholder="Filtrer..." />
+                    </th>
+                    <th>
+                        <select id="filter_gcp" class="form-control filter-input">
+                            <option value="all">Tous</option>
+                            <option value="non">Non</option>
+                            <option value="oui">Oui</option>
+                        </select>
+                    </th>
+                    <th>
+                        <input id="filter_springboot_version" class="form-control filter-input" value="" placeholder="Filtrer..." />
+                    </th>
+                    <th>
+                        <select id="filter_java_version" class="form-control filter-input">
+                            <option value="all">Tous</option>
+                            <option value="n/a">N/A</option>
+                            <option value="1.8">1.8</option>
+                            <option value="11">11</option>
+                            <option value="17">17</option>
+                            <option value="21">21</option>
+                            <option value="25">25</option>
+                        </select>
+                    </th>
+                    <th>
+                        <select id="filter_status" class="form-control filter-input">
+                            <option value="all">Tous</option>
+                            <option value="OK">OK</option>
+                            <option value="Java obsolète">Java obsolète</option>
+                            <option value="Spring Boot ancien">Spring Boot ancien</option>
+                        </select>
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="projects-tbody">
+                {% for r in results %}
+                    <tr class="project-row">
+                        <td class="col-index text-muted font-weight-bold"></td>
+                        <td class="col-sf" data-value="{{ r.sf }}">{{ r.sf }}</td>
+                        <td class="col-subsf" data-value="{{ r.subsf }}">{{ r.subsf }}</td>
+                        <td class="col-name">{{ r.name }}</td>
+                        <td class="col-gcp" data-value="{% if r.cloudGCP == 1 %}oui{% else %}non{% endif %}">
+                            {% if r.cloudGCP == 1 %}Oui{% else %}Non{% endif %}
+                        </td>
+
+                        <td class="col-sb">
+                            <span class="badge badge-info">
+                                {{ r.springBoot|default('N/A') }}
+                            </span>
+                        </td>
+
+                        <td class="col-java" data-value="{{ r.java|default('N/A') }}">
+                            <span class="badge badge-secondary">
+                                {{ r.java|default('N/A') }}
+                            </span>
+                        </td>
+
+                        <td class="col-status">
+                            {% set status = 'success' %}
+                            {% set label = 'OK' %}
+
+                            {% if r.java|default(0) < 17 %}
+                                {% set status = 'danger' %}
+                                {% set label = 'Java obsolète' %}
+                            {% elseif r.springBoot|default(0) < 3 %}
+                                {% set status = 'warning' %}
+                                {% set label = 'Spring Boot ancien' %}
+                            {% endif %}
+                            <span class="badge badge-{{ status }} status-label">
+                                {{ label }}
+                            </span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <div>
+            <select id="rows_per_page" class="form-control form-control-sm d-inline-block w-auto">
+                <option value="10">10 par page</option>
+                <option value="15" selected>15 par page</option>
+                <option value="25">25 par page</option>
+                <option value="50">50 par page</option>
+                <option value="1000">Tout afficher</option>
+            </select>
+            <span id="pagination-info" class="ml-2 text-muted small"></span>
+        </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm mb-0" id="pagination-container">
+                <!-- Les boutons de pagination seront générés ici par JS -->
+            </ul>
+        </nav>
+    </div>
+</div>
+<br />
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Éléments DOM (Filtres)
+    const filterSf = document.getElementById('filter_sf');
+    const filterSubsf = document.getElementById('filter_subsf');
+    const filterProjectName = document.getElementById('filter_project_name');
+    const filterGcp = document.getElementById('filter_gcp');
+    const filterSbVersion = document.getElementById('filter_springboot_version');
+    const filterJavaVersion = document.getElementById('filter_java_version');
+    const filterStatus = document.getElementById('filter_status');
+    const tbody = document.getElementById('projects-tbody');
+    let rows = Array.from(document.querySelectorAll('.project-row')); // Convertir en vrai tableau
+
+    // Éléments DOM (Pagination)
+    const rowsPerPageSelect = document.getElementById('rows_per_page');
+    const paginationContainer = document.getElementById('pagination-container');
+    const paginationInfo = document.getElementById('pagination-info');
+
+    // État de la pagination et du tri
+    let currentPage = 1;
+    let rowsPerPage = parseInt(rowsPerPageSelect.value);
+    let filteredRows = [];
+    let currentSortColumn = '';
+    let currentSortDirection = 'asc'; // 'asc' ou 'desc'
+
+    // --- LOGIQUE DE TRI ---
+    const sortHeaders = document.querySelectorAll('.sortable-header');
+
+    sortHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const column = this.getAttribute('data-sort');
+
+            // Gestion de la direction
+            if (currentSortColumn === column) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = column;
+                currentSortDirection = 'asc';
+            }
+
+            // Mise à jour des icônes FontAwesome
+            sortHeaders.forEach(h => {
+                const icon = h.querySelector('.sort-icon');
+                icon.className = 'fa-solid fa-sort sort-icon';
+                icon.style.opacity = '0.5';
+            });
+            const currentIcon = this.querySelector('.sort-icon');
+            currentIcon.className = currentSortDirection === 'asc' ? 'fa-solid fa-sort-up sort-icon' : 'fa-solid fa-sort-down sort-icon';
+            currentIcon.style.opacity = '1';
+
+            // Tri du tableau des lignes global (toutes les lignes)
+            rows.sort((a, b) => {
+                let valA = getColumnValue(a, column);
+                let valB = getColumnValue(b, column);
+
+                // Essayer de comparer numériquement si c'est possible (ex: versions)
+                const numA = parseFloat(valA);
+                const numB = parseFloat(valB);
+                if (!isNaN(numA) && !isNaN(numB) && isFinite(valA) && isFinite(valB)) {
+                    valA = numA;
+                    valB = numB;
+                } else {
+                    valA = valA.toString().toLowerCase();
+                    valB = valB.toString().toLowerCase();
+                }
+
+                if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            // Ré-insérer les lignes dans le DOM dans le nouvel ordre
+            rows.forEach(row => tbody.appendChild(row));
+
+            // Ré-appliquer le filtre et la pagination sur les lignes triées
+            applyFilters();
+        });
+    });
+
+    function getColumnValue(row, column) {
+        switch(column) {
+            case 'sf': return row.querySelector('.col-sf').getAttribute('data-value');
+            case 'subsf': return row.querySelector('.col-subsf').getAttribute('data-value');
+            case 'name': return row.querySelector('.col-name').textContent.trim();
+            case 'gcp': return row.querySelector('.col-gcp').getAttribute('data-value');
+            case 'sb': return row.querySelector('.col-sb').textContent.trim();
+            case 'java': return row.querySelector('.col-java').getAttribute('data-value');
+            case 'status': return row.querySelector('.status-label').textContent.trim();
+            default: return '';
+        }
+    }
+
+
+    // --- LOGIQUE DE FILTRAGE ---
+    function applyFilters() {
+        const valSf = filterSf.value.toLowerCase();
+        const valSubsf = filterSubsf.value.toLowerCase();
+        const valName = filterProjectName.value.toLowerCase();
+        const valGcp = filterGcp.value.toLowerCase();
+        const valSb = filterSbVersion.value.toLowerCase();
+        const valJava = filterJavaVersion.value.toLowerCase();
+        const valStatus = filterStatus.value.toLowerCase();
+
+        // Vider le tableau des lignes filtrées
+        filteredRows = [];
+
+        // Masquer toutes les lignes et identifier celles qui correspondent
+        rows.forEach(row => {
+            row.style.display = 'none';
+
+            const sf = row.querySelector('.col-sf').getAttribute('data-value').toLowerCase();
+            const subsf = row.querySelector('.col-subsf').getAttribute('data-value').toLowerCase();
+            const name = row.querySelector('.col-name').textContent.toLowerCase();
+            const gcp = row.querySelector('.col-gcp').getAttribute('data-value').toLowerCase();
+            const sb = row.querySelector('.col-sb').textContent.toLowerCase();
+            const java = row.querySelector('.col-java').getAttribute('data-value').toLowerCase();
+            const status = row.querySelector('.status-label').textContent.trim().toLowerCase();
+
+            const matchSf = (valSf === 'all' || sf === valSf);
+            const matchSubsf = (valSubsf === 'all' || subsf === valSubsf);
+            const matchName = (valName === '' || name.includes(valName));
+            const matchGcp = (valGcp === 'all' || gcp === valGcp);
+            const matchSb = (valSb === '' || sb.includes(valSb));
+            const matchJava = (valJava === 'all' || java === valJava);
+            const matchStatus = (valStatus === 'all' || status === valStatus);
+
+            if (matchSf && matchSubsf && matchName && matchGcp && matchSb && matchJava && matchStatus) {
+                filteredRows.push(row);
+            }
+        });
+
+        // Mettre à jour la numérotation en fonction des résultats filtrés
+        filteredRows.forEach((row, index) => {
+            row.querySelector('.col-index').textContent = index + 1;
+        });
+
+        // Après un filtrage, on retourne toujours à la page 1
+        currentPage = 1;
+        updatePagination();
+    }
+
+    // --- LOGIQUE DE PAGINATION ---
+    function updatePagination() {
+        const totalRows = filteredRows.length;
+        const totalPages = Math.ceil(totalRows / rowsPerPage);
+
+        // S'assurer que la page courante est valide
+        if (currentPage < 1) currentPage = 1;
+        if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+
+        // 1. Afficher uniquement les lignes de la page courante
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+
+        // Cacher toutes les lignes filtrées d'abord
+        filteredRows.forEach(row => row.style.display = 'none');
+        // Afficher seulement celles de la page
+        filteredRows.slice(startIndex, endIndex).forEach(row => row.style.display = '');
+
+        // Mise à jour de l'info texte
+        const endDisplayIndex = Math.min(endIndex, totalRows);
+        const startDisplayIndex = totalRows === 0 ? 0 : startIndex + 1;
+        paginationInfo.textContent = `Affichage de ${startDisplayIndex} à ${endDisplayIndex} sur ${totalRows}`;
+
+        // 2. Générer les boutons HTML de pagination
+        paginationContainer.innerHTML = '';
+
+        if (totalPages <= 1) return; // Pas besoin de pagination pour une seule page
+
+        // Bouton Précédent
+        paginationContainer.insertAdjacentHTML('beforeend',
+            `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${currentPage - 1}">&laquo;</a>
+            </li>`
+        );
+
+        // Numéros de page
+        for (let i = 1; i <= totalPages; i++) {
+            // Afficher une plage limitée de boutons (ex: page courante +/- 2)
+            if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                paginationContainer.insertAdjacentHTML('beforeend',
+                    `<li class="page-item ${currentPage === i ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>`
+                );
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
+                // Ajouter des points de suspension
+                paginationContainer.insertAdjacentHTML('beforeend',
+                    `<li class="page-item disabled"><a class="page-link" href="#">...</a></li>`
+                );
+            }
+        }
+
+        // Bouton Suivant
+        paginationContainer.insertAdjacentHTML('beforeend',
+            `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${currentPage + 1}">&raquo;</a>
+            </li>`
+        );
+    }
+
+    // Gestion du clic sur les boutons de pagination
+    paginationContainer.addEventListener('click', function(e) {
+        if (e.target.tagName === 'A') {
+            e.preventDefault();
+            const page = parseInt(e.target.getAttribute('data-page'));
+            if (!isNaN(page)) {
+                currentPage = page;
+                updatePagination();
+            }
+        }
+    });
+
+    // Écouteurs pour le filtre "Éléments par page"
+    rowsPerPageSelect.addEventListener('change', function() {
+        rowsPerPage = parseInt(this.value);
+        currentPage = 1;
+        updatePagination();
+    });
+
+    // Écouteurs d'événements pour tous les champs de filtre
+    const inputs = document.querySelectorAll('.filter-input');
+    inputs.forEach(input => {
+        if (input.tagName === 'SELECT') {
+            input.addEventListener('change', applyFilters);
+        } else {
+            input.addEventListener('input', applyFilters);
+        }
+    });
+
+    // Initialisation au chargement de la page
+    applyFilters();
+});
+</script>
+{% endblock body %}
