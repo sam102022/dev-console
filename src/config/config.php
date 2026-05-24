@@ -1,5 +1,6 @@
 <?php
 const PATH_IMAGES = 'public/images';
+const PATH_DATA = 'data';
 
 const ENVIRONMENT_PROD = 'prod';
 const ENVIRONMENT_TEST = 'test';
@@ -9,9 +10,10 @@ const THEME_DEFAULT = 'dark';
 const LEVEL_LOG_INFO = 'info';
 const LEVEL_LOG_WARN = 'warn';
 const LEVEL_LOG_ERROR = 'error';
-const LOG_FILE_DEFAULT = 'var/logs/log.log';
-const LOG_CLI_FILE_DEFAULT = 'var/logs/logCli.log';
-const TEST_LOG_FILE = 'var/logs/logTest.log';
+const PATH_LOGS = 'var/logs';
+const LOG_FILE_DEFAULT = PATH_LOGS . '/log.log';
+const LOG_CLI_FILE_DEFAULT = PATH_LOGS . '/logCli.log';
+const TEST_LOG_FILE = PATH_LOGS . '/logTest.log';
 
 const MESSAGES_SCAN_RESULTS = 'scanResults';
 const MESSAGES_POSTMAN = 'postman';

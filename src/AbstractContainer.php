@@ -7,6 +7,7 @@ use App\client\GitLabClient;
 use App\client\PostmanClient;
 use App\config\AppConfig;
 use App\context\LocaleContext;
+use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\parser\GradleParser;
 use App\parser\MavenParser;
@@ -22,6 +23,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use InvalidArgumentException;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\StreamHandler;
@@ -64,13 +66,12 @@ abstract class AbstractContainer
      * @param LocaleContext $localeContext Le contexte de la locale.
      */
     public function __construct(
-        private readonly string        $pathLogs,
-        private readonly string        $env,
-        private readonly string        $pathTemplates,
-        private readonly Level         $levelLogger,
+        private readonly string $pathLogs,
+        private readonly string $env,
+        private readonly string $pathTemplates,
+        private readonly Level $levelLogger,
         private readonly LocaleContext $localeContext,
-    )
-    {
+    ) {
         $this->registerCore();
     }
 
@@ -126,7 +127,18 @@ abstract class AbstractContainer
         /**
          * AppConfig (configuration de l'application)
          */
-        $this->set(AppConfig::class, fn($c) => new AppConfig($this->env, $this->pathTemplates, $c->get(LocaleContext::class)->getLang()));
+        $this->set(AppConfig::class, function ($c) {
+            try {
+                return new AppConfig($this->env, $this->pathTemplates, $c->get(LocaleContext::class)->getLang());
+            } catch (InvalidArgumentException $e) {
+                $logger = $c->get(LoggerFactory::class)->get(__CLASS__);
+                $logger->error(
+                    UtilsLog::prefixLog(__CLASS__, __FUNCTION__, __LINE__)
+                    . "Erreur lors de l'initialisation de AppConfig: " . $e->getMessage()
+                );
+                throw new TechnicalException("Erreur lors de l'initialisation de l'application", 500, $e); // Rethrow pour que l'application puisse gérer cette erreur critique
+            }
+        });
 
         $this->set(Client::class, fn($c) => $c->get(ClientInterface::class));
         $this->set(ClientInterface::class, fn($c) => $this->createGuzzleClient($c->get(LoggerFactory::class)));
@@ -137,7 +149,8 @@ abstract class AbstractContainer
                 'base_uri' => $c->get(AppConfig::class)->getParamConfig()->getGitlabUrl()
             ]),
             $c->get(AppConfig::class),
-            $c->get(LoggerFactory::class)));
+            $c->get(LoggerFactory::class)
+        ));
 
         $this->set(PostmanClient::class, fn($c) => new PostmanClient(
             new Client([
@@ -146,16 +159,18 @@ abstract class AbstractContainer
                     'X-Api-Key' => $c->get(AppConfig::class)->getParamConfig()->getPostmanApiKey(),
                     'Content-Type' => 'application/json'
                 ]
-            ])));
+            ])
+        ));
 
         // Services
         $this->set(GitlabService::class, fn($c) => new GitlabService(
             $c->get(GitLabClient::class),
             $c->get(MavenParser::class),
             $c->get(GradleParser::class),
-            new FileService("../data", $c->get(LoggerFactory::class)),
+            new FileService("../" . PATH_DATA, $c->get(LoggerFactory::class)),
             $c->get(AppConfig::class),
-            $c->get(LoggerFactory::class)));
+            $c->get(LoggerFactory::class)
+        ));
     }
 
     /**
@@ -300,7 +315,7 @@ abstract class AbstractContainer
             },
             static function (int $retries) {
                 // Delay exponentiel en ms
-                return (int)pow(2, $retries) * 1000;
+                return (int) pow(2, $retries) * 1000;
             }
         ));
 

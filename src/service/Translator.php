@@ -36,7 +36,7 @@ class Translator
     private function load(): void
     {
         $file = "$this->translationsPath/$this->locale.php";
-        if (!file_exists(realpath($file))) {
+        if (!realpath($file) || !file_exists(realpath($file))) {
             throw TechnicalException::createWithMessage("Translation file for '$this->locale' not found.");
         }
         $this->messages = include $file; // NOSONAR

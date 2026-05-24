@@ -3,3 +3,4 @@ node_modules/
 vendor/
 .phpunit.cache/
 build/
+var/logs/

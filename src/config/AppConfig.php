@@ -26,16 +26,17 @@ class AppConfig
      * @throws TechnicalException
      */
     public function __construct(
-        public string  $env,
-        public string  $pathTemplates,
+        public string $env,
+        public string $pathTemplates,
         private string $defaultLocale = 'fr'
-    )
-    {
+    ) {
         $params = EnvLoader::load($env, dirname(__DIR__, 2));
         $this->paramConfig = ParamConfig::parse($params);
 
         $pathResolver = new PathResolver();
         $this->pathImages = $pathResolver->resolve(PATH_IMAGES);
+        $pathResolver->resolve(PATH_LOGS);
+        $pathResolver->resolve(PATH_DATA);
     }
 
     /**

@@ -26,7 +26,7 @@ class FileService
      */
     public static function initPaths(): void
     {
-        $pathsToCreate = [PATH_IMAGES];
+        $pathsToCreate = [PATH_IMAGES, PATH_LOGS];
         $pathFull = [];
         foreach ($pathsToCreate as $pathToCreateTmp) {
             $pathFull[] = dirname(__DIR__, 2) . '/' . $pathToCreateTmp;
@@ -79,7 +79,7 @@ class FileService
      */
     public function read(string $filename): array
     {
-//        $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
+        //        $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
 //            . "lecture du fichier $filename");
 
         try {
@@ -89,8 +89,7 @@ class FileService
             fclose($handle);
 
             return json_decode($data, true, 512, JSON_THROW_ON_ERROR);
-        }
-        catch (JsonException $e){
+        } catch (JsonException $e) {
             $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
                 . "Erreur lors de la lecture du fichier $filename : " . $e->getMessage());
             throw new TechnicalException("Erreur lors de la lecture du fichier $filename", 400, $e);

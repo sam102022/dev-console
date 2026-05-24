@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\model;
 
+use InvalidArgumentException;
+
 /**
  * Classe ParamConfig
  *
@@ -243,6 +245,12 @@ class ParamConfig extends AbstractModel
      */
     public static function parse(array $params): self
     {
+        if (empty($params)) {
+            throw new InvalidArgumentException("Le tableau de paramètres est vide.");
+        }
+        if (!isset($params['base_url'], $params['host'], $params['port'], $params['database_host'], $params['database_port'], $params['database_user'], $params['database_password'], $params['database_name'], $params['gitlab_url'], $params['gitlab_token'], $params['gitlab_business_contract_project_id'], $params['gitlab_path_group_default'], $params['postman_api_key'], $params['postman_api_url'])) {
+            throw new InvalidArgumentException("Certains paramètres requis sont manquants.");
+        }
         $urlServer = $params['base_url'] ?? '';
         $ipLocal = $params['host'] ?? 'localhost';
         $portLocal = (int) ($params['port'] ?? 80);
@@ -257,12 +265,12 @@ class ParamConfig extends AbstractModel
         $gitlabPathGroupDefault = $params['gitlab_path_group_default'] ?? '';
         $postmanApiKey = $params['postman_api_key'] ?? '';
         $postmanApiUrl = $params['postman_api_url'] ?? '';
-        
+
         $projectsInGke = [];
         if (!empty($params['projects_in_gke'])) {
             $projectsInGke = array_map('trim', explode(',', $params['projects_in_gke']));
         }
-        
+
         $excludeProjects = [];
         if (!empty($params['exclude_projects'])) {
             $excludeProjects = array_map('trim', explode(',', $params['exclude_projects']));

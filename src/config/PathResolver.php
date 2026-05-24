@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\config;
 
+use App\service\FileService;
 use RuntimeException;
 
 /**
@@ -39,7 +40,11 @@ final class PathResolver
     {
         $realPath = realpath($this->rootDir . $path);
         if ($realPath === false) {
-            throw new RuntimeException(sprintf('Le chemin configuré n\'existe pas : %s', $this->rootDir . $path));
+            FileService::createDirectory($this->rootDir . $path);
+            $realPath = realpath($this->rootDir . $path);
+            if ($realPath === false) {
+                throw new RuntimeException(sprintf('Le chemin configuré n\'existe pas : %s', $this->rootDir . $path));
+            }
         }
         return $realPath;
     }
