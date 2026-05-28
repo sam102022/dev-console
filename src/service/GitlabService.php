@@ -7,9 +7,19 @@ use App\client\GitLabClient;
 use App\config\AppConfig;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
+use App\model\EnumEnvironment;
+use App\model\GitlabProject;
+use App\model\Project;
 use App\parser\GradleParser;
 use App\parser\MavenParser;
+use App\repository\GitLabRepository;
+use App\repository\mapper\GitlabProjectMapper;
+use App\repository\mapper\ProjectMapper;
+use App\repository\model\ProjectEntity;
+use App\repository\ProjectRepository;
+use App\util\MonitoringUtils;
 use App\util\UtilsLog;
+use DateMalformedStringException;
 use GuzzleHttp\Exception\GuzzleException;
 use Monolog\Logger;
 
@@ -19,12 +29,13 @@ class GitlabService
     private array $excludeProjects;
 
     public function __construct(
-        private readonly GitLabClient $client,
-        private readonly MavenParser  $mavenParser,
-        private readonly GradleParser $gradleParser,
-        private readonly FileService $fileService,
-        private readonly AppConfig    $appConfig,
-        LoggerFactory                 $loggerFactory
+        private readonly GitLabClient      $client,
+        private readonly MavenParser       $mavenParser,
+        private readonly GradleParser      $gradleParser,
+        private readonly GitLabRepository  $gitLabRepository,
+        private readonly ProjectRepository $projectRepository,
+        private readonly AppConfig         $appConfig,
+        LoggerFactory                      $loggerFactory
     )
     {
         $this->logger = $loggerFactory->get(__CLASS__);
@@ -32,114 +43,90 @@ class GitlabService
     }
 
     /**
-     * Nettoie les fichiers de cache locaux (gitlabProjects.json et javaProjects.json)
+     * Supprime toutes les données
      */
     public function purgeCache(): void
     {
-        $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-            . "debut purgeCache");
-
-        $this->fileService->delete('gitlabProjects.json');
-        $this->fileService->delete('javaProjects.json');
+        $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "debut purgeCache");
+        $this->gitLabRepository->purgeAll();
+        $this->projectRepository->purgeAll();
     }
 
     /**
      * Scan les projets gitlab
      *
      * @param string|null $pathGroup Le chemin du groupe GitLab à scanner (ex: 'core/dev/pdv').
-     * @return array
+     * @return GitlabProject[]
      * @throws GuzzleException|TechnicalException
      */
     public function getProjects(?string $pathGroup): array
     {
-        $filenameProjects = 'gitlabProjects.json';
-        if (!$this->fileService->isFileExists($filenameProjects)) {
-            $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                . "Le fichier : $filenameProjects n'existe pas");
+        $gitLabProjectsEntities = $this->gitLabRepository->findAll();
+        if (empty($gitLabProjectsEntities)) {
+            $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "Le cache des projets est vide, récupération depuis l'API GitLab.");
+            $gitLabProjectsData = $this->client->getAllProjects($pathGroup);
+            $entities = [];
+            foreach ($gitLabProjectsData as $gitlabProject) {
+                $entities[] = GitlabProjectMapper::fromArray($gitlabProject);
+            }
 
-            $projects = $this->client->getAllProjects($pathGroup);
-            $this->fileService->save($projects, $filenameProjects);
-        } else {
-            $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                . "lecture du fichier $filenameProjects");
-
-            $projects = $this->fileService->read($filenameProjects);
+            $this->gitLabRepository->updateAll($entities);
+            $gitLabProjectsEntities = $this->gitLabRepository->findAll() ?? [];
         }
-        return $projects;
+        $gitlabProjects = [];
+        foreach ($gitLabProjectsEntities as $gitLabProjectsEntity) {
+            $gitlabProjects[] = GitlabProjectMapper::toModel($gitLabProjectsEntity);
+        }
+        return $gitlabProjects;
     }
 
     /**
      * @param string $projectCode
-     * @return array|null
-     * @throws GuzzleException
+     * @return Project|null
      */
-    public function getProjectByCode(string $projectCode): ?array
+    public function getProjectByCode(string $projectCode): ?Project
     {
-        $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-            . "debut");
-
-        $results = $this->scan();
-
-        return array_find($results, static fn($result) => $result['name'] === $projectCode);
+        $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "debut");
+        try {
+            $projectEntity = $this->projectRepository->findByCode($projectCode);
+            if ($projectEntity != null) {
+                return ProjectMapper::fromEntity($projectEntity);
+            }
+            return null;
+        } catch (TechnicalException $e) {
+            $projectEntities = $this->initProjects();
+            $this->projectRepository->updateAll($projectEntities);
+            $projectEntity = array_find($projectEntities, static fn($result) => $result->getname() === $projectCode);
+            if ($projectEntity) {
+                return ProjectMapper::fromEntity($projectEntity);
+            }
+            return null;
+        }
     }
 
     /**
      * Scan les projets gitlab
      *
-     * @return array|null
+     * @return Project[]|null
      * @throws GuzzleException|TechnicalException
      */
     public function scan(): ?array
     {
-        $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-            . 'debut scan');
+        $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . 'debut scan');
 
-        $results = [];
-        $filenameJava = 'javaProjects.json';
-
-        if (!$this->fileService->isFileExists($filenameJava)) {
-
-            $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                . "Le fichier $filenameJava n'existe pas");
-
-            $projects = $this->getProjects($this->appConfig->getParamConfig()->getGitlabPathGroupDefault());
-
-            $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                . ' nbProjects:' . count($projects));
-
-            foreach ($projects as $project) {
-                // Exclusion des projets
-                if (in_array($project['name'], $this->excludeProjects, true)) {
-                    continue;
-                }
-
-                $result = $this->scanPomXml($project);
-
-                if (!empty($result)) {
-                    $results[] = $result;
-                    continue;
-                }
-
-                // Gradle
-                /*$result = $this->scanBuildGradle($project);
-
-                if (!empty($result)) {
-                    $results[] = $result;
-                }*/
-            }
-            $subsf = array_column($results, 'subsf');
-            $name = array_column($results, 'name');
-
-            array_multisort($subsf, SORT_ASC, $name, SORT_ASC, $results);
-            $this->fileService->save($results, $filenameJava);
-        } else {
-            $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                . "lecture du fichier $filenameJava");
-
-            $results = $this->fileService->read($filenameJava);
+        try {
+            $projectEntities = $this->projectRepository->findAll();
+        } catch (TechnicalException $e) {
+            $projectEntities = $this->initProjects();
+            $this->projectRepository->updateAll($projectEntities);
         }
 
-        return $results;
+        $projects = [];
+        foreach ($projectEntities as $projectEntity) {
+            $projects[] = ProjectMapper::fromEntity($projectEntity);
+        }
+
+        return $projects;
     }
 
     /**
@@ -160,72 +147,149 @@ class GitlabService
      */
     public function getFile(int $projectId, string $file): array
     {
-        return [
-            'content' => $this->client->getFile($projectId, $file, true, 'master')
+        return ['content' => $this->client->getFile($projectId, $file, true, 'master')];
+    }
+
+    /**
+     * Construit un objet {@link Project} à partir d'un projet gitlab {@link GitlabProject}
+     *
+     * @param GitlabProject $gitLabProject Le projet gitlab à scanner
+     * @return Project|null
+     * @throws DateMalformedStringException
+     */
+    private function buildProject(GitlabProject $gitLabProject): ?Project
+    {
+        $pathInfo = $this->extractPathInfo($gitLabProject);
+        $deploymentInfo = $this->getDeploymentInfo($gitLabProject);
+        $mavenInfo = $this->scanPomXml($gitLabProject);
+
+        $projectName = $deploymentInfo['deployName'] ?? $gitLabProject->getName();
+
+        $data = [
+            'name' => $projectName,
+            'serviceName' => $deploymentInfo['deployName'],
+            'sf' => $pathInfo['sf'],
+            'sfName' => $pathInfo['sfName'],
+            'subsf' => $pathInfo['subsf'],
+            'cloudGCP' => $deploymentInfo['cloudGCP'],
+            'urlHealthCheck' => [],
+            'urlLogs' => [],
+            ...$mavenInfo ?? [],
         ];
+        $project = ProjectMapper::projectFromArray($data);
+
+        $urlsHealth = [];
+        $urlsLogs = [];
+        foreach (EnumEnvironment::cases() as $env) {
+            $urlsHealth[$env->value] = MonitoringUtils::buildUrlHealthCheck($project, $env, $this->excludeProjects);
+            $urlsLogs[$env->value] = MonitoringUtils::buildLogUrl($project, $env);
+        }
+        $project->setUrlHealthCheck($urlsHealth);
+        $project->setUrlLogs($urlsLogs);
+
+        return $project;
     }
 
     /**
      * Scan un fichier pom.xml d'un projet gitlab
      *
-     * @param array $gitLabProject Le projet gitlab à scanner
+     * @param GitlabProject $gitLabProject Le projet gitlab à scanner
      * @return array|null
      */
-    private function scanPomXml(array $gitLabProject): ?array
+    private function scanPomXml(GitlabProject $gitLabProject): ?array
     {
-        $projectId = $gitLabProject['id'];
-        $projectName = $gitLabProject['name'];
-        $branch = $gitLabProject['default_branch'] ?? 'main';
-        $path = explode('/', $gitLabProject['path_with_namespace']);
-        $namePath = explode('/', $gitLabProject['name_with_namespace']);
-        // Ex path : core/dev/pdv/receipt/checkout-syst-monitoring
-        $sf = $path[2]; // pdv
-        $sfName = $namePath[2]; // pdv
-        $subsf = $path[3]; // receipt
+        $pom = $this->client->getFile($gitLabProject->getId(), 'pom.xml', true, $gitLabProject->getDefaultBranch());
+        if (!$pom) {
+            return null;
+        }
+        return $this->mavenParser->parse($pom);
+    }
 
-        // Maven
-        $pom = $this->client->getFile($projectId, 'pom.xml', true, $branch);
+    private function extractPathInfo(GitlabProject $gitLabProject): array
+    {
+        $path = explode('/', $gitLabProject->getPathWithNamespace());
+        $namePath = explode('/', $gitLabProject->getNameWithNamespace());
+        return [
+            'sf' => $path[2] ?? null,
+            'sfName' => $namePath[2] ?? null,
+            'subsf' => $path[3] ?? null,
+        ];
+    }
 
-        // Pour savoir si le projet a été migré sur GKE ou pas
-        $chartValuesFile = $this->client->getFile($projectId, 'chart/values.yaml', true, $branch);
+    private function getDeploymentInfo(GitlabProject $gitLabProject): array
+    {
+        $chartValuesFile = $this->client->getFile($gitLabProject->getId(), 'chart/values.yaml', true, $gitLabProject->getDefaultBranch());
         $cloudGCP = (bool)$chartValuesFile;
 
-        if ($pom) {
+        $deployName = null;
+        if (!$cloudGCP) {
+            $deployYamlContent = $this->client->getFile($gitLabProject->getId(), 'deploy/dev/deploy.yaml', true, $gitLabProject->getDefaultBranch());
+            if ($deployYamlContent && preg_match('/metadata:\s*name:\s*([^\s]+)/s', $deployYamlContent, $matches)) {
+                $deployName = $matches[1];
+            }
+        }
+        
+        return [
+            'cloudGCP' => $cloudGCP,
+            'deployName' => $deployName,
+        ];
+    }
+
+    private function scanBuildGradle(GitlabProject $gitLabProject): ?array
+    {
+        $pathInfo = $this->extractPathInfo($gitLabProject);
+        $gradle = $this->client->getFile($gitLabProject->getId(), 'build.gradle', true, $gitLabProject->getDefaultBranch());
+        
+        if ($gradle) {
             return [
-                'name' => $projectName,
-                'sf' => $sf,
-                'sfName' => $sfName,
-                'subsf' => $subsf,
-                'cloudGCP' => $cloudGCP,
-                ...$this->mavenParser->parse($pom)
+                'name' => $gitLabProject->getName(),
+                ...$pathInfo,
+                ...$this->gradleParser->parse($gradle)
             ];
         }
         return null;
     }
 
-    private function scanBuildGradle(array $gitLabProject): ?array
+    /**
+     * @return ProjectEntity[]
+     * @throws GuzzleException|TechnicalException|DateMalformedStringException
+     */
+    private function initProjects(): array
     {
-        $projectId = $gitLabProject['id'];
-        $projectName = $gitLabProject['name'];
-        $branch = $gitLabProject['default_branch'] ?? 'main';
-        $path = explode('/', $gitLabProject['path_with_namespace']);
-        $namePath = explode('/', $gitLabProject['name_with_namespace']);
-        // Ex path : core/dev/pdv/receipt/checkout-syst-monitoring
-        $sf = $path[2]; // pdv
-        $sfName = $namePath[2]; // pdv
-        $subsf = $path[3]; // receipt
+        $this->logger->info("Le cache des projets Java est vide, scan en cours...");
+        $gitlabProjects = $this->getProjects($this->appConfig->getParamConfig()->getGitlabPathGroupDefault());
+        $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . ' nb gitlab projects:' . count($gitlabProjects));
 
-        $gradle = $this->client->getFile($projectId, 'build.gradle', true, $branch);
+        $projects = [];
+        foreach ($gitlabProjects as $gitlabProject) {
+            if (in_array($gitlabProject->getName(), $this->excludeProjects, true)) {
+                continue;
+            }
 
-        if ($gradle) {
-            return [
-                'name' => $projectName,
-                'sf' => $sf,
-                'sfName' => $sfName,
-                'subsf' => $subsf,
-                ...$this->gradleParser->parse($gradle)
-            ];
+            $project = $this->buildProject($gitlabProject);
+            if (!empty($project)) {
+                $projects[] = $project;
+            }
         }
-        return null;
+
+        usort($projects, static function (Project $a, Project $b) {
+            // 1. Trier par 'subsf' en premier
+            $subsfComparison = $a->getSubsf() <=> $b->getSubsf();
+
+            // Si les 'subsf' sont différents, on retourne le résultat de la comparaison
+            if ($subsfComparison !== 0) {
+                return $subsfComparison;
+            }
+
+            // 2. Si les 'subsf' sont identiques, on trie par 'name'
+            return $a->getName() <=> $b->getName();
+        });
+
+        $projectEntities = [];
+        foreach ($projects as $project) {
+            $projectEntities[] = ProjectMapper::toEntity($project);
+        }
+
+        return $projectEntities;
     }
 }

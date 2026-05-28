@@ -6,78 +6,86 @@ namespace App\viewModel;
 use App\config\AppConfig;
 use App\context\IndexContext;
 use App\exception\TechnicalException;
-use App\service\Translator;
+use App\model\Project;
 use App\service\UtilsService;
-use App\util\UtilsFile;
 use Twig\Environment;
 
 /**
- * Classe AdminViewModelFactory
+ * Classe IndexViewModelFactory
  *
  * Usine (Factory) pour créer le ViewModel de la page public.
- * Elle agrège et prépare toutes les données nécessaires à l'affichage du template principal de l'administration.
+ * Elle agrège et prépare toutes les données nécessaires à l'affichage du template principal.
  */
 class IndexViewModelFactory
 {
     private array $results = [];
 
     public function __construct(
-        private readonly Environment     $twig,
-        private readonly AppConfig       $appConfig,
+        private readonly Environment $twig,
+        private readonly AppConfig   $appConfig
     )
     {
     }
 
     /**
-     * @param array|null $results
+     * @param Project[]|null $results
      */
     public function setResults(?array $results): void
     {
-        $this->results = $results;
+        $this->results = $results ?? [];
     }
 
     /**
-     * Construit le tableau de variables pour le template de la page public.
+     * Construit le tableau de variables pour le template.
      *
-     * @param IndexContext $indexContext Le contexte de la session public.
-     * @param array $messages Les messages à afficher à l'utilisateur.
+     * @param IndexContext $indexContext Le contexte de la session.
+     * @param array $messages Les messages à afficher.
+     * @return array
      * @throws TechnicalException
      */
     public function build(IndexContext $indexContext, array $messages): array
     {
         $theme = $indexContext->getTheme();
-
         $themesColor = THEMES_COLORS;
 
-        $bgBody = $themesColor[$theme]['bgBody'];
-        $bgContainer = $themesColor[$theme]['bgContainer'];
-        $bgToolbar = $themesColor[$theme]['bgToolbar'];
-        $colorInverse = $themesColor[$theme]['colorInverse'];
-        $colorLink = $themesColor[$theme]['colorLink'];
-        $colorText = $themesColor[$theme]['colorText'];
-
+        // Préparation des données pour la vue
         $sfs = [];
         $subsfs = [];
-        foreach($this->results as $result){
-            $sfs[$result['sf']] = $result['sfName'];
-            $subsfs[$result['subsf']] = $result['subsf'];
+        $formattedResults = [];
+
+        foreach ($this->results as $project) {
+            /**
+             * var Project $project
+             */
+            $sfs[$project->getSf()] = $project->getSfName();
+            $subsfs[$project->getSubsf()] = $project->getSubsf();
+            
+            // Formate chaque projet pour inclure les URLs directement
+            $formattedResults[] = [
+                'name' => $project->getName(),
+                'sf' => $project->getSf(),
+                'sfName' => $project->getSfName(),
+                'subsf' => $project->getSubsf(),
+                'cloudGCP' => $project->isCloudGCP(),
+                'springBoot' => $project->getSpringBoot(),
+                'java' => $project->getJava(),
+                'urlHealthCheck' => $project->getUrlHealthCheck(),
+                'urlLogs' => $project->getUrlLogs(),
+            ];
         }
 
         return [
             'baseUrl' => $this->appConfig->getBaseUrl(),
-            'bgBody' => $bgBody,
-            'bgContainer' => $bgContainer,
-            'bgToolbar' => $bgToolbar,
-            'colorInverse' => $colorInverse,
-            'colorLink' => $colorLink,
-            'colorText' => $colorText,
-            //'containerIndex' => $containerIndex,
-            //'javascriptsHead' => $javascriptsHead,
-            //'loadHtml' => LOAD_HTML,
+            'bgBody' => $themesColor[$theme]['bgBody'],
+            'bgContainer' => $themesColor[$theme]['bgContainer'],
+            'bgToolbar' => $themesColor[$theme]['bgToolbar'],
+            'colorInverse' => $themesColor[$theme]['colorInverse'],
+            'colorLink' => $themesColor[$theme]['colorLink'],
+            'colorText' => $themesColor[$theme]['colorText'],
             'sfs' => $sfs,
             'subsfs' => $subsfs,
-            'results' => $this->results,
-            'messageScanResults' => UtilsService::buildAlertHtml($this->twig, $messages[MESSAGES_SCAN_RESULTS]),
+            'results' => $formattedResults, // Utilise les résultats formatés
+            'messageScanResults' => UtilsService::buildAlertHtml($this->twig, $messages[MESSAGES_SCAN_RESULTS] ?? []),
         ];
     }
 }

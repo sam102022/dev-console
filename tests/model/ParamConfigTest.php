@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\tests\model;
 
 use App\model\ParamConfig;
+use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 class ParamConfigTest extends TestCase
@@ -35,7 +36,7 @@ class ParamConfigTest extends TestCase
 
         $paramConfig->setPortLocal(8000);
         $this->assertEquals(8000, $paramConfig->getPortLocal());
-        
+
         $paramConfig->setGitlabUrl('https://gitlab.example.com');
         $this->assertEquals('https://gitlab.example.com', $paramConfig->getGitlabUrl());
 
@@ -104,24 +105,28 @@ class ParamConfigTest extends TestCase
 
     public function testParseWithDefaults(): void
     {
-        $paramConfig = ParamConfig::parse([]);
+        try {
+            $paramConfig = ParamConfig::parse([]);
 
-        $this->assertEquals('localhost', $paramConfig->getDatabaseHost());
-        $this->assertEquals(3306, $paramConfig->getDatabasePort());
-        $this->assertEquals('', $paramConfig->getDatabaseName());
-        $this->assertEquals('', $paramConfig->getDatabaseUser());
-        $this->assertEquals('', $paramConfig->getDatabasePassword());
-        $this->assertEquals('', $paramConfig->getUrlServer());
-        $this->assertEquals('localhost', $paramConfig->getIpLocal());
-        $this->assertEquals(80, $paramConfig->getPortLocal());
-        $this->assertEquals('', $paramConfig->getGitlabUrl());
-        $this->assertEquals('', $paramConfig->getGitlabToken());
-        $this->assertEquals(0, $paramConfig->getGitlabBusinessContractProjectId());
-        $this->assertEquals('', $paramConfig->getGitlabPathGroupDefault());
-        $this->assertEquals('', $paramConfig->getPostmanApiKey());
-        $this->assertEquals('', $paramConfig->getPostmanApiUrl());
-        $this->assertEquals([], $paramConfig->getProjectsInGke());
-        $this->assertEquals([], $paramConfig->getExcludeProjects());
+            $this->assertEquals('localhost', $paramConfig->getDatabaseHost());
+            $this->assertEquals(3306, $paramConfig->getDatabasePort());
+            $this->assertEquals('', $paramConfig->getDatabaseName());
+            $this->assertEquals('', $paramConfig->getDatabaseUser());
+            $this->assertEquals('', $paramConfig->getDatabasePassword());
+            $this->assertEquals('', $paramConfig->getUrlServer());
+            $this->assertEquals('localhost', $paramConfig->getIpLocal());
+            $this->assertEquals(80, $paramConfig->getPortLocal());
+            $this->assertEquals('', $paramConfig->getGitlabUrl());
+            $this->assertEquals('', $paramConfig->getGitlabToken());
+            $this->assertEquals(0, $paramConfig->getGitlabBusinessContractProjectId());
+            $this->assertEquals('', $paramConfig->getGitlabPathGroupDefault());
+            $this->assertEquals('', $paramConfig->getPostmanApiKey());
+            $this->assertEquals('', $paramConfig->getPostmanApiUrl());
+            $this->assertEquals([], $paramConfig->getProjectsInGke());
+            $this->assertEquals([], $paramConfig->getExcludeProjects());
+        } catch (InvalidArgumentException $e) {
+            $this->assertEquals('Le tableau de paramètres est vide.', $e->getMessage());
+        }
     }
 
     public function testJsonSerialize(): void

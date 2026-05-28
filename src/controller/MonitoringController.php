@@ -52,7 +52,7 @@ class MonitoringController
      * Affiche la page pour gérer les collections postman.
      *
      * @param array $messages Un tableau de messages à afficher à l'utilisateur (notifications, erreurs, etc.).
-     * @throws GuzzleException
+     * @throws GuzzleException|TechnicalException
      */
     public function index(array $messages): void
     {
@@ -87,14 +87,14 @@ class MonitoringController
         $env = EnumEnvironment::tryFrom($envString);
 
         try {
+            http_response_code(200);
             switch ($action) {
-                case ACTION_MONITORING_CHECK_ONE:
-                    $result = $this->monitoringService->checkOne($project, $env);
+                case ACTION_MONITORING_GET_DATA:
+                    $data = $this->monitoringService->getMonitoringData($project, $env);
                     $response = [
                         'success' => true,
-                        'status' => $result['status'] ?? 'DOWN',
-                        'httpCode' => $result['httpCode'] ?? null,
-                        'error' => $result['error'] ?? null,
+                        'health' => $data['health'],
+                        'urls' => $data['urls'],
                     ];
                     break;
 

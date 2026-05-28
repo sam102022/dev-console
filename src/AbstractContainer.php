@@ -11,7 +11,8 @@ use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\parser\GradleParser;
 use App\parser\MavenParser;
-use App\service\FileService;
+use App\repository\GitLabRepository;
+use App\repository\ProjectRepository;
 use App\service\GitlabService;
 use App\service\Translator;
 use App\util\UtilsLog;
@@ -167,7 +168,8 @@ abstract class AbstractContainer
             $c->get(GitLabClient::class),
             $c->get(MavenParser::class),
             $c->get(GradleParser::class),
-            new FileService("../" . PATH_DATA, $c->get(LoggerFactory::class)),
+            $c->get(GitLabRepository::class),
+            $c->get(ProjectRepository::class),
             $c->get(AppConfig::class),
             $c->get(LoggerFactory::class)
         ));

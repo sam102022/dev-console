@@ -1,9 +1,13 @@
 <?php
-const PATH_IMAGES = 'public/images';
-const PATH_DATA = 'data';
+declare(strict_types=1);
 
 const ENVIRONMENT_PROD = 'prod';
 const ENVIRONMENT_TEST = 'test';
+// Chemins
+const PATH_DATA = 'data';
+const PATH_CACHE = 'cache';
+const PATH_TEMPLATES = 'templates';
+const PATH_IMAGES = 'public/images';
 
 const THEME_DEFAULT = 'dark';
 
@@ -18,10 +22,12 @@ const TEST_LOG_FILE = PATH_LOGS . '/logTest.log';
 const MESSAGES_SCAN_RESULTS = 'scanResults';
 const MESSAGES_POSTMAN = 'postman';
 
+// Actions
+const ACTION_PURGE_CACHE = 'purge_cache';
+
 const ACTION_GITLAB_SCAN = 'scan';
 const ACTION_GITLAB_TREE = 'tree';
 const ACTION_GITLAB_FILE = 'file';
-const ACTION_PURGE_CACHE = 'purge_cache';
 
 const ACTION_POSTMAN_WORKSPACES = 'getWorkspaces';
 const ACTION_POSTMAN_CREATE_WORKSPACE = 'createWorkspace';
@@ -29,7 +35,7 @@ const ACTION_POSTMAN_CREATE_ENVIRONMENT = 'createEnvironment';
 const ACTION_POSTMAN_IMPORT_OPENAPI = 'importOpenApi';
 const ACTION_POSTMAN_GET_WORKSPACE_DETAILS = 'getWorkspaceDetails';
 
-const ACTION_MONITORING_CHECK_ONE = 'checkHealthOne';
+const ACTION_MONITORING_GET_DATA = 'getMonitoringData';
 
 const THEMES_COLORS = [ //
     'dark' => [ //

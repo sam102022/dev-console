@@ -1,0 +1,122 @@
+<?php
+declare(strict_types=1);
+
+namespace App\tests\repository;
+
+use App\exception\TechnicalException;
+use App\factory\LoggerFactory;
+use App\repository\mapper\ProjectMapper;
+use App\repository\model\ProjectEntity;
+use App\repository\ProjectRepository;
+use App\service\FileService;
+use Monolog\Logger;
+use PHPUnit\Framework\TestCase;
+
+class ProjectRepositoryTest extends TestCase
+{
+    private FileService $fileService;
+    private ProjectRepository $repository;
+
+    protected function setUp(): void
+    {
+        $this->fileService = $this->createMock(FileService::class);
+
+        $loggerFactory = $this->createMock(LoggerFactory::class);
+        $loggerFactory->method('get')->willReturn($this->createMock(Logger::class));
+
+        $this->repository = new ProjectRepository($loggerFactory);
+
+        // Inject the mocked FileService
+        $reflection = new \ReflectionClass($this->repository);
+        $property = $reflection->getProperty('fileService');
+        $property->setAccessible(true);
+        $property->setValue($this->repository, $this->fileService);
+    }
+
+    public function testFindAllThrowsExceptionWhenCacheIsEmpty(): void
+    {
+        $this->fileService->method('isFileExists')->willReturn(false);
+        $this->expectException(TechnicalException::class);
+        $this->repository->findAll();
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testFindAllReturnsProjectObjects(): void
+    {
+        $projectsData = [
+            ['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a', 'java' => '11'],
+            ['name' => 'project-b', 'sf' => 'sf-b', 'sfName' => 'SF B', 'subsf' => 'sub-b', 'java' => '17'],
+        ];
+        $this->fileService->method('isFileExists')->willReturn(true);
+        $this->fileService->method('read')->willReturn($projectsData);
+
+        $result = $this->repository->findAll();
+
+        $this->assertCount(2, $result);
+        $this->assertInstanceOf(ProjectEntity::class, $result[0]);
+        $this->assertEquals('project-a', $result[0]->getName());
+        $this->assertEquals('17', $result[1]->getJavaVersion());
+    }
+
+    public function testFindByCodeThrowsExceptionWhenCacheIsEmpty(): void
+    {
+        $this->fileService->method('isFileExists')->willReturn(false);
+        $this->expectException(TechnicalException::class);
+        $this->repository->findByCode('any-code');
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testFindByCodeReturnsProjectWhenFound(): void
+    {
+        $projectsData = [
+            ['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a'],
+            ['name' => 'project-b', 'sf' => 'sf-b', 'sfName' => 'SF B', 'subsf' => 'sub-b'],
+        ];
+        $this->fileService->method('isFileExists')->willReturn(true);
+        $this->fileService->method('read')->willReturn($projectsData);
+
+        $result = $this->repository->findByCode('project-b');
+
+        $this->assertInstanceOf(ProjectEntity::class, $result);
+        $this->assertEquals('project-b', $result->getName());
+        $this->assertEquals('sf-b', $result->getSf());
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testFindByCodeReturnsNullWhenNotFound(): void
+    {
+        $projectsData = [['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a']];
+        $this->fileService->method('isFileExists')->willReturn(true);
+        $this->fileService->method('read')->willReturn($projectsData);
+
+        $result = $this->repository->findByCode('project-c');
+        $this->assertNull($result);
+    }
+
+    public function testUpdateAll(): void
+    {
+        $projectEntity1 = ProjectMapper::projectEntityFromArray(['name' => 'p1', 'sf' => 's', 'sfName' => 'sn', 'subsf' => 'ss']);
+        $projectEntity2 = ProjectMapper::projectEntityFromArray(['name' => 'p2', 'sf' => 's', 'sfName' => 'sn', 'subsf' => 'ss']);
+        $projectEntities = [$projectEntity1, $projectEntity2];
+
+        $this->fileService->expects($this->once())
+            ->method('save');
+
+        $this->repository->updateAll($projectEntities);
+    }
+
+    public function testPurgeAll(): void
+    {
+        $this->fileService->expects($this->once())
+            ->method('delete')
+            ->with(ProjectRepository::FILE_JAVA_PROJECTS);
+
+        $this->repository->purgeAll();
+    }
+}
