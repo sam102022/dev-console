@@ -19,6 +19,8 @@ class ProjectMapper
         $projectEntity->setCloudGCP($data['cloudGCP'] ?? false);
         $projectEntity->setSpringBootVersion($data['springBoot'] ?? null);
         $projectEntity->setJavaVersion($data['java'] ?? null);
+        $projectEntity->setWebUrl($data['webUrl'] ?? '');
+        $projectEntity->setArchived($data['archived'] ?? false);
         $projectEntity->setUrlHealthCheck($data['urlHealthCheck'] ?? []);
         $projectEntity->setUrlLogs($data['urlLogs'] ?? []);
 
@@ -36,6 +38,8 @@ class ProjectMapper
         $project->setCloudGCP($data['cloudGCP'] ?? false);
         $project->setSpringBoot($data['springBoot'] ?? null);
         $project->setJava($data['java'] ?? null);
+        $project->setWebUrl($data['webUrl'] ?? '');
+        $project->setArchived($data['archived'] ?? false);
         $project->setUrlHealthCheck($data['urlHealthCheck'] ?? []);
         $project->setUrlLogs($data['urlLogs'] ?? []);
 
@@ -53,6 +57,8 @@ class ProjectMapper
         $project->setCloudGCP($entity->isCloudGCP());
         $project->setSpringBoot($entity->getSpringBootVersion());
         $project->setJava($entity->getJavaVersion());
+        $project->setWebUrl($entity->getWebUrl());
+        $project->setArchived($entity->isArchived());
         $project->setUrlHealthCheck($entity->getUrlHealthCheck());
         $project->setUrlLogs($entity->getUrlLogs());
 
@@ -70,6 +76,8 @@ class ProjectMapper
             $project->isCloudGCP(),
             $project->getSpringBoot(),
             $project->getJava(),
+            $project->getWebUrl(),
+            $project->isArchived(),
             $project->getUrlHealthCheck(),
             $project->getUrlLogs()
         );
@@ -86,6 +94,8 @@ class ProjectMapper
             'cloudGCP' => $projectEntity->isCloudGCP(),
             'springBoot' => $projectEntity->getSpringBootVersion(),
             'java' => $projectEntity->getJavaVersion(),
+            'webUrl' => $projectEntity->getWebUrl(),
+            'archived' => $projectEntity->isArchived(),
             'urlHealthCheck' => $projectEntity->getUrlHealthCheck(),
             'urlLogs' => $projectEntity->getUrlLogs(),
         ];

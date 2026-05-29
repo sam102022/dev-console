@@ -22,6 +22,15 @@ class MonitoringUtils
     // URL Kibana de base (à adapter avec la vraie URL de votre entreprise)
     private const string KIBANA_URL_BASE = 'http://kibana.gestionlogs.app%s.xm';
 
+    public static function parseServiceName(?string $deployYamlContent): ?string
+    {
+        if ($deployYamlContent && preg_match('/metadata:\s*name:\s*([^\s]+)/s', $deployYamlContent, $matches)
+            && $matches[1] !== '$CI_PROJECT_NAME') {
+            return $matches[1];
+        }
+        return null;
+    }
+
     public static function buildUrlHealthCheck(Project $project, ?EnumEnvironment $env, array $projectsInGke): string
     {
         $projectName = $project->getname();

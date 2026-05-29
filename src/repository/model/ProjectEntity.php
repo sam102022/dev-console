@@ -15,6 +15,8 @@ class ProjectEntity
     private bool $cloudGCP;
     private ?string $springBootVersion;
     private ?string $javaVersion;
+    private string $webUrl;
+    private bool $archived;
     private array $urlHealthCheck = [];
     private array $urlLogs = [];
 
@@ -61,6 +63,19 @@ class ProjectEntity
         return $this->javaVersion;
     }
 
+    /**
+     * @return string
+     */
+    public function getWebUrl(): string
+    {
+        return $this->webUrl;
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->archived;
+    }
+
     public function getUrlHealthCheck(): array
     {
         return $this->urlHealthCheck;
@@ -78,7 +93,7 @@ class ProjectEntity
 
     /**
      * @param string|null $serviceName
-     * @return Project
+     * @return ProjectEntity
      */
     public function setServiceName(?string $serviceName): self
     {
@@ -116,6 +131,22 @@ class ProjectEntity
         $this->javaVersion = $javaVersion;
     }
 
+    /**
+     * @param string $webUrl
+     * @return ProjectEntity
+     */
+    public function setWebUrl(string $webUrl): self
+    {
+        $this->webUrl = $webUrl;
+        return $this;
+    }
+
+    public function setArchived(bool $archived): self
+    {
+        $this->archived = $archived;
+        return $this;
+    }
+
     public function setUrlHealthCheck(array $urlHealthCheck): void
     {
         $this->urlHealthCheck = $urlHealthCheck;
@@ -135,6 +166,8 @@ class ProjectEntity
         bool    $cloudGCP,
         ?string $springBootVersion,
         ?string $javaVersion,
+        string  $webUrl,
+        bool    $archived,
         array   $urlHealthCheck = [],
         array   $urlLogs = []
     )
@@ -150,6 +183,8 @@ class ProjectEntity
         $project->setJavaVersion($javaVersion);
         $project->setUrlHealthCheck($urlHealthCheck);
         $project->setUrlLogs($urlLogs);
+        $project->setWebUrl($webUrl);
+        $project->setArchived($archived);
         return $project;
     }
 }

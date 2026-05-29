@@ -96,7 +96,7 @@ class GitlabService
         } catch (TechnicalException $e) {
             $projectEntities = $this->initProjects();
             $this->projectRepository->updateAll($projectEntities);
-            $projectEntity = array_find($projectEntities, static fn($result) => $result->getname() === $projectCode);
+            $projectEntity = array_find($projectEntities, static fn($result) => $result->getName() === $projectCode);
             if ($projectEntity) {
                 return ProjectMapper::fromEntity($projectEntity);
             }
@@ -108,11 +108,14 @@ class GitlabService
      * Scan les projets gitlab
      *
      * @return Project[]|null
-     * @throws GuzzleException|TechnicalException
+     * @throws GuzzleHttp|GuzzleException|TechnicalException
      */
     public function scan(): ?array
     {
         $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . 'debut scan');
+
+        //$deployYamlContent = $this->client->getFile(648, 'deploy/conf/dev/deploy.yml', true, 'master');
+        //var_dump($deployYamlContent);
 
         try {
             $projectEntities = $this->projectRepository->findAll();
@@ -163,7 +166,7 @@ class GitlabService
         $deploymentInfo = $this->getDeploymentInfo($gitLabProject);
         $mavenInfo = $this->scanPomXml($gitLabProject);
 
-        $projectName = $deploymentInfo['deployName'] ?? $gitLabProject->getName();
+        $projectName = $gitLabProject->getName();
 
         $data = [
             'name' => $projectName,
@@ -172,6 +175,8 @@ class GitlabService
             'sfName' => $pathInfo['sfName'],
             'subsf' => $pathInfo['subsf'],
             'cloudGCP' => $deploymentInfo['cloudGCP'],
+            'webUrl' => $gitLabProject->getWebUrl(),
+            'archived' => $gitLabProject->isArchived(),
             'urlHealthCheck' => [],
             'urlLogs' => [],
             ...$mavenInfo ?? [],
@@ -207,8 +212,8 @@ class GitlabService
 
     private function extractPathInfo(GitlabProject $gitLabProject): array
     {
-        $path = explode('/', $gitLabProject->getPathWithNamespace());
-        $namePath = explode('/', $gitLabProject->getNameWithNamespace());
+        $path = explode('/', $gitLabProject->getPathWithNamespace() ?? '');
+        $namePath = explode('/', $gitLabProject->getNameWithNamespace() ?? '');
         return [
             'sf' => $path[2] ?? null,
             'sfName' => $namePath[2] ?? null,
@@ -223,12 +228,13 @@ class GitlabService
 
         $deployName = null;
         if (!$cloudGCP) {
-            $deployYamlContent = $this->client->getFile($gitLabProject->getId(), 'deploy/dev/deploy.yaml', true, $gitLabProject->getDefaultBranch());
-            if ($deployYamlContent && preg_match('/metadata:\s*name:\s*([^\s]+)/s', $deployYamlContent, $matches)) {
-                $deployName = $matches[1];
+            // Ex : 648
+            $deployYamlContent = $this->client->getFile($gitLabProject->getId(), 'deploy/conf/dev/deploy.yml', true, $gitLabProject->getDefaultBranch());
+            if ($deployYamlContent) {
+                $deployName = MonitoringUtils::parseServiceName($deployYamlContent);
             }
         }
-        
+
         return [
             'cloudGCP' => $cloudGCP,
             'deployName' => $deployName,
@@ -239,7 +245,7 @@ class GitlabService
     {
         $pathInfo = $this->extractPathInfo($gitLabProject);
         $gradle = $this->client->getFile($gitLabProject->getId(), 'build.gradle', true, $gitLabProject->getDefaultBranch());
-        
+
         if ($gradle) {
             return [
                 'name' => $gitLabProject->getName(),

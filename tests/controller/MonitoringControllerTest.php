@@ -88,13 +88,13 @@ class MonitoringControllerTest extends AbstractControllerCase
     {
         return [
             'check one success' => [
-                'action' => ACTION_MONITORING_CHECK_ONE,
+                'action' => ACTION_MONITORING_GET_DATA,
                 'request' => ['project' => 'my-project', 'env' => 'dev'],
                 'serviceReturn' => ['status' => 'UP', 'httpCode' => 200, 'error' => null],
                 'expectedResponse' => json_encode(['success' => true, 'status' => 'UP', 'httpCode' => 200, 'error' => null]),
             ],
             'check one failure' => [
-                'action' => ACTION_MONITORING_CHECK_ONE,
+                'action' => ACTION_MONITORING_GET_DATA,
                 'request' => ['project' => 'my-project', 'env' => 'prod'],
                 'serviceReturn' => ['status' => 'DOWN', 'httpCode' => 500, 'error' => 'Server Error'],
                 'expectedResponse' => json_encode(['success' => true, 'status' => 'DOWN', 'httpCode' => 500, 'error' => 'Server Error']),
@@ -127,7 +127,7 @@ class MonitoringControllerTest extends AbstractControllerCase
 
     public function testHandleRequestException(): void
     {
-        $action = ACTION_MONITORING_CHECK_ONE;
+        $action = ACTION_MONITORING_GET_DATA;
         $_REQUEST = ['project' => 'p', 'env' => 'dev'];
         $errorMessage = 'Service exception';
 

@@ -46,8 +46,8 @@ class ProjectRepositoryTest extends TestCase
     public function testFindAllReturnsProjectObjects(): void
     {
         $projectsData = [
-            ['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a', 'java' => '11'],
-            ['name' => 'project-b', 'sf' => 'sf-b', 'sfName' => 'SF B', 'subsf' => 'sub-b', 'java' => '17'],
+            ['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a', 'java' => '11', 'archived' => false],
+            ['name' => 'project-b', 'sf' => 'sf-b', 'sfName' => 'SF B', 'subsf' => 'sub-b', 'java' => '17', 'archived' => true],
         ];
         $this->fileService->method('isFileExists')->willReturn(true);
         $this->fileService->method('read')->willReturn($projectsData);
@@ -58,6 +58,8 @@ class ProjectRepositoryTest extends TestCase
         $this->assertInstanceOf(ProjectEntity::class, $result[0]);
         $this->assertEquals('project-a', $result[0]->getName());
         $this->assertEquals('17', $result[1]->getJavaVersion());
+        $this->assertFalse($result[0]->isArchived());
+        $this->assertTrue($result[1]->isArchived());
     }
 
     public function testFindByCodeThrowsExceptionWhenCacheIsEmpty(): void

@@ -13,6 +13,8 @@ class Project extends AbstractModel
     public bool $cloudGCP;
     public ?string $springBoot;
     public ?string $java;
+    private string $webUrl;
+    private bool $archived;
     public array $urlHealthCheck = [];
     public array $urlLogs = [];
 
@@ -160,6 +162,35 @@ class Project extends AbstractModel
         return $this;
     }
 
+    /**
+     * @return string
+     */
+    public function getWebUrl(): string
+    {
+        return $this->webUrl;
+    }
+
+    /**
+     * @param string $webUrl
+     * @return Project
+     */
+    public function setWebUrl(string $webUrl): self
+    {
+        $this->webUrl = $webUrl;
+        return $this;
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->archived;
+    }
+
+    public function setArchived(bool $archived): self
+    {
+        $this->archived = $archived;
+        return $this;
+    }
+
     public function getUrlHealthCheck(): array
     {
         return $this->urlHealthCheck;
@@ -183,7 +214,7 @@ class Project extends AbstractModel
     }
 
     public static function build(string $name, ?string $serviceName, ?string $sf, ?string $sfName, ?string $subsf, bool $cloudGCP,
-        ?string $springBoot, ?string $java, array $urlHealthCheck, array $urlLogs): self
+        ?string $springBoot, ?string $java, string  $webUrl, bool $archived, array $urlHealthCheck, array $urlLogs): self
     {
         $project = new self();
         $project->setName($name);
@@ -194,6 +225,8 @@ class Project extends AbstractModel
         $project->setCloudGCP($cloudGCP);
         $project->setSpringBoot($springBoot);
         $project->setJava($java);
+        $project->setWebUrl($webUrl);
+        $project->setArchived($archived);
         $project->setUrlHealthCheck($urlHealthCheck);
         $project->setUrlLogs($urlLogs);
         return $project;

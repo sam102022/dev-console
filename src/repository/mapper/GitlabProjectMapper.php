@@ -20,6 +20,7 @@ class GitlabProjectMapper
         $project->setCreatedAt($data['created_at']);
         $project->setDefaultBranch($data['default_branch'] ?? 'main');
         $project->setWebUrl($data['web_url'] ?? '');
+        $project->setArchived($data['archived'] ?? false);
 
         return $project;
     }
@@ -36,6 +37,7 @@ class GitlabProjectMapper
         $project->setCreatedAt($entity->getCreatedAt());
         $project->setDefaultBranch($entity->getDefaultBranch());
         $project->setWebUrl($entity->getWebUrl());
+        $project->setArchived($entity->isArchived());
 
         return $project;
     }
@@ -51,7 +53,8 @@ class GitlabProjectMapper
             $project->getPathWithNamespace(),
             $project->getDefaultBranch(),
             $project->getCreatedAt(),
-            $project->getWebUrl()
+            $project->getWebUrl(),
+            $project->isArchived()
         );
     }
 
@@ -66,7 +69,8 @@ class GitlabProjectMapper
             $entity->getPathWithNamespace(),
             $entity->getDefaultBranch(),
             $entity->getCreatedAt(),
-            $entity->getWebUrl()
+            $entity->getWebUrl(),
+            $entity->isArchived()
         );
     }
 
@@ -82,6 +86,7 @@ class GitlabProjectMapper
             'created_at' => $gitlabProjectEntity->getCreatedAt(),
             'default_branch' => $gitlabProjectEntity->getDefaultBranch(),
             'web_url' => $gitlabProjectEntity->getWebUrl(),
+            'archived' => $gitlabProjectEntity->isArchived(),
         ];
     }
 

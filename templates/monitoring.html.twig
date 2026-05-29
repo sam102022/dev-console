@@ -22,10 +22,17 @@
 .log-link:hover {
     opacity: 1;
 }
+.url-link {
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+.url-link:hover {
+    opacity: 1;
+}
 </style>
 <div class="card shadow rounded mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">🩺 Monitoring & Logs</h5>
+        <h5 class="mb-0">🩺 Monitoring & 📰 Logs</h5>
         <div>
             <button id="btn-check-selected" class="btn btn-primary btn-sm mr-2" onclick="checkHealth('selected')" title="Vérifier cochés"><i class="fa-solid fa-check-square"></i> Vérifier</button>
             <button id="btn-stop-health" class="btn btn-danger btn-sm d-none" onclick="stopHealthCheck()" title="Arrêter"><i class="fa-solid fa-stop"></i> Arrêter</button>
@@ -46,7 +53,7 @@
                         <th><a class="sortable-header" data-sort="name">Nom <i class="fa-solid fa-sort sort-icon"></i></a></th>
                         <th><a class="sortable-header" data-sort="gcp">GCP <i class="fa-solid fa-sort sort-icon"></i></a></th>
                         <th class="text-center" style="width: 120px;">DEV</th>
-                        <th class="text-center" style="width: 120px;">RECETTE</th>
+                        <th class="text-center" style="width: 120px;">REC</th>
                         <th class="text-center" style="width: 120px;">PP</th>
                         <th class="text-center" style="width: 120px;">PROD</th>
                         <th class="text-center" style="width: 80px;">Action</th>
@@ -92,7 +99,18 @@
                             <td class="col-index text-muted font-weight-bold"></td>
                             <td class="col-sf" data-value="{{ r.sf }}">{{ r.sf }}</td>
                             <td class="col-subsf" data-value="{{ r.subsf }}">{{ r.subsf }}</td>
-                            <td class="col-name">{{ r.name }}</td>
+                            <td class="col-name">
+                                {% if r.archived %}
+                                    <i class="fa-solid fa-box-archive text-danger mr-1" title="Projet archivé"></i>
+                                {% endif %}
+                                {% if r.webUrl is defined and r.webUrl != '' %}
+                                <a href="{{ r.webUrl }}" class="url-link text-decoration-none" target="_blank" title="Voir le projet Gitlab{% if r.archived %} archivé{% endif %}">
+                                    <i class="fa-brands fa-gitlab text-warning"></i> {{ r.name }}
+                                </a>
+                                {% else %}
+                                    {{ r.name }}
+                                {% endif %}
+                            </td>
                             <td class="col-gcp" data-value="{% if r.cloudGCP == 1 %}oui{% else %}non{% endif %}">
                                 {% if r.cloudGCP == 1 %}Oui{% else %}Non{% endif %}
                             </td>

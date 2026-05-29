@@ -14,6 +14,7 @@ class GitlabProjectEntity
     private string $createdAt;
     private string $defaultBranch;
     private string $webUrl;
+    private bool $archived;
 
     /**
      * @return int
@@ -177,9 +178,20 @@ class GitlabProjectEntity
         return $this;
     }
 
+    public function isArchived(): bool
+    {
+        return $this->archived;
+    }
+
+    public function setArchived(bool $archived): self
+    {
+        $this->archived = $archived;
+        return $this;
+    }
+
     public static function build(int $id, ?string $description, string $name, string $nameWithNamespace,
                                  string $path, string $path_with_namespace, string $default_branch,
-                                 string $created_at, string $web_url)
+                                 string $created_at, string $web_url, bool $archived)
     {
         $project = new self();
         $project->setId($id);
@@ -191,6 +203,7 @@ class GitlabProjectEntity
         $project->setDefaultBranch($default_branch);
         $project->setCreatedAt($created_at);
         $project->setWebUrl($web_url);
+        $project->setArchived($archived);
 
         return $project;
     }

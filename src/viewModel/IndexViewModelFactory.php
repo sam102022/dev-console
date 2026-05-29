@@ -55,7 +55,7 @@ class IndexViewModelFactory
 
         foreach ($this->results as $project) {
             /**
-             * var Project $project
+             * @var Project $project
              */
             $sfs[$project->getSf()] = $project->getSfName();
             $subsfs[$project->getSubsf()] = $project->getSubsf();
@@ -69,6 +69,8 @@ class IndexViewModelFactory
                 'cloudGCP' => $project->isCloudGCP(),
                 'springBoot' => $project->getSpringBoot(),
                 'java' => $project->getJava(),
+                'webUrl' => $project->getWebUrl(),
+                'archived' => $project->isArchived(),
                 'urlHealthCheck' => $project->getUrlHealthCheck(),
                 'urlLogs' => $project->getUrlLogs(),
             ];
