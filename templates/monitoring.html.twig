@@ -215,7 +215,7 @@
                                     <span class="health-badge badge badge-secondary"><i class="fa-solid fa-hourglass"></i></span>
                                 {% endif %}
 
-                                {% if (r.techno == 'react' or r.techno == 'nuxt') and r.urlFronts[env] is defined and r.urlFronts[env] != '' %}
+                                {% if (r.techno == 'react' or r.techno == 'nuxt' or r.techno == 'php') and r.urlFronts[env] is defined and r.urlFronts[env] != '' %}
                                     <a href="{{ r.urlFronts[env] }}" class="url-link ml-2" target="_blank" title="Voir le front de {{ env }}">
                                         <i class="fa-solid fa-desktop text-success"></i>
                                     </a>
@@ -230,10 +230,6 @@
                                 {% if isEligibleForLogs and r.urlLogs[env] is defined and r.urlLogs[env] != '' %}
                                 <a href="{{ r.urlLogs[env] }}" class="log-link ml-2" target="_blank" title="Voir les logs de {{ env }}">
                                     <i class="fa-solid fa-file-lines text-info"></i>
-                                </a>
-                                {% else %}
-                                <a href="#" class="log-link ml-2 text-muted" onclick="return false;" title="Logs non disponibles">
-                                    <i class="fa-solid fa-file-lines"></i>
                                 </a>
                                 {% endif %}
                             </td>

@@ -21,7 +21,14 @@ class MonitoringUtils
 
     // URL Kibana de base (à adapter avec la vraie URL de votre entreprise)
     private const string KIBANA_URL_BASE = 'http://kibana.gestionlogs.app%s.xm';
+    private const string ZEND_URL_PATTERN = 'https://intranet%s.siege.xm/portail/public/%s/index';
 
+    /**
+     * Analyse le contenu d'un fichier deploy.yml pour extraire le nom du service.
+     *
+     * @param string|null $deployYamlContent Le contenu du fichier deploy.yml.
+     * @return string|null Le nom du service extrait, ou null s'il n'a pas pu être trouvé.
+     */
     public static function parseServiceName(?string $deployYamlContent): ?string
     {
         if ($deployYamlContent && preg_match('/metadata:\s*name:\s*([^\s]+)/s', $deployYamlContent, $matches)
@@ -31,6 +38,12 @@ class MonitoringUtils
         return null;
     }
 
+    /**
+     * Analyse le contenu d'un fichier application.yml pour extraire le nom de la souscription Pub/Sub.
+     *
+     * @param string|null $yamlContent Le contenu du fichier YAML.
+     * @return string|null Le nom de la souscription, ou null s'il n'a pas pu être trouvé.
+     */
     public static function parseSubscriptionName(?string $yamlContent): ?string
     {
         if (!$yamlContent) {
@@ -44,6 +57,13 @@ class MonitoringUtils
         return null;
     }
 
+    /**
+     * Extrait la valeur d'une variable spécifique dans un fichier values.yaml.
+     *
+     * @param string $yamlContent Le contenu du fichier YAML.
+     * @param string $variableName Le nom de la variable à rechercher.
+     * @return string|null La valeur de la variable, ou null si elle n'est pas trouvée.
+     */
     public static function parseVariableInValuesFile(string $yamlContent, string $variableName): ?string
     {
         // On cherche le nom de la variable (qui est peut-être imbriquée) suivi de deux points
@@ -55,6 +75,12 @@ class MonitoringUtils
         return null;
     }
 
+    /**
+     * Analyse le contenu d'un fichier package.json pour déterminer la technologie frontend (React ou Nuxt).
+     *
+     * @param string|null $packageContent Le contenu du fichier package.json.
+     * @return string|null La technologie ('react' ou 'nuxt'), ou null si elle n'est pas identifiée.
+     */
     public static function parsePackage(?string $packageContent): ?string
     {
         if (!$packageContent) {
@@ -90,6 +116,12 @@ class MonitoringUtils
         return null;
     }
 
+    /**
+     * Vérifie si le mot "nuxt" est présent dans les scripts NPM.
+     *
+     * @param array $scripts Liste des scripts du package.json.
+     * @return bool True si un script contient 'nuxt', sinon false.
+     */
     private static function hasNuxtScript(array $scripts): bool
     {
         foreach ($scripts as $script) {
@@ -100,6 +132,12 @@ class MonitoringUtils
         return false;
     }
 
+    /**
+     * Vérifie si une dépendance du scope "@nuxt/" est présente.
+     *
+     * @param array $dependencies Liste des dépendances du package.json.
+     * @return bool True si une dépendance commence par '@nuxt/', sinon false.
+     */
     private static function hasNuxtScope(array $dependencies): bool
     {
         foreach (array_keys($dependencies) as $packageName) {
@@ -110,6 +148,14 @@ class MonitoringUtils
         return false;
     }
 
+    /**
+     * Construit l'URL du point de terminaison Health Check d'un projet pour un environnement donné.
+     *
+     * @param Project $project L'objet projet contenant les informations du service.
+     * @param EnumEnvironment|null $env L'environnement ciblé.
+     * @param array $projectsInGke Liste des projets déployés sur GKE.
+     * @return string L'URL construite du Health Check.
+     */
     public static function buildUrlHealthCheck(Project $project, ?EnumEnvironment $env, array $projectsInGke): string
     {
         $projectName = $project->getname();
@@ -140,6 +186,11 @@ class MonitoringUtils
     }
 
     /**
+     * Construit l'URL pour accéder aux logs du projet (vers GCP ou Kibana selon le déploiement).
+     *
+     * @param Project $project L'objet projet contenant les informations.
+     * @param EnumEnvironment|null $env L'environnement ciblé.
+     * @return string L'URL permettant d'accéder aux logs.
      * @throws DateMalformedStringException
      */
     public static function buildLogUrl(Project $project, ?EnumEnvironment $env): string
@@ -150,6 +201,13 @@ class MonitoringUtils
         return self::buildKibanaLogUrl($project, $env);
     }
 
+    /**
+     * Construit l'URL Kibana pour consulter les logs d'un projet déployé sur Rancher/On-Premise.
+     *
+     * @param Project $project L'objet projet.
+     * @param EnumEnvironment|null $env L'environnement ciblé.
+     * @return string L'URL Kibana pointant vers les logs du projet.
+     */
     public static function buildKibanaLogUrl(Project $project, ?EnumEnvironment $env): string
     {
         $projectName = $project->getServiceName() ?? $project->getname();
@@ -178,7 +236,12 @@ class MonitoringUtils
     }
 
     /**
-     * @throws DateMalformedStringException
+     * Construit l'URL Google Cloud Console pour consulter les logs d'un projet déployé sur GCP.
+     *
+     * @param Project $project L'objet projet.
+     * @param EnumEnvironment|null $env L'environnement ciblé.
+     * @return string L'URL Google Cloud Logs Explorer pointant vers les logs du projet.
+     * @throws DateMalformedStringException En cas d'erreur lors de la manipulation de la date.
      */
     public static function buildGCPLogUrl(Project $project, ?EnumEnvironment $env): string
     {
@@ -216,6 +279,14 @@ class MonitoringUtils
         return $url;
     }
 
+    /**
+     * Construit l'URL du frontend React d'un projet pour un environnement donné.
+     *
+     * @param Project $project L'objet projet frontend.
+     * @param EnumEnvironment|null $env L'environnement ciblé.
+     * @param string $tokenE107 Le token d'authentification pour accéder à l'application.
+     * @return string L'URL publique de l'application frontend.
+     */
     public static function buildFrontReactUrl(Project $project, ?EnumEnvironment $env, string $tokenE107): string
     {
         $projectName = $project->getname();
@@ -238,14 +309,20 @@ class MonitoringUtils
 
         if ($projectName === 'front-store-till-contact') {
             $url .= '&idMag=124&CodeLng=fr';
-        }
-        elseif($projectName === 'front-dossier-client'){
+        } elseif ($projectName === 'front-dossier-client') {
             $url .= '&nobl=75226562';
         }
         return $url;
     }
 
-    public static function buildPubSubUrl(Project $project, ?EnumEnvironment $env)
+    /**
+     * Construit l'URL de la file d'attente Google Cloud Pub/Sub d'un projet.
+     *
+     * @param Project $project L'objet projet contenant la configuration Pub/Sub.
+     * @param EnumEnvironment|null $env L'environnement ciblé.
+     * @return string L'URL Google Cloud Console pour inspecter les messages du topic Pub/Sub.
+     */
+    public static function buildPubSubUrl(Project $project, ?EnumEnvironment $env): string
     {
         //https://console.cloud.google.com/cloudpubsub/topic/detail/flow-store-received-delivery-note_store-received-delivery-note-events_ops?inv=1&invt=Ab5XmQ&project=dev-mdm-buyers&tab=messages
         $url = 'https://console.cloud.google.com/cloudpubsub/topic/detail/';
@@ -253,5 +330,21 @@ class MonitoringUtils
         $url .= '?project=' . $env->value . '-mdm-' . $project->getSubsf() . '&inv=1&invt=Ab5XmQ&tab=messages';
 
         return $url;
+    }
+
+    /**
+     * Construit l'URL d'un frontend PHP classique (hors React/Nuxt).
+     *
+     * @param Project $project L'objet projet PHP.
+     * @param EnumEnvironment $env L'environnement ciblé.
+     * @return string L'URL du frontend PHP, ou une chaîne vide si non applicable (DEV, PP).
+     */
+    public static function buildFrontPhpUrl(Project $project, EnumEnvironment $env): string
+    {
+        if ($env->value !== EnumEnvironment::DEV->value && $env->value !== EnumEnvironment::PP->value) {
+            $envPart = ($env->value === EnumEnvironment::REC->value) ? '-rec' : '';
+            return sprintf(self::ZEND_URL_PATTERN, $envPart, $project->getName());
+        }
+        return '';
     }
 }

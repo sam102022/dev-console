@@ -197,11 +197,14 @@ class GitlabService
                     $urlsPubsubs[$env->value] = MonitoringUtils::buildPubSubUrl($project, $env);
                 }
             }
-            if ($techno === 'java' ||$techno === 'react' || $techno === 'nuxt') {
+            if ($techno === 'java' || $techno === 'react' || $techno === 'nuxt') {
                 $urlsLogs[$env->value] = MonitoringUtils::buildLogUrl($project, $env);
             }
             if ($techno === 'react' || $techno === 'nuxt') {
                 $urlsFronts[$env->value] = MonitoringUtils::buildFrontReactUrl($project, $env, $this->appConfig->getParamConfig()->getTokenE107());
+            }
+            if ($techno === 'php' && str_starts_with($projectName, 'zend')) {
+                $urlsFronts[$env->value] = MonitoringUtils::buildFrontPhpUrl($project, $env);
             }
         }
         $project->setUrlHealthCheck($urlsHealth);
