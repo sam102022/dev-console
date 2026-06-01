@@ -20,11 +20,13 @@ class ProjectMapper
         $projectEntity->setSpringBootVersion($data['springBoot'] ?? null);
         $projectEntity->setJavaVersion($data['java'] ?? null);
         $projectEntity->setTechno($data['techno'] ?? null);
+        $projectEntity->setSubscriptionName($data['subscriptionName'] ?? null);
         $projectEntity->setWebUrl($data['webUrl'] ?? '');
         $projectEntity->setArchived($data['archived'] ?? false);
         $projectEntity->setUrlHealthCheck($data['urlHealthCheck'] ?? []);
         $projectEntity->setUrlLogs($data['urlLogs'] ?? []);
         $projectEntity->setUrlFronts($data['urlFronts'] ?? []);
+        $projectEntity->setUrlPubsubs($data['urlPubsubs'] ?? []);
 
         return $projectEntity;
     }
@@ -41,11 +43,13 @@ class ProjectMapper
         $project->setSpringBoot($data['springBoot'] ?? null);
         $project->setJava($data['java'] ?? null);
         $project->setTechno($data['techno'] ?? null);
+        $project->setSubscriptionName($data['subscriptionName'] ?? null);
         $project->setWebUrl($data['webUrl'] ?? '');
         $project->setArchived($data['archived'] ?? false);
         $project->setUrlHealthCheck($data['urlHealthCheck'] ?? []);
         $project->setUrlLogs($data['urlLogs'] ?? []);
         $project->setUrlFronts($data['urlFronts'] ?? []);
+        $project->setUrlPubsubs($data['urlPubsubs'] ?? []);
 
         return $project;
     }
@@ -62,11 +66,13 @@ class ProjectMapper
         $project->setSpringBoot($entity->getSpringBootVersion());
         $project->setJava($entity->getJavaVersion());
         $project->setTechno($entity->getTechno());
+        $project->setSubscriptionName($entity->getSubscriptionName());
         $project->setWebUrl($entity->getWebUrl());
         $project->setArchived($entity->isArchived());
         $project->setUrlHealthCheck($entity->getUrlHealthCheck());
         $project->setUrlLogs($entity->getUrlLogs());
         $project->setUrlFronts($entity->getUrlFronts());
+        $project->setUrlPubsubs($entity->getUrlPubsubs());
 
         return $project;
     }
@@ -83,11 +89,13 @@ class ProjectMapper
             $project->getSpringBoot(),
             $project->getJava(),
             $project->getTechno(),
+            $project->getSubscriptionName(),
             $project->getWebUrl(),
             $project->isArchived(),
             $project->getUrlHealthCheck(),
             $project->getUrlLogs(),
-            $project->getUrlFronts()
+            $project->getUrlFronts(),
+            $project->getUrlPubsubs()
         );
     }
 
@@ -103,11 +111,13 @@ class ProjectMapper
             'springBoot' => $projectEntity->getSpringBootVersion(),
             'java' => $projectEntity->getJavaVersion(),
             'techno' => $projectEntity->getTechno(),
+            'subscriptionName' => $projectEntity->getSubscriptionName(),
             'webUrl' => $projectEntity->getWebUrl(),
             'archived' => $projectEntity->isArchived(),
             'urlHealthCheck' => $projectEntity->getUrlHealthCheck(),
             'urlLogs' => $projectEntity->getUrlLogs(),
             'urlFronts' => $projectEntity->getUrlFronts(),
+            'urlPubsubs' => $projectEntity->getUrlPubsubs(),
         ];
     }
 }

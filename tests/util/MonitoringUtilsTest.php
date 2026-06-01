@@ -66,6 +66,70 @@ YAML,
         $this->assertEquals($expectedName, $actualName);
     }
 
+    public static function parseSubscriptionNameProvider(): array
+    {
+        return [
+            'valid subscription name' => [
+                'yamlContent' => 'mdm.core.subscriber.subscription.name: test-subscription',
+                'expectedName' => 'test-subscription'
+            ],
+            'valid subscription name with spaces' => [
+                'yamlContent' => 'mdm.core.subscriber.subscription.name:    test-subscription  ',
+                'expectedName' => 'test-subscription'
+            ],
+            'no subscription name' => [
+                'yamlContent' => 'mdm.core.subscriber.something.else: test-subscription',
+                'expectedName' => null
+            ],
+            'empty content' => [
+                'yamlContent' => '',
+                'expectedName' => null
+            ],
+            'null content' => [
+                'yamlContent' => null,
+                'expectedName' => null
+            ]
+        ];
+    }
+
+    #[DataProvider('parseSubscriptionNameProvider')]
+    public function testParseSubscriptionName(?string $yamlContent, ?string $expectedName): void
+    {
+        $this->assertEquals($expectedName, MonitoringUtils::parseSubscriptionName($yamlContent));
+    }
+
+    public static function parseVariableInValuesFileProvider(): array
+    {
+        return [
+            'valid variable name' => [
+                'yamlContent' => "CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME: \"my-subscription-name\"",
+                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
+                'expectedValue' => 'my-subscription-name'
+            ],
+            'valid variable name without quotes' => [
+                'yamlContent' => "CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME: my-subscription-name",
+                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
+                'expectedValue' => 'my-subscription-name'
+            ],
+            'valid variable name with spaces' => [
+                'yamlContent' => "CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME:   \"my-subscription-name\"  ",
+                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
+                'expectedValue' => 'my-subscription-name'
+            ],
+            'no variable name' => [
+                'yamlContent' => "OTHER_VARIABLE: my-subscription-name",
+                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
+                'expectedValue' => null
+            ]
+        ];
+    }
+
+    #[DataProvider('parseVariableInValuesFileProvider')]
+    public function testParseVariableInValuesFile(string $yamlContent, string $variableName, ?string $expectedValue): void
+    {
+        $this->assertEquals($expectedValue, MonitoringUtils::parseVariableInValuesFile($yamlContent, $variableName));
+    }
+
     public static function parsePackageProvider(): array
     {
         return [
@@ -110,31 +174,31 @@ YAML,
     {
         return [
             'Cloud GCP project' => [
-                Project::build('my-project', null, 'sf', 'SF Name', 'subsf', true, null, null, '', false, [], []),
+                Project::build('my-project', null, 'sf', 'SF Name', 'subsf', true, null, null, '', null, false, [], [], []),
                 EnumEnvironment::DEV,
                 [], // projectsInGke (doesn't matter if cloudGCP is true)
                 'https://management-my-project.dev.mdm-int.net/actuator/health'
             ],
             'Rancher non-prod' => [
-                Project::build('my-project', null, 'sf', 'SF Name', 'subsf', false, null, null, '', false, [], []),
+                Project::build('my-project', null, 'sf', 'SF Name', 'subsf', false, null, null, '', null, false, [], [], []),
                 EnumEnvironment::REC,
                 [],
                 'https://management-my-project.app-rec.xm/actuator/health'
             ],
             'Rancher prod, migrated to GKE' => [
-                Project::build('migrated-project', null, 'sf', 'SF Name', 'subsf', false, null, null, '', false, [], []),
+                Project::build('migrated-project', null, 'sf', 'SF Name', 'subsf', false, null, null, '', null, false, [], [], []),
                 EnumEnvironment::PROD,
                 ['migrated-project'],
                 'https://management-migrated-project.prod.mdm-int.net/actuator/health'
             ],
             'Rancher prod, not migrated' => [
-                Project::build('my-project', null, 'sf', 'SF Name', 'subsf', false, null, null, '', false, [], []),
+                Project::build('my-project', null, 'sf', 'SF Name', 'subsf', false, null, null, '', null, false, [], [], []),
                 EnumEnvironment::PROD,
                 [],
                 'https://management-my-project.app.xm/actuator/health'
             ],
             'API project' => [
-                Project::build('api-my-project', null, 'sf', 'SF Name', 'subsf', true, null, null, '', false, [], []),
+                Project::build('api-my-project', null, 'sf', 'SF Name', 'subsf', true, null, null, '', null, false, [], [], []),
                 EnumEnvironment::DEV,
                 [],
                 'https://management-api-my-project.dev.mdm-int.net/v1/actuator/health'

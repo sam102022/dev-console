@@ -79,6 +79,7 @@ class IndexViewModelFactory
                 'urlHealthCheck' => $project->getUrlHealthCheck(),
                 'urlLogs' => $project->getUrlLogs(),
                 'urlFronts' => $project->getUrlFronts(),
+                'urlPubsubs' => $project->getUrlPubsubs(),
             ];
         }
 

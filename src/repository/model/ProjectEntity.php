@@ -16,11 +16,13 @@ class ProjectEntity
     private ?string $springBootVersion;
     private ?string $javaVersion;
     private ?string $techno = null;
+    private ?string $subscriptionName = null;
     private string $webUrl;
     private bool $archived;
     private array $urlHealthCheck = [];
     private array $urlLogs = [];
     private array $urlFronts = [];
+    private array $urlPubsubs = [];
 
     public function getName(): string
     {
@@ -70,6 +72,11 @@ class ProjectEntity
         return $this->techno;
     }
 
+    public function getSubscriptionName(): ?string
+    {
+        return $this->subscriptionName;
+    }
+
     /**
      * @return string
      */
@@ -96,6 +103,11 @@ class ProjectEntity
     public function getUrlFronts(): array
     {
         return $this->urlFronts;
+    }
+
+    public function getUrlPubsubs(): array
+    {
+        return $this->urlPubsubs;
     }
 
     public function setName(string $name): void
@@ -148,6 +160,11 @@ class ProjectEntity
         $this->techno = $techno;
     }
 
+    public function setSubscriptionName(?string $subscriptionName): void
+    {
+        $this->subscriptionName = $subscriptionName;
+    }
+
     /**
      * @param string $webUrl
      * @return ProjectEntity
@@ -179,6 +196,11 @@ class ProjectEntity
         $this->urlFronts = $urlFronts;
     }
 
+    public function setUrlPubsubs(array $urlPubsubs): void
+    {
+        $this->urlPubsubs = $urlPubsubs;
+    }
+
     public static function build(
         string  $name,
         ?string $serviceName,
@@ -189,11 +211,13 @@ class ProjectEntity
         ?string $springBootVersion,
         ?string $javaVersion,
         ?string $techno,
+        ?string $subscriptionName,
         string  $webUrl,
         bool    $archived,
         array   $urlHealthCheck = [],
         array   $urlLogs = [],
-        array   $urlFronts = []
+        array   $urlFronts = [],
+        array   $urlPubsubs = []
     )
     {
         $project = new self();
@@ -206,9 +230,11 @@ class ProjectEntity
         $project->setSpringBootVersion($springBootVersion);
         $project->setJavaVersion($javaVersion);
         $project->setTechno($techno);
+        $project->setSubscriptionName($subscriptionName);
         $project->setUrlHealthCheck($urlHealthCheck);
         $project->setUrlLogs($urlLogs);
         $project->setUrlFronts($urlFronts);
+        $project->setUrlPubsubs($urlPubsubs);
         $project->setWebUrl($webUrl);
         $project->setArchived($archived);
         return $project;

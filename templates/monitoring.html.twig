@@ -34,9 +34,6 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">🩺 Monitoring &amp; 📰 Logs</h5>
         <div>
-            <button class="btn btn-outline-secondary btn-sm mr-2" type="button" id="btn-reset-filters" title="Réinitialiser les filtres"><i class="fa-solid fa-rotate-left"></i> Réinitialiser</button>
-            <button id="btn-check-selected" class="btn btn-primary btn-sm mr-2" onclick="checkHealth('selected')" title="Vérifier cochés"><i class="fa-solid fa-check-square"></i> Vérifier</button>
-            <button id="btn-stop-health" class="btn btn-danger btn-sm d-none" onclick="stopHealthCheck()" title="Arrêter"><i class="fa-solid fa-stop"></i> Arrêter</button>
         </div>
     </div>
 
@@ -55,11 +52,35 @@
                         <th><a class="sortable-header" data-sort="techno">Techno <i class="fa-solid fa-sort sort-icon"></i></a></th>
                         <th><a class="sortable-header" data-sort="archived">Archivé <i class="fa-solid fa-sort sort-icon"></i></a></th>
                         <th><a class="sortable-header" data-sort="gcp">GCP <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th class="text-center" style="width: 120px;">DEV</th>
+                        <th class="text-center" style="width: 120px;">
+                            <div class="d-flex justify-content-center align-items-center">
+                                <span>DEV</span>
+                                <span class="ml-2" style="cursor: pointer;" data-toggle="collapse" data-target="#legend-row" aria-expanded="false" aria-controls="legend-row">
+                                    <i class="fa-solid fa-circle-info text-muted" data-toggle="tooltip" data-placement="top" title="Afficher/Masquer la légende"></i>
+                                </span>
+                            </div>
+                        </th>
                         <th class="text-center" style="width: 120px;">REC</th>
                         <th class="text-center" style="width: 120px;">PP</th>
                         <th class="text-center" style="width: 120px;">PROD</th>
-                        <th class="text-center" style="width: 80px;">Action</th>
+                        <th class="text-center" style="width: 80px;">Actions</th>
+                    </tr>
+                    <tr>
+                        <td colspan="13" class="p-0" style="border: none;">
+                            <div class="collapse" id="legend-row">
+                                <div class="card card-body bg-light border-0">
+                                    <small class="text-muted">
+                                        <i class="fa-brands fa-gitlab text-warning"></i> Projet Gitlab |
+                                        <i class="fa-solid fa-box-archive text-danger"></i> Projet archivé |
+                                        <i class="fa-brands fa-google text-primary"></i> Projet sur GCP |
+                                        <i class="fa-solid fa-hourglass"></i> Health Check |
+                                        <i class="fa-solid fa-desktop text-success"></i> Front |
+                                        <i class="fa-solid fa-comment-dots text-primary"></i> Pub/Sub |
+                                        <i class="fa-solid fa-file-lines text-info"></i> Logs
+                                    </small>
+                                </div>
+                            </div>
+                        </td>
                     </tr>
                     <tr>
                         <th></th>
@@ -137,7 +158,13 @@
                                 </div>
                             </div>
                         </th>
-                        <th colspan="5"></th>
+                        <th colspan="4">
+                        </th>
+                        <th>
+                            <button class="btn btn-outline-light btn-sm mr-2" type="button" id="btn-reset-filters" title="Réinitialiser les filtres"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button id="btn-check-selected" class="btn btn-outline-primary btn-sm mr-2" onclick="checkHealth('selected')" title="Vérifier cochés"><i class="fa-solid fa-rotate"></i></button>
+                            <button id="btn-stop-health" class="btn btn-danger btn-sm d-none" onclick="stopHealthCheck()" title="Arrêter"><i class="fa-solid fa-stop"></i> Arrêter</button>
+                        </th>
                     </tr>
                 </thead>
                 <tbody id="projects-tbody">
@@ -176,7 +203,7 @@
                                 {% if r.archived %}<i class="fa-solid fa-box-archive text-danger mr-1" title="Projet archivé"></i>{% endif %}
                             </td>
                             <td class="col-gcp" data-value="{% if r.cloudGCP == 1 %}oui{% else %}non{% endif %}">
-                                {% if r.cloudGCP == 1 %}Oui{% else %}Non{% endif %}
+                                {% if r.cloudGCP == 1 %}<i class="fa-brands fa-google text-primary"></i>{% else %}-{% endif %}
                             </td>
 
                             {% for env in ['dev', 'rec', 'pp', 'prod'] %}
@@ -191,6 +218,12 @@
                                 {% if (r.techno == 'react' or r.techno == 'nuxt') and r.urlFronts[env] is defined and r.urlFronts[env] != '' %}
                                     <a href="{{ r.urlFronts[env] }}" class="url-link ml-2" target="_blank" title="Voir le front de {{ env }}">
                                         <i class="fa-solid fa-desktop text-success"></i>
+                                    </a>
+                                {% endif %}
+
+                                {% if r.urlPubsubs[env] is defined and r.urlPubsubs[env] != '' %}
+                                    <a href="{{ r.urlPubsubs[env] }}" class="url-link ml-2" target="_blank" title="Voir le pubsub de {{ env }}">
+                                        <i class="fa-solid fa-comment-dots text-primary"></i>
                                     </a>
                                 {% endif %}
 
@@ -242,6 +275,9 @@
 let getVisibleRows; // Fonction globale pour accéder aux lignes visibles
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialisation des tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+
     // Éléments DOM (Filtres)
     const filterSf = document.getElementById('filter_sf');
     const filterSubsf = document.getElementById('filter_subsf');

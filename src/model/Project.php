@@ -14,11 +14,13 @@ class Project extends AbstractModel
     public ?string $springBoot;
     public ?string $java;
     public ?string $techno = null;
+    public ?string $subscriptionName = null;
     private string $webUrl;
     private bool $archived;
     public array $urlHealthCheck = [];
     public array $urlLogs = [];
     public array $urlFronts = [];
+    public array $urlPubsubs = [];
 
     /**
      * @return string
@@ -183,6 +185,24 @@ class Project extends AbstractModel
     }
 
     /**
+     * @return string|null
+     */
+    public function getSubscriptionName(): ?string
+    {
+        return $this->subscriptionName;
+    }
+
+    /**
+     * @param string|null $subscriptionName
+     * @return Project
+     */
+    public function setSubscriptionName(?string $subscriptionName): self
+    {
+        $this->subscriptionName = $subscriptionName;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getWebUrl(): string
@@ -244,8 +264,19 @@ class Project extends AbstractModel
         return $this;
     }
 
+    public function getUrlPubsubs(): array
+    {
+        return $this->urlPubsubs;
+    }
+
+    public function setUrlPubsubs(array $urlPubsubs): self
+    {
+        $this->urlPubsubs = $urlPubsubs;
+        return $this;
+    }
+
     public static function build(string $name, ?string $serviceName, ?string $sf, ?string $sfName, ?string $subsf, bool $cloudGCP,
-        ?string $springBoot, ?string $java, ?string $techno, string  $webUrl, bool $archived, array $urlHealthCheck, array $urlLogs, array $urlFronts): self
+        ?string $springBoot, ?string $java, ?string $techno, ?string $subscriptionName, string  $webUrl, bool $archived, array $urlHealthCheck, array $urlLogs, array $urlFronts, array $urlPubsubs): self
     {
         $project = new self();
         $project->setName($name);
@@ -257,11 +288,13 @@ class Project extends AbstractModel
         $project->setSpringBoot($springBoot);
         $project->setJava($java);
         $project->setTechno($techno);
+        $project->setSubscriptionName($subscriptionName);
         $project->setWebUrl($webUrl);
         $project->setArchived($archived);
         $project->setUrlHealthCheck($urlHealthCheck);
         $project->setUrlLogs($urlLogs);
         $project->setUrlFronts($urlFronts);
+        $project->setUrlPubsubs($urlPubsubs);
         return $project;
     }
 

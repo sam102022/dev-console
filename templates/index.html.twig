@@ -100,9 +100,20 @@
                         <td class="col-index text-muted font-weight-bold"></td>
                         <td class="col-sf" data-value="{{ r.sf }}">{{ r.sf }}</td>
                         <td class="col-subsf" data-value="{{ r.subsf }}">{{ r.subsf }}</td>
-                        <td class="col-name">{{ r.name }}</td>
+                        <td class="col-name">
+                            {% if r.webUrl is defined and r.webUrl != '' %}
+                                <a href="{{ r.webUrl }}"
+                                   class="url-link text-decoration-none"
+                                   target="_blank"
+                                   title="Voir le projet Gitlab{% if r.archived %} archivé{% endif %} {{ r.name }}">
+                                    <i class="fa-brands fa-gitlab text-warning"></i> {{ r.name }}
+                                </a>
+                            {% else %}
+                                {{ r.name }}
+                            {% endif %}
+                        </td>
                         <td class="col-gcp" data-value="{% if r.cloudGCP == 1 %}oui{% else %}non{% endif %}">
-                            {% if r.cloudGCP == 1 %}Oui{% else %}Non{% endif %}
+                            {% if r.cloudGCP == 1 %}<i class="fa-brands fa-google text-primary"></i>{% else %}-{% endif %}
                         </td>
 
                         <td class="col-sb">

@@ -163,6 +163,7 @@ class GitlabService
         $deploymentInfo = $this->getDeploymentInfo($gitLabProject);
         $mavenInfo = $this->scanPomXml($gitLabProject);
         $techno = $this->getTechno($gitLabProject);
+        $subscriptionName = $this->getSubscriptionName($gitLabProject);
 
         $projectName = $gitLabProject->getName();
 
@@ -174,10 +175,13 @@ class GitlabService
             'subsf' => $pathInfo['subsf'],
             'cloudGCP' => $deploymentInfo['cloudGCP'],
             'techno' => $techno,
+            'subscriptionName' => $subscriptionName,
             'webUrl' => $gitLabProject->getWebUrl(),
             'archived' => $gitLabProject->isArchived(),
             'urlHealthCheck' => [],
             'urlLogs' => [],
+            'urlFronts' => [],
+            'urlPubsubs' => [],
             ...$mavenInfo ?? [],
         ];
         $project = ProjectMapper::projectFromArray($data);
@@ -185,11 +189,17 @@ class GitlabService
         $urlsHealth = [];
         $urlsLogs = [];
         $urlsFronts = [];
+        $urlsPubsubs = [];
         foreach (EnumEnvironment::cases() as $env) {
             if ($techno === 'java') {
                 $urlsHealth[$env->value] = MonitoringUtils::buildUrlHealthCheck($project, $env, $this->excludeProjects);
+                if (str_starts_with($projectName, 'flow')) {
+                    $urlsPubsubs[$env->value] = MonitoringUtils::buildPubSubUrl($project, $env);
+                }
             }
-            $urlsLogs[$env->value] = MonitoringUtils::buildLogUrl($project, $env);
+            if ($techno === 'java' ||$techno === 'react' || $techno === 'nuxt') {
+                $urlsLogs[$env->value] = MonitoringUtils::buildLogUrl($project, $env);
+            }
             if ($techno === 'react' || $techno === 'nuxt') {
                 $urlsFronts[$env->value] = MonitoringUtils::buildFrontReactUrl($project, $env, $this->appConfig->getParamConfig()->getTokenE107());
             }
@@ -197,6 +207,7 @@ class GitlabService
         $project->setUrlHealthCheck($urlsHealth);
         $project->setUrlLogs($urlsLogs);
         $project->setUrlFronts($urlsFronts);
+        $project->setUrlPubsubs($urlsPubsubs);
 
         return $project;
     }
@@ -273,6 +284,46 @@ class GitlabService
         return $packageFile
             ? (MonitoringUtils::parsePackage($packageFile) ?? '')
             : '';
+    }
+
+    private function getSubscriptionName(GitlabProject $gitLabProject): ?string
+    {
+        $yamlContent = $this->client->getFile(
+            $gitLabProject->getId(),
+            'src/main/resources/application.yml',
+            true,
+            $gitLabProject->getDefaultBranch()
+        );
+
+        if (!$yamlContent) {
+            $yamlContent = $this->client->getFile(
+                $gitLabProject->getId(),
+                'src/main/resources/application.yaml',
+                true,
+                $gitLabProject->getDefaultBranch()
+            );
+        }
+
+        if ($yamlContent) {
+            $subscriptionName = MonitoringUtils::parseSubscriptionName($yamlContent);
+
+            if ($subscriptionName && preg_match('/^\$\{(.+)\}$/', $subscriptionName, $matches)) {
+                $variableName = $matches[1];
+                $valuesDevContent = $this->client->getFile(
+                    $gitLabProject->getId(),
+                    'chart/values-dev.yaml',
+                    true,
+                    $gitLabProject->getDefaultBranch()
+                );
+
+                if ($valuesDevContent) {
+                    return MonitoringUtils::parseVariableInValuesFile($valuesDevContent, $variableName);
+                }
+            }
+            return $subscriptionName;
+        }
+
+        return null;
     }
 
     private function scanBuildGradle(GitlabProject $gitLabProject): ?array

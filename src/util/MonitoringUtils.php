@@ -31,6 +31,30 @@ class MonitoringUtils
         return null;
     }
 
+    public static function parseSubscriptionName(?string $yamlContent): ?string
+    {
+        if (!$yamlContent) {
+            return null;
+        }
+
+        if (preg_match('/subscription\.name:\s*([^\s]+)/', $yamlContent, $matches)) {
+            return trim($matches[1]);
+        }
+
+        return null;
+    }
+
+    public static function parseVariableInValuesFile(string $yamlContent, string $variableName): ?string
+    {
+        // On cherche le nom de la variable (qui est peut-être imbriquée) suivi de deux points
+        // Ex: CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME: "my-subscription-name"
+        if (preg_match('/' . preg_quote($variableName, '/') . ':\s*"?([^"\s]+)"?/', $yamlContent, $matches)) {
+            return trim($matches[1]);
+        }
+
+        return null;
+    }
+
     public static function parsePackage(?string $packageContent): ?string
     {
         if (!$packageContent) {
@@ -57,7 +81,9 @@ class MonitoringUtils
 
         // React
         if (isset($dependencies['react']) || isset($dependencies['react-dom'])
-            || (isset($scripts['test:ci']) && str_starts_with($scripts['test:ci'], 'react-scripts'))) {
+            || (isset($scripts['start']) && str_starts_with($scripts['start'], 'node server.js'))
+            || (isset($scripts['test:ci']) && str_starts_with($scripts['test:ci'], 'react-scripts'))
+        ) {
             return 'react';
         }
 
@@ -208,8 +234,24 @@ class MonitoringUtils
         } else {
             $url .= '.' . $env->value . '.mdm-int.net';
         }
+        $url .= '/?lk=' . $tokenE107;
 
-        return $url . '/?lk=' . $tokenE107;
+        if ($projectName === 'front-store-till-contact') {
+            $url .= '&idMag=124&CodeLng=fr';
+        }
+        elseif($projectName === 'front-dossier-client'){
+            $url .= '&nobl=75226562';
+        }
+        return $url;
+    }
 
+    public static function buildPubSubUrl(Project $project, ?EnumEnvironment $env)
+    {
+        //https://console.cloud.google.com/cloudpubsub/topic/detail/flow-store-received-delivery-note_store-received-delivery-note-events_ops?inv=1&invt=Ab5XmQ&project=dev-mdm-buyers&tab=messages
+        $url = 'https://console.cloud.google.com/cloudpubsub/topic/detail/';
+        $url .= $project->getSubscriptionName() . '_ops';
+        $url .= '?project=' . $env->value . '-mdm-' . $project->getSubsf() . '&inv=1&invt=Ab5XmQ&tab=messages';
+
+        return $url;
     }
 }
