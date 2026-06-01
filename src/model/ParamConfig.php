@@ -64,6 +64,9 @@ class ParamConfig extends AbstractModel
     /** @var array Les projets à exclure séparés par une virgule. */
     private array $excludeProjects;
 
+    /** @var string Le token e107. */
+    private string $tokenE107;
+
 
     public function getDatabaseHost(): string
     {
@@ -149,6 +152,11 @@ class ParamConfig extends AbstractModel
     public function getExcludeProjects(): array
     {
         return $this->excludeProjects;
+    }
+
+    public function getTokenE107(): string
+    {
+        return $this->tokenE107;
     }
 
     public function setDatabaseHost(string $databaseHost): void
@@ -237,6 +245,11 @@ class ParamConfig extends AbstractModel
         $this->excludeProjects = $excludeProjects;
     }
 
+    public function setTokenE107(string $tokenE107): void
+    {
+        $this->tokenE107 = $tokenE107;
+    }
+
     /**
      * Méthode de fabrique statique pour analyser un tableau de paramètres et créer un objet ParamConfig.
      *
@@ -265,6 +278,7 @@ class ParamConfig extends AbstractModel
         $gitlabPathGroupDefault = $params['gitlab_path_group_default'] ?? '';
         $postmanApiKey = $params['postman_api_key'] ?? '';
         $postmanApiUrl = $params['postman_api_url'] ?? '';
+        $tokenE107 = $params['token_e107'] ?? '';
 
         $projectsInGke = [];
         if (!empty($params['projects_in_gke'])) {
@@ -293,6 +307,7 @@ class ParamConfig extends AbstractModel
         $paramConfig->setPostmanApiUrl($postmanApiUrl);
         $paramConfig->setProjectsInGke($projectsInGke);
         $paramConfig->setExcludeProjects($excludeProjects);
+        $paramConfig->setTokenE107($tokenE107);
 
         return $paramConfig;
     }

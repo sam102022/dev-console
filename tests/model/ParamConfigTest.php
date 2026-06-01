@@ -60,6 +60,9 @@ class ParamConfigTest extends TestCase
 
         $paramConfig->setExcludeProjects(['exclude1']);
         $this->assertEquals(['exclude1'], $paramConfig->getExcludeProjects());
+
+        $paramConfig->setTokenE107('my-token-e107');
+        $this->assertEquals('my-token-e107', $paramConfig->getTokenE107());
     }
 
     public function testParse(): void
@@ -81,6 +84,7 @@ class ParamConfigTest extends TestCase
             'postman_api_url' => 'https://pm.test',
             'projects_in_gke' => 'proj1, proj2 ',
             'exclude_projects' => ' ex1 , ex2',
+            'token_e107' => 'e107_token_val',
         ];
 
         $paramConfig = ParamConfig::parse($params);
@@ -101,6 +105,7 @@ class ParamConfigTest extends TestCase
         $this->assertEquals('https://pm.test', $paramConfig->getPostmanApiUrl());
         $this->assertEquals(['proj1', 'proj2'], $paramConfig->getProjectsInGke());
         $this->assertEquals(['ex1', 'ex2'], $paramConfig->getExcludeProjects());
+        $this->assertEquals('e107_token_val', $paramConfig->getTokenE107());
     }
 
     public function testParseWithDefaults(): void
@@ -124,6 +129,7 @@ class ParamConfigTest extends TestCase
             $this->assertEquals('', $paramConfig->getPostmanApiUrl());
             $this->assertEquals([], $paramConfig->getProjectsInGke());
             $this->assertEquals([], $paramConfig->getExcludeProjects());
+            $this->assertEquals('', $paramConfig->getTokenE107());
         } catch (InvalidArgumentException $e) {
             $this->assertEquals('Le tableau de paramètres est vide.', $e->getMessage());
         }

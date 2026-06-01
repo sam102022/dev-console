@@ -15,10 +15,12 @@ class ProjectEntity
     private bool $cloudGCP;
     private ?string $springBootVersion;
     private ?string $javaVersion;
+    private ?string $techno = null;
     private string $webUrl;
     private bool $archived;
     private array $urlHealthCheck = [];
     private array $urlLogs = [];
+    private array $urlFronts = [];
 
     public function getName(): string
     {
@@ -63,6 +65,11 @@ class ProjectEntity
         return $this->javaVersion;
     }
 
+    public function getTechno(): ?string
+    {
+        return $this->techno;
+    }
+
     /**
      * @return string
      */
@@ -84,6 +91,11 @@ class ProjectEntity
     public function getUrlLogs(): array
     {
         return $this->urlLogs;
+    }
+
+    public function getUrlFronts(): array
+    {
+        return $this->urlFronts;
     }
 
     public function setName(string $name): void
@@ -131,6 +143,11 @@ class ProjectEntity
         $this->javaVersion = $javaVersion;
     }
 
+    public function setTechno(?string $techno): void
+    {
+        $this->techno = $techno;
+    }
+
     /**
      * @param string $webUrl
      * @return ProjectEntity
@@ -157,6 +174,11 @@ class ProjectEntity
         $this->urlLogs = $urlLogs;
     }
 
+    public function setUrlFronts(array $urlFronts): void
+    {
+        $this->urlFronts = $urlFronts;
+    }
+
     public static function build(
         string  $name,
         ?string $serviceName,
@@ -166,10 +188,12 @@ class ProjectEntity
         bool    $cloudGCP,
         ?string $springBootVersion,
         ?string $javaVersion,
+        ?string $techno,
         string  $webUrl,
         bool    $archived,
         array   $urlHealthCheck = [],
-        array   $urlLogs = []
+        array   $urlLogs = [],
+        array   $urlFronts = []
     )
     {
         $project = new self();
@@ -181,8 +205,10 @@ class ProjectEntity
         $project->setCloudGCP($cloudGCP);
         $project->setSpringBootVersion($springBootVersion);
         $project->setJavaVersion($javaVersion);
+        $project->setTechno($techno);
         $project->setUrlHealthCheck($urlHealthCheck);
         $project->setUrlLogs($urlLogs);
+        $project->setUrlFronts($urlFronts);
         $project->setWebUrl($webUrl);
         $project->setArchived($archived);
         return $project;

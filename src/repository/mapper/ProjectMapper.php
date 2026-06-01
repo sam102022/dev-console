@@ -19,10 +19,12 @@ class ProjectMapper
         $projectEntity->setCloudGCP($data['cloudGCP'] ?? false);
         $projectEntity->setSpringBootVersion($data['springBoot'] ?? null);
         $projectEntity->setJavaVersion($data['java'] ?? null);
+        $projectEntity->setTechno($data['techno'] ?? null);
         $projectEntity->setWebUrl($data['webUrl'] ?? '');
         $projectEntity->setArchived($data['archived'] ?? false);
         $projectEntity->setUrlHealthCheck($data['urlHealthCheck'] ?? []);
         $projectEntity->setUrlLogs($data['urlLogs'] ?? []);
+        $projectEntity->setUrlFronts($data['urlFronts'] ?? []);
 
         return $projectEntity;
     }
@@ -38,10 +40,12 @@ class ProjectMapper
         $project->setCloudGCP($data['cloudGCP'] ?? false);
         $project->setSpringBoot($data['springBoot'] ?? null);
         $project->setJava($data['java'] ?? null);
+        $project->setTechno($data['techno'] ?? null);
         $project->setWebUrl($data['webUrl'] ?? '');
         $project->setArchived($data['archived'] ?? false);
         $project->setUrlHealthCheck($data['urlHealthCheck'] ?? []);
         $project->setUrlLogs($data['urlLogs'] ?? []);
+        $project->setUrlFronts($data['urlFronts'] ?? []);
 
         return $project;
     }
@@ -57,10 +61,12 @@ class ProjectMapper
         $project->setCloudGCP($entity->isCloudGCP());
         $project->setSpringBoot($entity->getSpringBootVersion());
         $project->setJava($entity->getJavaVersion());
+        $project->setTechno($entity->getTechno());
         $project->setWebUrl($entity->getWebUrl());
         $project->setArchived($entity->isArchived());
         $project->setUrlHealthCheck($entity->getUrlHealthCheck());
         $project->setUrlLogs($entity->getUrlLogs());
+        $project->setUrlFronts($entity->getUrlFronts());
 
         return $project;
     }
@@ -76,10 +82,12 @@ class ProjectMapper
             $project->isCloudGCP(),
             $project->getSpringBoot(),
             $project->getJava(),
+            $project->getTechno(),
             $project->getWebUrl(),
             $project->isArchived(),
             $project->getUrlHealthCheck(),
-            $project->getUrlLogs()
+            $project->getUrlLogs(),
+            $project->getUrlFronts()
         );
     }
 
@@ -94,10 +102,12 @@ class ProjectMapper
             'cloudGCP' => $projectEntity->isCloudGCP(),
             'springBoot' => $projectEntity->getSpringBootVersion(),
             'java' => $projectEntity->getJavaVersion(),
+            'techno' => $projectEntity->getTechno(),
             'webUrl' => $projectEntity->getWebUrl(),
             'archived' => $projectEntity->isArchived(),
             'urlHealthCheck' => $projectEntity->getUrlHealthCheck(),
             'urlLogs' => $projectEntity->getUrlLogs(),
+            'urlFronts' => $projectEntity->getUrlFronts(),
         ];
     }
 }

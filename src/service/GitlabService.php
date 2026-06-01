@@ -108,14 +108,11 @@ class GitlabService
      * Scan les projets gitlab
      *
      * @return Project[]|null
-     * @throws GuzzleHttp|GuzzleException|TechnicalException
+     * @throws GuzzleException|TechnicalException
      */
     public function scan(): ?array
     {
         $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . 'debut scan');
-
-        //$deployYamlContent = $this->client->getFile(648, 'deploy/conf/dev/deploy.yml', true, 'master');
-        //var_dump($deployYamlContent);
 
         try {
             $projectEntities = $this->projectRepository->findAll();
@@ -165,6 +162,7 @@ class GitlabService
         $pathInfo = $this->extractPathInfo($gitLabProject);
         $deploymentInfo = $this->getDeploymentInfo($gitLabProject);
         $mavenInfo = $this->scanPomXml($gitLabProject);
+        $techno = $this->getTechno($gitLabProject);
 
         $projectName = $gitLabProject->getName();
 
@@ -175,6 +173,7 @@ class GitlabService
             'sfName' => $pathInfo['sfName'],
             'subsf' => $pathInfo['subsf'],
             'cloudGCP' => $deploymentInfo['cloudGCP'],
+            'techno' => $techno,
             'webUrl' => $gitLabProject->getWebUrl(),
             'archived' => $gitLabProject->isArchived(),
             'urlHealthCheck' => [],
@@ -185,12 +184,19 @@ class GitlabService
 
         $urlsHealth = [];
         $urlsLogs = [];
+        $urlsFronts = [];
         foreach (EnumEnvironment::cases() as $env) {
-            $urlsHealth[$env->value] = MonitoringUtils::buildUrlHealthCheck($project, $env, $this->excludeProjects);
+            if ($techno === 'java') {
+                $urlsHealth[$env->value] = MonitoringUtils::buildUrlHealthCheck($project, $env, $this->excludeProjects);
+            }
             $urlsLogs[$env->value] = MonitoringUtils::buildLogUrl($project, $env);
+            if ($techno === 'react' || $techno === 'nuxt') {
+                $urlsFronts[$env->value] = MonitoringUtils::buildFrontReactUrl($project, $env, $this->appConfig->getParamConfig()->getTokenE107());
+            }
         }
         $project->setUrlHealthCheck($urlsHealth);
         $project->setUrlLogs($urlsLogs);
+        $project->setUrlFronts($urlsFronts);
 
         return $project;
     }
@@ -239,6 +245,34 @@ class GitlabService
             'cloudGCP' => $cloudGCP,
             'deployName' => $deployName,
         ];
+    }
+
+    private function getTechno(GitlabProject $gitLabProject): string
+    {
+        $name = $gitLabProject->getName();
+
+        if (str_starts_with($name, 'api')
+            || str_starts_with($name, 'flow')
+            || str_starts_with($name, 'batch')
+            || str_starts_with($name, 'integ')
+        ) {
+            return 'java';
+        }
+        if (str_contains(strtolower($name), 'php')
+            || str_starts_with(strtolower($name), 'zend')) {
+            return 'php';
+        }
+
+        $packageFile = $this->client->getFile(
+            $gitLabProject->getId(),
+            'package.json',
+            true,
+            $gitLabProject->getDefaultBranch()
+        );
+
+        return $packageFile
+            ? (MonitoringUtils::parsePackage($packageFile) ?? '')
+            : '';
     }
 
     private function scanBuildGradle(GitlabProject $gitLabProject): ?array

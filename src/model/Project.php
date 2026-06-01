@@ -13,10 +13,12 @@ class Project extends AbstractModel
     public bool $cloudGCP;
     public ?string $springBoot;
     public ?string $java;
+    public ?string $techno = null;
     private string $webUrl;
     private bool $archived;
     public array $urlHealthCheck = [];
     public array $urlLogs = [];
+    public array $urlFronts = [];
 
     /**
      * @return string
@@ -163,6 +165,24 @@ class Project extends AbstractModel
     }
 
     /**
+     * @return string|null
+     */
+    public function getTechno(): ?string
+    {
+        return $this->techno;
+    }
+
+    /**
+     * @param string|null $techno
+     * @return Project
+     */
+    public function setTechno(?string $techno): self
+    {
+        $this->techno = $techno;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getWebUrl(): string
@@ -213,8 +233,19 @@ class Project extends AbstractModel
         return $this;
     }
 
+    public function getUrlFronts(): array
+    {
+        return $this->urlFronts;
+    }
+
+    public function setUrlFronts(array $urlFronts): self
+    {
+        $this->urlFronts = $urlFronts;
+        return $this;
+    }
+
     public static function build(string $name, ?string $serviceName, ?string $sf, ?string $sfName, ?string $subsf, bool $cloudGCP,
-        ?string $springBoot, ?string $java, string  $webUrl, bool $archived, array $urlHealthCheck, array $urlLogs): self
+        ?string $springBoot, ?string $java, ?string $techno, string  $webUrl, bool $archived, array $urlHealthCheck, array $urlLogs, array $urlFronts): self
     {
         $project = new self();
         $project->setName($name);
@@ -225,10 +256,12 @@ class Project extends AbstractModel
         $project->setCloudGCP($cloudGCP);
         $project->setSpringBoot($springBoot);
         $project->setJava($java);
+        $project->setTechno($techno);
         $project->setWebUrl($webUrl);
         $project->setArchived($archived);
         $project->setUrlHealthCheck($urlHealthCheck);
         $project->setUrlLogs($urlLogs);
+        $project->setUrlFronts($urlFronts);
         return $project;
     }
 

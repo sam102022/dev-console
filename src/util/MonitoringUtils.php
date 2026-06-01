@@ -31,6 +31,59 @@ class MonitoringUtils
         return null;
     }
 
+    public static function parsePackage(?string $packageContent): ?string
+    {
+        if (!$packageContent) {
+            return null;
+        }
+
+        $data = json_decode($packageContent, true);
+
+        if (!is_array($data)) {
+            return null;
+        }
+
+        $dependencies = array_merge(
+            $data['dependencies'] ?? [],
+            $data['devDependencies'] ?? []
+        );
+
+        $scripts = $data['scripts'] ?? [];
+
+        // Nuxt
+        if (isset($dependencies['nuxt']) || self::hasNuxtScript($scripts) || self::hasNuxtScope($dependencies)) {
+            return 'nuxt';
+        }
+
+        // React
+        if (isset($dependencies['react']) || isset($dependencies['react-dom'])
+            || (isset($scripts['test:ci']) && str_starts_with($scripts['test:ci'], 'react-scripts'))) {
+            return 'react';
+        }
+
+        return null;
+    }
+
+    private static function hasNuxtScript(array $scripts): bool
+    {
+        foreach ($scripts as $script) {
+            if (str_contains($script, 'nuxt')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static function hasNuxtScope(array $dependencies): bool
+    {
+        foreach (array_keys($dependencies) as $packageName) {
+            if (str_starts_with($packageName, '@nuxt/')) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static function buildUrlHealthCheck(Project $project, ?EnumEnvironment $env, array $projectsInGke): string
     {
         $projectName = $project->getname();
@@ -85,7 +138,7 @@ class MonitoringUtils
 
         if ($env) {
             if ($envName === EnumEnvironment::PROD->value) {
-                $url = sprintf(self::KIBANA_URL_BASE, $envName) . "/app/kibana#/dashboard/";
+                $url = sprintf(self::KIBANA_URL_BASE, '') . "/app/kibana#/dashboard/";
             } else {
                 $url = sprintf(self::KIBANA_URL_BASE, '-dev') . "/app/dashboards#/view/";
             }
@@ -118,8 +171,11 @@ class MonitoringUtils
 
         $value3 = '';
         $prefix = explode('-', $projectName)[0]; // Récupère 'api', 'flow', ou 'batch'
-        if (in_array($prefix, ['api', 'flow', 'batch'], true)) {
+        if ($prefix === 'api') {
             $value3 = urlencode(sprintf('"app-java-%s"', $prefix));
+        }
+        if (in_array($prefix, ['batch', 'flow'], true)) {
+            $value3 = '"java"';
         }
         $date = new DateTime('now', new DateTimeZone('UTC'));
 
@@ -132,5 +188,28 @@ class MonitoringUtils
         //https://console.cloud.google.com/logs/query;query=resource.labels.namespace_name%3D%22stores%22%0Alabels.k8s-pod%2Fapp_kubernetes_io%2Finstance:%22api-store-reception%22%0Aresource.labels.container_name%3D%22app-java-api%22;storageScope=storage,projects%2Fmdm-observability-rec%2Flocations%2Feu%2Fbuckets%2Fmdm-observability-rec.common_logs%2Fviews%2F_AllLogs,projects%2Fmdm-observability-rec%2Flocations%2Feu%2Fbuckets%2Fmdm-observability-rec.fin_logs%2Fviews%2F_AllLogs,projects%2Fmdm-observability-rec%2Flocations%2Feu%2Fbuckets%2Fmdm-observability-rec.infra_logs%2Fviews%2F_AllLogs,projects%2Fmdm-observability-rec%2Flocations%2Fglobal%2Fbuckets%2F_Default%2Fviews%2F_AllLogs,projects%2Fmdm-observability-rec%2Flocations%2Fglobal%2Fbuckets%2F_Default%2Fviews%2F_Default,projects%2Fmdm-observability-rec%2Flocations%2Fglobal%2Fbuckets%2F_Required%2Fviews%2F_AllLogs;cursorTimestamp=2026-05-28T09:48:02.657Z;histogramBreakdownField=severity;duration=P14D?invt=AbtxPQ&project=mdm-observability-rec
 
         return $url;
+    }
+
+    public static function buildFrontReactUrl(Project $project, ?EnumEnvironment $env, string $tokenE107): string
+    {
+        $projectName = $project->getname();
+
+        // Ex : https://front-store-employee.stores.app-dev.xm/?lk=<token>
+        // https://front-gestion-magasin.dev.mdm-int.net/
+        //https://front-gestion-magasin.prod.mdm-int.net/
+        // Exception front-store-reception-gap -> https://front-store-reception-arbitration.stores.app-dev.xm/?lk=cy1kbmFpcmJ8Y3kxa2JtRnBjbUk9fGJXOWpMbVZrYm05dGRXUnpibTl6YVdGdFFHUnVZV2x5WW5NPQ
+        if ($projectName === 'front-store-reception-gap') {
+            $projectName = 'front-store-reception-arbitration';
+        }
+        $url = 'https://' . $projectName;
+        if (!$project->isCloudGCP()) {
+            $envPart = ($env->value !== EnumEnvironment::PROD->value) ? '-' . $env->value : '';
+            $url .= sprintf('.%s.app%s.xm', $project->getSubsf(), $envPart);
+        } else {
+            $url .= '.' . $env->value . '.mdm-int.net';
+        }
+
+        return $url . '/?lk=' . $tokenE107;
+
     }
 }

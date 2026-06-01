@@ -51,6 +51,7 @@ class IndexViewModelFactory
         // Préparation des données pour la vue
         $sfs = [];
         $subsfs = [];
+        $technos = [];
         $formattedResults = [];
 
         foreach ($this->results as $project) {
@@ -59,6 +60,9 @@ class IndexViewModelFactory
              */
             $sfs[$project->getSf()] = $project->getSfName();
             $subsfs[$project->getSubsf()] = $project->getSubsf();
+            if ($project->getTechno()) {
+                $technos[$project->getTechno()] = $project->getTechno();
+            }
             
             // Formate chaque projet pour inclure les URLs directement
             $formattedResults[] = [
@@ -69,10 +73,12 @@ class IndexViewModelFactory
                 'cloudGCP' => $project->isCloudGCP(),
                 'springBoot' => $project->getSpringBoot(),
                 'java' => $project->getJava(),
+                'techno' => $project->getTechno(),
                 'webUrl' => $project->getWebUrl(),
                 'archived' => $project->isArchived(),
                 'urlHealthCheck' => $project->getUrlHealthCheck(),
                 'urlLogs' => $project->getUrlLogs(),
+                'urlFronts' => $project->getUrlFronts(),
             ];
         }
 
@@ -86,6 +92,7 @@ class IndexViewModelFactory
             'colorText' => $themesColor[$theme]['colorText'],
             'sfs' => $sfs,
             'subsfs' => $subsfs,
+            'technos' => $technos,
             'results' => $formattedResults, // Utilise les résultats formatés
             'messageScanResults' => UtilsService::buildAlertHtml($this->twig, $messages[MESSAGES_SCAN_RESULTS] ?? []),
         ];
