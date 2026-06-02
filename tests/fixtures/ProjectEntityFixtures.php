@@ -1,0 +1,23 @@
+<?php
+declare(strict_types=1);
+
+namespace App\tests\fixtures;
+
+use App\repository\model\ProjectEntity;
+
+class ProjectEntityFixtures
+{
+    public static function getProjectAEntity(): ProjectEntity
+    {
+        return ProjectEntity::build('project-a', 'serviceName',
+            'sf', 'sfName', 'subsf', true,
+            '2.7.0', '17', 'java', 'subscriptionName', 'http://url', false);
+    }
+
+    public static function getProjectBEntity(): ProjectEntity
+    {
+        return ProjectEntity::build('project-b', 'serviceName',
+            'sf', 'sfName', 'subsf', true,
+            '2.7.0', '17', 'java', 'subscriptionName', 'http://url', false);
+    }
+}

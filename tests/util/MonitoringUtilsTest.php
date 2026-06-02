@@ -5,6 +5,7 @@ namespace App\tests\util;
 
 use App\model\EnumEnvironment;
 use App\model\Project;
+use App\tests\fixtures\ProjectFixtures;
 use App\util\MonitoringUtils;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -174,37 +175,31 @@ YAML,
     {
         return [
             'Cloud GCP project' => [
-                Project::build('my-project', null, 'sf', 'SF Name', 'subsf', true,
-                    null, null, '', null, 'http://url', false,
-                    [], [], [], []),
+                ProjectFixtures::getMonitoringProject('my-project', true),
                 EnumEnvironment::DEV,
                 [], // projectsInGke (doesn't matter if cloudGCP is true)
                 'https://management-my-project.dev.mdm-int.net/actuator/health'
             ],
             'Rancher non-prod' => [
-                Project::build('my-project', null, 'sf', 'SF Name', 'subsf', false,
-                    null, null, '', null, 'http://url', false, [], [], [], []),
+                ProjectFixtures::getMonitoringProject('my-project', false),
                 EnumEnvironment::REC,
                 [],
                 'https://management-my-project.app-rec.xm/actuator/health'
             ],
             'Rancher prod, migrated to GKE' => [
-                Project::build('migrated-project', null, 'sf', 'SF Name', 'subsf', false,
-                    null, null, '', null, 'http://url', false, [], [], [], []),
+                ProjectFixtures::getMonitoringProject('migrated-project', false),
                 EnumEnvironment::PROD,
                 ['migrated-project'],
                 'https://management-migrated-project.prod.mdm-int.net/actuator/health'
             ],
             'Rancher prod, not migrated' => [
-                Project::build('my-project', null, 'sf', 'SF Name', 'subsf', false,
-                    null, null, '', null, 'http://url', false, [], [], [], []),
+                ProjectFixtures::getMonitoringProject('my-project', false),
                 EnumEnvironment::PROD,
                 [],
                 'https://management-my-project.app.xm/actuator/health'
             ],
             'API project' => [
-                Project::build('api-my-project', null, 'sf', 'SF Name', 'subsf', true,
-                    null, null, '', null, 'http://url', false, [], [], [], []),
+                ProjectFixtures::getMonitoringProject('api-my-project', true),
                 EnumEnvironment::DEV,
                 [],
                 'https://management-api-my-project.dev.mdm-int.net/v1/actuator/health'

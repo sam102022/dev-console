@@ -5,9 +5,9 @@ namespace App\tests\service;
 
 use App\exception\FunctionalException;
 use App\model\EnumEnvironment;
-use App\model\Project;
 use App\service\GitlabService;
 use App\service\MonitoringService;
+use App\tests\fixtures\ProjectFixtures;
 use Exception;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
@@ -93,9 +93,7 @@ class MonitoringServiceTest extends AbstractServiceCase
             $this->client->method('request')->willReturn($response);
         }
 
-        $project = Project::build('New Project', 'service-name', 'sf', 'sfName', 'subsf', false,
-                '2.7.18', '21',  'java', null, 'http://url/a', false,
-            ['dev' => 'http://url/dev', 'rec' => 'http://url/rec', 'pp' => 'http://url/pp', 'prod' => 'http://url/prod'], [], [], []);
+        $project = ProjectFixtures::getProjectWithUrls();
 
         $this->gitlabService->method('getProjectByCode')->with('any-project')->willReturn($project);
 

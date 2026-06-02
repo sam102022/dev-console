@@ -6,8 +6,8 @@ namespace App\tests\repository;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\repository\GitLabRepository;
-use App\repository\model\GitlabProjectEntity;
 use App\service\FileService;
+use App\tests\fixtures\GitlabProjectEntityFixtures;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -39,7 +39,7 @@ class GitLabRepositoryTest extends TestCase
     public function testGetProjectsWhenCacheExists(): void
     {
         $projects = [['id' => 1, 'description' => 'New Project', 'name' => 'Project From Cache', 'name_with_namespace' => 'name-with-namespace', 'path' => 'path', 'path_with_namespace' => 'path-with-namespace', 'created_at' => '2023-01-01', 'default_branch' => 'main', 'web_url' => 'http://url', 'archived' => false]];
-        $expectedProjects = [GitlabProjectEntity::build(1, 'New Project', 'Project From Cache', 'name-with-namespace', 'path', 'path-with-namespace', 'main', '2023-01-01', 'http://url', false)];
+        $expectedProjects = [GitlabProjectEntityFixtures::getGitlabProjectEntityFromCache()];
         $this->fileService->method('isFileExists')->with(GitLabRepository::FILE_GITLAB_PROJECTS)->willReturn(true);
         $this->fileService->method('read')->with(GitLabRepository::FILE_GITLAB_PROJECTS)->willReturn($projects);
 
@@ -64,7 +64,7 @@ class GitLabRepositoryTest extends TestCase
     public function testSaveProjects(): void
     {
         $expectedProjects = [['id' => 1, 'description' => 'New Project', 'name' => 'New Project', 'name_with_namespace' => 'name-with-namespace', 'path' => 'path', 'path_with_namespace' => 'path-with-namespace', 'created_at' => '2023-01-01', 'default_branch' => 'main', 'web_url' => 'http://url', 'archived' => false]];
-        $projects = [GitlabProjectEntity::build(1, 'New Project', 'New Project', 'name-with-namespace', 'path', 'path-with-namespace', 'main', '2023-01-01', 'http://url', false)];
+        $projects = [GitlabProjectEntityFixtures::getGitlabProjectEntity()];
         $this->fileService->expects($this->once())
             ->method('save')
             ->with($expectedProjects, GitLabRepository::FILE_GITLAB_PROJECTS);
