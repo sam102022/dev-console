@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace App\repository\model;
 
-use App\model\Project;
-
 class ProjectEntity
 {
     private string $name;
@@ -218,7 +216,7 @@ class ProjectEntity
         array   $urlLogs = [],
         array   $urlFronts = [],
         array   $urlPubsubs = []
-    )
+    ): self
     {
         $project = new self();
         $project->setName($name);

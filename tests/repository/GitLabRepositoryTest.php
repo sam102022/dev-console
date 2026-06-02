@@ -10,6 +10,7 @@ use App\repository\model\GitlabProjectEntity;
 use App\service\FileService;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 class GitLabRepositoryTest extends TestCase
 {
@@ -26,7 +27,7 @@ class GitLabRepositoryTest extends TestCase
         $this->repository = new GitLabRepository($loggerFactory);
 
         // Inject the mocked FileService
-        $reflection = new \ReflectionClass($this->repository);
+        $reflection = new ReflectionClass($this->repository);
         $property = $reflection->getProperty('fileService');
         $property->setAccessible(true);
         $property->setValue($this->repository, $this->fileService);

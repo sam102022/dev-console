@@ -275,8 +275,9 @@ class Project extends AbstractModel
         return $this;
     }
 
-    public static function build(string $name, ?string $serviceName, ?string $sf, ?string $sfName, ?string $subsf, bool $cloudGCP,
-        ?string $springBoot, ?string $java, ?string $techno, ?string $subscriptionName, string  $webUrl, bool $archived, array $urlHealthCheck, array $urlLogs, array $urlFronts, array $urlPubsubs): self
+    public static function build(string  $name, ?string $serviceName, ?string $sf, ?string $sfName, ?string $subsf, bool $cloudGCP,
+                                 ?string $springBoot, ?string $java, ?string $techno, ?string $subscriptionName, string $webUrl,
+                                 bool $archived, array $urlHealthCheck, array $urlLogs, array $urlFronts, array $urlPubsubs): self
     {
         $project = new self();
         $project->setName($name);

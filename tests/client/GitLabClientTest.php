@@ -70,14 +70,14 @@ class GitLabClientTest extends AbstractClientCase
     }
 
     #[DataProvider('getAllProjectsProvider')]
-    public function testGetAllProjects(?string $groupPath, array $responses, array $expected): void
+    final public function testGetAllProjects(?string $groupPath, array $responses, array $expected): void
     {
         $client = $this->createClientWithMockedResponses($responses);
         $projects = $client->getAllProjects($groupPath);
         $this->assertEquals($expected, $projects);
     }
 
-    public function testListRepositoryTree(): void
+    final public function testListRepositoryTree(): void
     {
         $expected = [['id' => 'file1', 'name' => 'file1.txt']];
         $client = $this->createClientWithMockedResponses([
@@ -110,7 +110,7 @@ class GitLabClientTest extends AbstractClientCase
     }
 
     #[DataProvider('getFileProvider')]
-    public function testGetFile(int $projectId, string $filePath, bool $raw, string $branch, Response $response, string|array|null $expected): void
+    final public function testGetFile(int $projectId, string $filePath, bool $raw, string $branch, Response $response, string|array|null $expected): void
     {
         $client = $this->createClientWithMockedResponses([$response]);
         $content = $client->getFile($projectId, $filePath, $raw, $branch);

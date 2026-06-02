@@ -9,6 +9,7 @@ use App\exception\TechnicalException;
 use App\service\GitlabService;
 use App\viewModel\IndexViewModelFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Throwable;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
@@ -20,7 +21,7 @@ class IndexControllerTest extends AbstractControllerCase
     private GitlabService $gitlabService;
     private IndexController $controller;
 
-    protected function setUp(): void
+    final protected function setUp(): void
     {
         parent::setUp();
         $this->viewModelFactory = $this->createMock(IndexViewModelFactory::class);
@@ -36,7 +37,7 @@ class IndexControllerTest extends AbstractControllerCase
         );
     }
 
-    public function testIndex(): void
+    final public function testIndex(): void
     {
         $messages = ['some_message'];
         $scanResults = ['projects' => ['project1']];
@@ -59,7 +60,7 @@ class IndexControllerTest extends AbstractControllerCase
         // Expect twig to render
         $this->twigMocked->expects($this->once())
             ->method('render')
-            ->with('index.html.twig', $this->callback(function ($subject) use ($viewModel) {
+            ->with('index.html.twig', $this->callback(function ($subject) {
                 $this->assertArrayHasKey('viewModelKey', $subject);
                 $this->assertEquals('viewModelValue', $subject['viewModelKey']);
                 $this->assertArrayHasKey('current_route', $subject);
@@ -76,7 +77,7 @@ class IndexControllerTest extends AbstractControllerCase
         $this->assertEquals('rendered_html', $output);
     }
 
-    public function testPurgeCache(): void
+    final public function testPurgeCache(): void
     {
         $initialMessages = [];
         $scanResults = ['projects' => ['refreshed_project']];
@@ -136,7 +137,7 @@ class IndexControllerTest extends AbstractControllerCase
     }
 
     #[DataProvider('renderExceptionProvider')]
-    public function testRenderCatchesExceptions(\Throwable $exception): void
+    final public function testRenderCatchesExceptions(Throwable $exception): void
     {
         $messages = [];
 

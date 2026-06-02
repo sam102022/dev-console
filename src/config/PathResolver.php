@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\config;
 
+use App\exception\TechnicalException;
 use App\service\FileService;
 use RuntimeException;
 
@@ -34,7 +35,7 @@ final class PathResolver
      *
      * @param string $path Le chemin relatif à résoudre (ex: 'var/cache').
      * @return string Le chemin absolu et réel.
-     * @throws RuntimeException Si le chemin n'existe pas ou n'est pas lisible.
+     * @throws RuntimeException|TechnicalException Si le chemin n'existe pas ou n'est pas lisible.
      */
     public function resolve(string $path): string
     {

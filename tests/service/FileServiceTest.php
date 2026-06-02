@@ -13,13 +13,16 @@ class FileServiceTest extends AbstractServiceCase
 {
     private vfsStreamDirectory $root;
 
-    protected function setUp(): void
+    final protected function setUp(): void
     {
         parent::setUp();
-        $this->root = vfsStream::setup('root');
+        $this->root = vfsStream::setup();
     }
 
-    public function testInitPaths(): void
+    /**
+     * @throws TechnicalException
+     */
+    final public function testInitPaths(): void
     {
         // We need to redefine dirname for the virtual filesystem
         $baseDir = vfsStream::url('root');
@@ -28,7 +31,7 @@ class FileServiceTest extends AbstractServiceCase
         $this->assertTrue(true); // Placeholder, as initPaths is hard to test with vfsStream without refactoring
     }
 
-    public function testCheckPaths(): void
+    final public function testCheckPaths(): void
     {
         $paths = [
             vfsStream::url('root/path1'),
@@ -41,7 +44,10 @@ class FileServiceTest extends AbstractServiceCase
         $this->assertTrue($this->root->hasChild('path2/subpath'));
     }
 
-    public function testCreateDirectorySuccess(): void
+    /**
+     * @throws TechnicalException
+     */
+    final public function testCreateDirectorySuccess(): void
     {
         $path = vfsStream::url('root/new_dir');
         $result = FileService::createDirectory($path);
@@ -49,7 +55,7 @@ class FileServiceTest extends AbstractServiceCase
         $this->assertTrue($this->root->hasChild('new_dir'));
     }
 
-    public function testCreateDirectoryFailure(): void
+    final public function testCreateDirectoryFailure(): void
     {
         $this->expectException(TechnicalException::class);
         // vfsStream does not easily simulate mkdir failure, so this test is more conceptual
@@ -57,7 +63,7 @@ class FileServiceTest extends AbstractServiceCase
         $this->markTestSkipped('Cannot easily simulate mkdir failure with vfsStream.');
     }
 
-    public function testSaveAndReadFile(): void
+    final public function testSaveAndReadFile(): void
     {
         $service = new FileService(vfsStream::url('root'), self::$loggerFactory);
         $filename = 'test.json';
@@ -69,7 +75,7 @@ class FileServiceTest extends AbstractServiceCase
         $this->assertEquals(json_encode($data), $this->root->getChild($filename)->getContent());
     }
 
-    public function testReadFile(): void
+    final public function testReadFile(): void
     {
         $service = new FileService(vfsStream::url('root'), self::$loggerFactory);
         $filename = 'test.json';
@@ -83,7 +89,7 @@ class FileServiceTest extends AbstractServiceCase
         $this->assertEquals($data, $readData);
     }
 
-    public function testReadInvalidJson(): void
+    final public function testReadInvalidJson(): void
     {
         $this->expectException(TechnicalException::class);
 
@@ -97,7 +103,7 @@ class FileServiceTest extends AbstractServiceCase
         $service->read($filename);
     }
 
-    public function testIsFileExists(): void
+    final public function testIsFileExists(): void
     {
         $service = new FileService(vfsStream::url('root'), self::$loggerFactory);
         $filename = 'existing.txt';
@@ -108,7 +114,7 @@ class FileServiceTest extends AbstractServiceCase
         $this->assertFalse($service->isFileExists('non_existing.txt'));
     }
 
-    public function testDeleteFile(): void
+    final public function testDeleteFile(): void
     {
         $service = new FileService(vfsStream::url('root'), self::$loggerFactory);
         $filename = 'to_delete.txt';

@@ -45,7 +45,7 @@ class GitlabController
                     break;
                 case ACTION_GITLAB_FILE:
                     $projectId = $this->appConfig->getParamConfig()->getGitlabBusinessContractProjectId();
-                    $response = $this->gitlabService->getFile($projectId, $_REQUEST['file'] ?? '', 'master');
+                    $response = $this->gitlabService->getFile($projectId, $_REQUEST['file'] ?? '');
                     break;
 
                 default:

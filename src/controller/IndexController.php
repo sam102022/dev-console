@@ -52,14 +52,13 @@ class IndexController
      * Affiche la page principale.
      *
      * @param array $messages Un tableau de messages à afficher à l'utilisateur (notifications, erreurs, etc.).
-     * @throws GuzzleException
      */
     public function index(array $messages): void
     {
         try {
             $response = $this->gitlabService->scan();
             $this->viewModelFactory->setResults($response);
-        } catch (Exception $e) {
+        } catch (GuzzleException | Exception $e) {
             $this->logger->error(UtilsLog::prefixLog(self::class, __FUNCTION__, __LINE__) . $e->getMessage());
             $messages[MESSAGES_SCAN_RESULTS] = [
                 LEVEL_LOG_ERROR => [
@@ -71,9 +70,6 @@ class IndexController
         $this->render($messages);
     }
 
-    /**
-     * @throws GuzzleException
-     */
     public function purgeCache(array $messages): void
     {
         $this->gitlabService->purgeCache();

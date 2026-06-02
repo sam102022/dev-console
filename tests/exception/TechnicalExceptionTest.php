@@ -9,7 +9,7 @@ use RuntimeException;
 
 class TechnicalExceptionTest extends TestCase
 {
-    public function testConstructorSetsMessageCodeAndPrevious(): void
+    final public function testConstructorSetsMessageCodeAndPrevious(): void
     {
         // GIVEN
         $previous = new RuntimeException('Previous error');
@@ -23,7 +23,7 @@ class TechnicalExceptionTest extends TestCase
         TestCase::assertSame($previous, $exception->getPrevious());
     }
 
-    public function testCreateWithMessage(): void
+    final public function testCreateWithMessage(): void
     {
         // WHEN
         $exception = TechnicalException::createWithMessage('Technical error');
@@ -34,7 +34,7 @@ class TechnicalExceptionTest extends TestCase
         TestCase::assertNull($exception->getPrevious());
     }
 
-    public function testCreateWithCode(): void
+    final public function testCreateWithCode(): void
     {
         // WHEN
         $exception = TechnicalException::createWithCode('Technical error', 42);
@@ -45,7 +45,7 @@ class TechnicalExceptionTest extends TestCase
         TestCase::assertNull($exception->getPrevious());
     }
 
-    public function testToStringReturnsExpectedFormat(): void
+    final public function testToStringReturnsExpectedFormat(): void
     {
         // GIVEN
         $exception = new TechnicalException('Error message', 99);
@@ -60,7 +60,7 @@ class TechnicalExceptionTest extends TestCase
         );
     }
 
-    public function testJsonSerializeContainsMessageAndCode(): void
+    final public function testJsonSerializeContainsMessageAndCode(): void
     {
         // GIVEN
         $exception = new TechnicalException('JSON error', 7);
@@ -76,7 +76,7 @@ class TechnicalExceptionTest extends TestCase
         TestCase::assertSame(7, $data['code']);
     }
 
-    public function testJsonEncodeWorksAsExpected(): void
+    final public function testJsonEncodeWorksAsExpected(): void
     {
         // GIVEN
         $exception = new TechnicalException('Encoded error', 500);

@@ -11,6 +11,7 @@ use App\repository\ProjectRepository;
 use App\service\FileService;
 use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 class ProjectRepositoryTest extends TestCase
 {
@@ -27,7 +28,7 @@ class ProjectRepositoryTest extends TestCase
         $this->repository = new ProjectRepository($loggerFactory);
 
         // Inject the mocked FileService
-        $reflection = new \ReflectionClass($this->repository);
+        $reflection = new ReflectionClass($this->repository);
         $property = $reflection->getProperty('fileService');
         $property->setAccessible(true);
         $property->setValue($this->repository, $this->fileService);

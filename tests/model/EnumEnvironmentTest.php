@@ -10,7 +10,7 @@ use ValueError;
 
 class EnumEnvironmentTest extends TestCase
 {
-    public function testEnumValues(): void
+    final public function testEnumValues(): void
     {
         $this->assertEquals('dev', EnumEnvironment::DEV->value);
         $this->assertEquals('rec', EnumEnvironment::REC->value);
@@ -29,12 +29,12 @@ class EnumEnvironmentTest extends TestCase
     }
 
     #[DataProvider('fromProvider')]
-    public function testFrom(string $value, EnumEnvironment $expected): void
+    final public function testFrom(string $value, EnumEnvironment $expected): void
     {
         $this->assertSame($expected, EnumEnvironment::from($value));
     }
 
-    public function testFromInvalid(): void
+    final public function testFromInvalid(): void
     {
         $this->expectException(ValueError::class);
         EnumEnvironment::from('invalid');
@@ -53,7 +53,7 @@ class EnumEnvironmentTest extends TestCase
     }
 
     #[DataProvider('tryFromProvider')]
-    public function testTryFrom(string $value, ?EnumEnvironment $expected): void
+    final public function testTryFrom(string $value, ?EnumEnvironment $expected): void
     {
         $this->assertSame($expected, EnumEnvironment::tryFrom($value));
     }

@@ -191,7 +191,7 @@ class GitlabProjectEntity
 
     public static function build(int $id, ?string $description, string $name, string $nameWithNamespace,
                                  string $path, string $path_with_namespace, string $default_branch,
-                                 string $created_at, string $web_url, bool $archived)
+                                 string $created_at, string $web_url, bool $archived): self
     {
         $project = new self();
         $project->setId($id);

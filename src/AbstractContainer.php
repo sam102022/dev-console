@@ -276,12 +276,12 @@ abstract class AbstractContainer
         // Handler stack par défaut
         $stack = HandlerStack::create();
 
-        $maxRetries = 3;
         $logger = $loggerFactory->get(__CLASS__);
 
         // Retry middleware
         $stack->push(Middleware::retry(
-            static function (int $retries, RequestInterface $request, ?ResponseInterface $response = null, ?TransferException $exception = null) use ($maxRetries, $logger): bool {
+            static function (int $retries, RequestInterface $request, ?ResponseInterface $response = null, ?TransferException $exception = null) use ($logger): bool {
+                $maxRetries = 3;
                 // Limite max de retries
                 if ($retries >= $maxRetries) {
                     return false;
@@ -294,23 +294,17 @@ abstract class AbstractContainer
                 ) {
                     $logger->error(
                         UtilsLog::prefixLog(__CLASS__, __FUNCTION__, __LINE__)
-                        . $msgRetry . "Impossible de se connecter à " . $request->getUri()
+                        . $msgRetry . "Impossible de se connecter à " . $request->getUri()->__toString()
                     );
                     return true;
                 }
 
-                if ($response) {
-                    /*$logger->debug(
+                if ($response && in_array($response->getStatusCode(), [249, 408, 429, 500, 502, 503, 504], true)) {
+                    $logger->error(
                         UtilsLog::prefixLog(__CLASS__, __FUNCTION__, __LINE__)
-                        . "Statut " . $response->getStatusCode() . " pour " . $request->getUri()
-                    );*/
-                    if (in_array($response->getStatusCode(), [249, 408, 429, 500, 502, 503, 504], true)) {
-                        $logger->error(
-                            UtilsLog::prefixLog(__CLASS__, __FUNCTION__, __LINE__)
-                            . $msgRetry . "Une erreur est survenue sur le serveur."
-                        );
-                        return true;
-                    }
+                        . $msgRetry . "Une erreur est survenue sur le serveur."
+                    );
+                    return true;
                 }
 
                 return false;

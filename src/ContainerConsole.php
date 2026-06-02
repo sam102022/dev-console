@@ -27,7 +27,6 @@ final class ContainerConsole extends AbstractContainer
         $dirname = dirname(__DIR__);
         parent::__construct(
             $dirname . '/' . LOG_CLI_FILE_DEFAULT,
-            $dirname . '/' . LOG_CLI_FILE_DEFAULT,
             ENVIRONMENT_PROD,
             $dirname . '/templates',
             Level::Info,

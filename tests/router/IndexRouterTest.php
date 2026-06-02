@@ -59,7 +59,7 @@ class IndexRouterTest extends AbstractRouterCase
             'postman create environment' => [ACTION_POSTMAN_CREATE_ENVIRONMENT, 'postmanController', 'handleRequest'],
             'postman import openapi' => [ACTION_POSTMAN_IMPORT_OPENAPI, 'postmanController', 'handleRequest'],
             'postman get workspace details' => [ACTION_POSTMAN_GET_WORKSPACE_DETAILS, 'postmanController', 'handleRequest'],
-            'monitoring check one' => [ACTION_MONITORING_CHECK_ONE, 'monitoringController', 'handleRequest'],
+            'monitoring check one' => [ACTION_MONITORING_GET_DATA, 'monitoringController', 'handleRequest'],
         ];
     }
 

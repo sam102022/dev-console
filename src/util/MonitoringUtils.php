@@ -124,12 +124,7 @@ class MonitoringUtils
      */
     private static function hasNuxtScript(array $scripts): bool
     {
-        foreach ($scripts as $script) {
-            if (str_contains($script, 'nuxt')) {
-                return true;
-            }
-        }
-        return false;
+        return array_any($scripts, static fn($script) => str_contains($script, 'nuxt'));
     }
 
     /**
@@ -140,12 +135,7 @@ class MonitoringUtils
      */
     private static function hasNuxtScope(array $dependencies): bool
     {
-        foreach (array_keys($dependencies) as $packageName) {
-            if (str_starts_with($packageName, '@nuxt/')) {
-                return true;
-            }
-        }
-        return false;
+        return array_any(array_keys($dependencies), static fn($packageName) => str_starts_with($packageName, '@nuxt/'));
     }
 
     /**
@@ -273,10 +263,8 @@ class MonitoringUtils
 
         $currentTimestamp = $date->format('Y-m-d\TH:i:s.v\Z');
 
-        $url = "https://console.cloud.google.com/logs/query;query=$query;storageScope=storage,projects%2F$projectId%2Flocations%2Feu%2Fbuckets%2F$projectId.common_logs%2Fviews%2F_AllLogs,projects%2F$projectId%2Flocations%2Feu%2Fbuckets%2F$projectId.infra_logs%2Fviews%2F_AllLogs,projects%2F$projectId%2Flocations%2Fglobal%2Fbuckets%2F_Default%2Fviews%2F_AllLogs,projects%2F$projectId%2Flocations%2Fglobal%2Fbuckets%2F_Default%2Fviews%2F_Default,projects%2F$projectId%2Flocations%2Fglobal%2Fbuckets%2F_Required%2Fviews%2F_AllLogs;cursorTimestamp=$currentTimestamp;histogramBreakdownField=severity;duration=P14D?invt=AbtxOw&project=$projectId";
         //https://console.cloud.google.com/logs/query;query=resource.labels.namespace_name%3D%22stores%22%0Alabels.k8s-pod%2Fapp_kubernetes_io%2Finstance:%22api-store-reception%22%0Aresource.labels.container_name%3D%22app-java-api%22;storageScope=storage,projects%2Fmdm-observability-rec%2Flocations%2Feu%2Fbuckets%2Fmdm-observability-rec.common_logs%2Fviews%2F_AllLogs,projects%2Fmdm-observability-rec%2Flocations%2Feu%2Fbuckets%2Fmdm-observability-rec.fin_logs%2Fviews%2F_AllLogs,projects%2Fmdm-observability-rec%2Flocations%2Feu%2Fbuckets%2Fmdm-observability-rec.infra_logs%2Fviews%2F_AllLogs,projects%2Fmdm-observability-rec%2Flocations%2Fglobal%2Fbuckets%2F_Default%2Fviews%2F_AllLogs,projects%2Fmdm-observability-rec%2Flocations%2Fglobal%2Fbuckets%2F_Default%2Fviews%2F_Default,projects%2Fmdm-observability-rec%2Flocations%2Fglobal%2Fbuckets%2F_Required%2Fviews%2F_AllLogs;cursorTimestamp=2026-05-28T09:48:02.657Z;histogramBreakdownField=severity;duration=P14D?invt=AbtxPQ&project=mdm-observability-rec
-
-        return $url;
+        return "https://console.cloud.google.com/logs/query;query=$query;storageScope=storage,projects%2F$projectId%2Flocations%2Feu%2Fbuckets%2F$projectId.common_logs%2Fviews%2F_AllLogs,projects%2F$projectId%2Flocations%2Feu%2Fbuckets%2F$projectId.infra_logs%2Fviews%2F_AllLogs,projects%2F$projectId%2Flocations%2Fglobal%2Fbuckets%2F_Default%2Fviews%2F_AllLogs,projects%2F$projectId%2Flocations%2Fglobal%2Fbuckets%2F_Default%2Fviews%2F_Default,projects%2F$projectId%2Flocations%2Fglobal%2Fbuckets%2F_Required%2Fviews%2F_AllLogs;cursorTimestamp=$currentTimestamp;histogramBreakdownField=severity;duration=P14D?invt=AbtxOw&project=$projectId";
     }
 
     /**
@@ -346,5 +334,19 @@ class MonitoringUtils
             return sprintf(self::ZEND_URL_PATTERN, $envPart, $project->getName());
         }
         return '';
+    }
+
+    /**
+     * Construit l'URL du rundeck d'un projet.
+     *
+     * @param Project $project L'objet projet PHP.
+     * @param EnumEnvironment $env L'environnement ciblé.
+     * @return string L'URL du rundeck.
+     */
+    public static function buildRundeckUrl(Project $project, EnumEnvironment $env): string
+    {
+        $pattern = 'https://rundeck-%s.siege.xm/project/%s/jobs';
+
+        return sprintf($pattern, $env->value, $project->getSubsf());
     }
 }

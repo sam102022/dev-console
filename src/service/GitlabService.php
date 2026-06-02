@@ -89,7 +89,7 @@ class GitlabService
         $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "debut");
         try {
             $projectEntity = $this->projectRepository->findByCode($projectCode);
-            if ($projectEntity != null) {
+            if ($projectEntity !== null) {
                 return ProjectMapper::fromEntity($projectEntity);
             }
             return null;
@@ -190,6 +190,7 @@ class GitlabService
         $urlsLogs = [];
         $urlsFronts = [];
         $urlsPubsubs = [];
+        $urlsRundeck = [];
         foreach (EnumEnvironment::cases() as $env) {
             if ($techno === 'java') {
                 $urlsHealth[$env->value] = MonitoringUtils::buildUrlHealthCheck($project, $env, $this->excludeProjects);
@@ -205,6 +206,9 @@ class GitlabService
             }
             if ($techno === 'php' && str_starts_with($projectName, 'zend')) {
                 $urlsFronts[$env->value] = MonitoringUtils::buildFrontPhpUrl($project, $env);
+            }
+            if ($techno === 'php' && str_starts_with($projectName, 'batch')) {
+                $urlsRundeck[$env->value] = MonitoringUtils::buildRundeckUrl($project, $env);
             }
         }
         $project->setUrlHealthCheck($urlsHealth);
