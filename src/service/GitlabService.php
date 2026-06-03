@@ -10,6 +10,7 @@ use App\factory\LoggerFactory;
 use App\model\EnumEnvironment;
 use App\model\GitlabProject;
 use App\model\Project;
+use App\parser\ChartParser;
 use App\parser\GradleParser;
 use App\parser\MavenParser;
 use App\repository\GitLabRepository;
@@ -32,6 +33,7 @@ class GitlabService
         private readonly GitLabClient      $client,
         private readonly MavenParser       $mavenParser,
         private readonly GradleParser      $gradleParser,
+        private readonly ChartParser       $chartParser,
         private readonly GitLabRepository  $gitLabRepository,
         private readonly ProjectRepository $projectRepository,
         private readonly AppConfig         $appConfig,
@@ -67,7 +69,12 @@ class GitlabService
             $gitLabProjectsData = $this->client->getAllProjects($pathGroup);
             $entities = [];
             foreach ($gitLabProjectsData as $gitlabProject) {
-                $entities[] = GitlabProjectMapper::fromArray($gitlabProject);
+                $entity = GitlabProjectMapper::fromArray($gitlabProject);
+                $chartContent = $this->client->getFile($entity->getId(), 'Chart.yaml', true, $entity->getDefaultBranch());
+                if ($chartContent) {
+                    $entity->setMdmWorkloadVersion($this->chartParser->parse($chartContent));
+                }
+                $entities[] = $entity;
             }
 
             $this->gitLabRepository->updateAll($entities);
@@ -314,7 +321,7 @@ class GitlabService
         if ($yamlContent) {
             $subscriptionName = MonitoringUtils::parseSubscriptionName($yamlContent);
 
-            if ($subscriptionName && preg_match('/^\$\{(.+)\}$/', $subscriptionName, $matches)) {
+            if ($subscriptionName && preg_match('/^\$\{(.+)}$/', $subscriptionName, $matches)) {
                 $variableName = $matches[1];
                 $valuesDevContent = $this->client->getFile(
                     $gitLabProject->getId(),

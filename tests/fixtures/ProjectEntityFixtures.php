@@ -11,13 +11,15 @@ class ProjectEntityFixtures
     {
         return ProjectEntity::build('project-a', 'serviceName',
             'sf', 'sfName', 'subsf', true,
-            '2.7.0', '17', 'java', 'subscriptionName', 'http://url', false);
+            '2.7.0', '17', 'java',
+            'subscriptionName', 'http://url', false);
     }
 
     public static function getProjectBEntity(): ProjectEntity
     {
-        return ProjectEntity::build('project-b', 'serviceName',
-            'sf', 'sfName', 'subsf', true,
-            '2.7.0', '17', 'java', 'subscriptionName', 'http://url', false);
+        return ProjectEntity::build('project-b', null,
+            'e', ' e ', 'f', false,
+            null, null, '', null,
+            'http://url/b', false);
     }
 }

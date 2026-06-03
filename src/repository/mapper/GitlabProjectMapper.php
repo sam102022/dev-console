@@ -21,6 +21,7 @@ class GitlabProjectMapper
         $project->setDefaultBranch($data['default_branch'] ?? 'main');
         $project->setWebUrl($data['web_url'] ?? '');
         $project->setArchived($data['archived'] ?? false);
+        $project->setMdmWorkloadVersion($data['mdm_workload_version'] ?? null);
 
         return $project;
     }
@@ -38,6 +39,7 @@ class GitlabProjectMapper
         $project->setDefaultBranch($entity->getDefaultBranch());
         $project->setWebUrl($entity->getWebUrl());
         $project->setArchived($entity->isArchived());
+        $project->setMdmWorkloadVersion($entity->getMdmWorkloadVersion());
 
         return $project;
     }
@@ -54,7 +56,8 @@ class GitlabProjectMapper
             $project->getDefaultBranch(),
             $project->getCreatedAt(),
             $project->getWebUrl(),
-            $project->isArchived()
+            $project->isArchived(),
+            $project->getMdmWorkloadVersion()
         );
     }
 
@@ -70,7 +73,8 @@ class GitlabProjectMapper
             $entity->getDefaultBranch(),
             $entity->getCreatedAt(),
             $entity->getWebUrl(),
-            $entity->isArchived()
+            $entity->isArchived(),
+            $entity->getMdmWorkloadVersion()
         );
     }
 
@@ -87,6 +91,7 @@ class GitlabProjectMapper
             'default_branch' => $gitlabProjectEntity->getDefaultBranch(),
             'web_url' => $gitlabProjectEntity->getWebUrl(),
             'archived' => $gitlabProjectEntity->isArchived(),
+            'mdm_workload_version' => $gitlabProjectEntity->getMdmWorkloadVersion(),
         ];
     }
 

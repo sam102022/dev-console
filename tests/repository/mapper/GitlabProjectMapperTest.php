@@ -155,6 +155,7 @@ class GitlabProjectMapperTest extends AbstractServiceCase
             'default_branch' => 'main',
             'web_url' => 'http://localhost/project',
             'archived' => false,
+            'mdm_workload_version' => null
         ];
 
         $this->assertEquals($expected, $data);

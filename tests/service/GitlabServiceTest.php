@@ -5,6 +5,7 @@ namespace App\tests\service;
 
 use App\client\GitLabClient;
 use App\exception\TechnicalException;
+use App\parser\ChartParser;
 use App\parser\GradleParser;
 use App\parser\MavenParser;
 use App\repository\GitLabRepository;
@@ -21,6 +22,7 @@ class GitlabServiceTest extends AbstractServiceCase
     private GitLabClient $client;
     private MavenParser $mavenParser;
     private GradleParser $gradleParser;
+    private ChartParser $chartParser;
     private GitLabRepository $gitLabRepository;
     private ProjectRepository $projectRepository;
     private GitlabService $service;
@@ -32,6 +34,7 @@ class GitlabServiceTest extends AbstractServiceCase
         $this->client = $this->createMock(GitLabClient::class);
         $this->mavenParser = $this->createMock(MavenParser::class);
         $this->gradleParser = $this->createMock(GradleParser::class);
+        $this->chartParser = $this->createMock(ChartParser::class);
         $this->gitLabRepository = $this->createMock(GitLabRepository::class);
         $this->projectRepository = $this->createMock(ProjectRepository::class);
 
@@ -39,6 +42,7 @@ class GitlabServiceTest extends AbstractServiceCase
             $this->client,
             $this->mavenParser,
             $this->gradleParser,
+            $this->chartParser,
             $this->gitLabRepository,
             $this->projectRepository,
             self::$appConfig,
@@ -56,11 +60,30 @@ class GitlabServiceTest extends AbstractServiceCase
     final public function testGetProjectsFromApiWhenCacheIsEmpty(): void
     {
         $projects = [['id' => 1, 'description' => 'New Project', 'name' => 'New Project', 'name_with_namespace' => 'name-with-namespace', 'path' => 'path', 'path_with_namespace' => 'path-with-namespace', 'created_at' => '2023-01-01', 'default_branch' => 'main', 'web_url' => 'http://url']];
+        $gitlabProjects = [];
+        $expectedProjects = [];
+        $chartContent = "dependencies:\n  - name: mdm-workload\n    version: 1.5.0";
+
+        $this->gitLabRepository->method('findAll')->willReturn(null)->willReturn($gitlabProjects);
+        $this->client->expects($this->once())->method('getAllProjects')->with('group/path')->willReturn($projects);
+        $this->client->expects($this->once())->method('getFile')->with(1, 'Chart.yaml', true, 'main')->willReturn($chartContent);
+        $this->chartParser->expects($this->once())->method('parse')->with($chartContent)->willReturn('1.5.0');
+        $this->gitLabRepository->expects($this->once())->method('updateAll');
+
+        $result = $this->service->getProjects('group/path');
+        $this->assertEquals($expectedProjects, $result);
+    }
+
+    final public function testGetProjectsFromApiWhenCacheIsNotEmpty(): void
+    {
+        $projects = [['id' => 1, 'description' => 'New Project', 'name' => 'New Project', 'name_with_namespace' => 'name-with-namespace', 'path' => 'path', 'path_with_namespace' => 'path-with-namespace', 'created_at' => '2023-01-01', 'default_branch' => 'main', 'web_url' => 'http://url']];
         $gitlabProjects = [GitlabProjectEntityFixtures::getGitlabProjectEntityA()];
-        $expectedProjects = [GitlabProjectFixtures::getGitlabProject()];
+        $expectedProjects = [GitlabProjectFixtures::getGitlabProjectA()];
+        $chartContent = "dependencies:\n  - name: mdm-workload\n    version: 1.5.0";
 
         $this->gitLabRepository->method('findAll')->willReturn(null)->willReturn($gitlabProjects);
         $this->client->expects($this->never())->method('getAllProjects')->with('group/path')->willReturn($projects);
+        $this->chartParser->expects($this->never())->method('parse')->with($chartContent)->willReturn('1.5.0');
         $this->gitLabRepository->expects($this->never())->method('updateAll');
 
         $result = $this->service->getProjects('group/path');
@@ -70,7 +93,7 @@ class GitlabServiceTest extends AbstractServiceCase
     final public function testGetProjectsFromCache(): void
     {
         $projectEntities = [GitlabProjectEntityFixtures::getGitlabProjectEntityA()];
-        $expectedProjects = [GitlabProjectFixtures::getGitlabProjectFromCache()];
+        $expectedProjects = [GitlabProjectFixtures::getGitlabProjectA()];
 
         $this->gitLabRepository->method('findAll')->willReturn($projectEntities);
         $this->client->expects($this->never())->method('getAllProjects');

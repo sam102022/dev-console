@@ -63,7 +63,7 @@ class GitLabRepositoryTest extends TestCase
 
     public function testSaveProjects(): void
     {
-        $expectedProjects = [['id' => 1, 'description' => 'New Project', 'name' => 'New Project', 'name_with_namespace' => 'name-with-namespace', 'path' => 'path', 'path_with_namespace' => 'path-with-namespace', 'created_at' => '2023-01-01', 'default_branch' => 'main', 'web_url' => 'http://url', 'archived' => false]];
+        $expectedProjects = [GitlabProjectEntityFixtures::getGitlabProjectData()];
         $projects = [GitlabProjectEntityFixtures::getGitlabProjectEntity()];
         $this->fileService->expects($this->once())
             ->method('save')

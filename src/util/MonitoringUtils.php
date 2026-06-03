@@ -242,23 +242,27 @@ class MonitoringUtils
 
         $projectId = 'mdm-observability-' . $envName;
 
-        $key1 = 'resource.labels.namespace_name';
-        $key2 = urlencode('labels.k8s-pod/app_kubernetes_io/instance');
-        $key3 = 'resource.labels.container_name';
         $value1 = urlencode('"' . $subSf . '"');
         $value2 = urlencode('"' . $projectName . '"');
-
         $value3 = '';
         $prefix = explode('-', $projectName)[0]; // Récupère 'api', 'flow', ou 'batch'
-        if ($prefix === 'api') {
+        if (in_array($prefix, ['api', 'flow', 'batch'], true)) {
             $value3 = urlencode(sprintf('"app-java-%s"', $prefix));
-        }
-        if (in_array($prefix, ['batch', 'flow'], true)) {
-            $value3 = '"java"';
         }
         $date = new DateTime('now', new DateTimeZone('UTC'));
 
-        $query = "$key1%3D$value1%0A$key2:$value2%0A$key3%3D$value3";
+        $data = [
+            'resource.labels.namespace_name' => $value1,
+            urlencode('labels.k8s-pod/app_kubernetes_io/instance') => $value2,
+            'resource.labels.container_name' => $value3,
+        ];
+
+        $items = array_map(
+            static fn($key, $value) => $key . '%3D' . $value,
+            array_keys($data),
+            $data
+        );
+        $query = implode('%0A', $items);
         // Ex : resource.labels.namespace_name%3D%22stores%22%0Alabels.k8s-pod%2Fapp_kubernetes_io%2Finstance:%22api-store-reception%22%0Aresource.labels.container_name%3D%22app-java-api%22
 
         $currentTimestamp = $date->format('Y-m-d\TH:i:s.v\Z');
@@ -315,7 +319,11 @@ class MonitoringUtils
         //https://console.cloud.google.com/cloudpubsub/topic/detail/flow-store-received-delivery-note_store-received-delivery-note-events_ops?inv=1&invt=Ab5XmQ&project=dev-mdm-buyers&tab=messages
         $url = 'https://console.cloud.google.com/cloudpubsub/topic/detail/';
         $url .= $project->getSubscriptionName() . '_ops';
-        $url .= '?project=' . $env->value . '-mdm-' . $project->getSubsf() . '&inv=1&invt=Ab5XmQ&tab=messages';
+        $url .= '?project=';
+        if ($env !== EnumEnvironment::PROD) {
+            $url .= $env->value . '-';
+        }
+        $url .= 'mdm-' . $project->getSubsf() . '&inv=1&invt=Ab5XmQ&tab=messages';
 
         return $url;
     }
