@@ -6,7 +6,6 @@ namespace App\tests\service;
 use App\client\GitLabClient;
 use App\exception\TechnicalException;
 use App\parser\ChartParser;
-use App\parser\GradleParser;
 use App\parser\MavenParser;
 use App\repository\GitLabRepository;
 use App\repository\mapper\ProjectMapper;
@@ -21,7 +20,6 @@ class GitlabServiceTest extends AbstractServiceCase
 {
     private GitLabClient $client;
     private MavenParser $mavenParser;
-    private GradleParser $gradleParser;
     private ChartParser $chartParser;
     private GitLabRepository $gitLabRepository;
     private ProjectRepository $projectRepository;
@@ -33,7 +31,6 @@ class GitlabServiceTest extends AbstractServiceCase
 
         $this->client = $this->createMock(GitLabClient::class);
         $this->mavenParser = $this->createMock(MavenParser::class);
-        $this->gradleParser = $this->createMock(GradleParser::class);
         $this->chartParser = $this->createMock(ChartParser::class);
         $this->gitLabRepository = $this->createMock(GitLabRepository::class);
         $this->projectRepository = $this->createMock(ProjectRepository::class);
@@ -41,7 +38,6 @@ class GitlabServiceTest extends AbstractServiceCase
         $this->service = new GitlabService(
             $this->client,
             $this->mavenParser,
-            $this->gradleParser,
             $this->chartParser,
             $this->gitLabRepository,
             $this->projectRepository,

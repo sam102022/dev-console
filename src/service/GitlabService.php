@@ -11,7 +11,6 @@ use App\model\EnumEnvironment;
 use App\model\GitlabProject;
 use App\model\Project;
 use App\parser\ChartParser;
-use App\parser\GradleParser;
 use App\parser\MavenParser;
 use App\repository\GitLabRepository;
 use App\repository\mapper\GitlabProjectMapper;
@@ -32,7 +31,6 @@ class GitlabService
     public function __construct(
         private readonly GitLabClient      $client,
         private readonly MavenParser       $mavenParser,
-        private readonly GradleParser      $gradleParser,
         private readonly ChartParser       $chartParser,
         private readonly GitLabRepository  $gitLabRepository,
         private readonly ProjectRepository $projectRepository,
@@ -337,21 +335,6 @@ class GitlabService
             return $subscriptionName;
         }
 
-        return null;
-    }
-
-    private function scanBuildGradle(GitlabProject $gitLabProject): ?array
-    {
-        $pathInfo = $this->extractPathInfo($gitLabProject);
-        $gradle = $this->client->getFile($gitLabProject->getId(), 'build.gradle', true, $gitLabProject->getDefaultBranch());
-
-        if ($gradle) {
-            return [
-                'name' => $gitLabProject->getName(),
-                ...$pathInfo,
-                ...$this->gradleParser->parse($gradle)
-            ];
-        }
         return null;
     }
 

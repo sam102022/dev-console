@@ -251,6 +251,13 @@ class MonitoringUtils
         }
         $date = new DateTime('now', new DateTimeZone('UTC'));
 
+        // Ex :
+//        resource.type="k8s_container"
+//        resource.labels.location="europe-west1"
+//        resource.labels.cluster_name="kube-prod"
+//        resource.labels.container_name !~ "^istio.*" // resource.labels.container_name%20!~%20%22%5Eistio.*%22%0D
+        //https://console.cloud.google.com/logs/query;query=resource.type%3D%22k8s_container%22%0D%0Aresource.labels.location%3D%22europe-west1%22%0D%0Aresource.labels.cluster_name%3D%22kube-prod%22%0D%0Aresource.labels.container_name%20!~%20%22%5Eistio.*%22%0D%0Aresource.labels.namespace_name%3D%22stores%22%0D%0Alabels.k8s-pod%2Fapp_kubernetes_io%2Finstance%3D%22api-store-operator%22%20%0D%0Aseverity%3E%3DDEFAULT;storageScope=storage,projects%2Fmdm-observability-prod%2Flocations%2Feu%2Fbuckets%2Fmdm-observability-prod.common_logs%2Fviews%2F_AllLogs;cursorTimestamp=2026-06-03T07:18:37.655023114Z;duration=P1D?project=mdm-observability-prod
+
         $data = [
             'resource.labels.namespace_name' => $value1,
             urlencode('labels.k8s-pod/app_kubernetes_io/instance') => $value2,
@@ -258,7 +265,7 @@ class MonitoringUtils
         ];
 
         $items = array_map(
-            static fn($key, $value) => $key . '%3D' . $value,
+            static fn($key, $value) => $key . '%3D' . $value, // %3D => "="
             array_keys($data),
             $data
         );
