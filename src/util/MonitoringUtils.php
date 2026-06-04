@@ -364,4 +364,12 @@ class MonitoringUtils
 
         return sprintf($pattern, $env->value, $project->getSubsf());
     }
+
+    public static function buildDeploymentGcpUrl(Project $project, EnumEnvironment $env): string{
+
+        // Ex : https://console.cloud.google.com/kubernetes/deployment/europe-west1/kube-dev/stores-stock/flow-stores-stock-composition/overview?hl=fr&project=mdm-core-infra-dev&supportedpurview=project
+        $pattern = 'https://console.cloud.google.com/kubernetes/deployment/europe-west1/kube-%s/%s/%s/overview?hl=fr&project=mdm-core-infra-%s&supportedpurview=project';
+
+        return sprintf($pattern, $env->value, $project->getSubsf(), $project->getName(), $env->value);
+    }
 }

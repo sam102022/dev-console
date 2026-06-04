@@ -109,7 +109,7 @@ class GitlabService
      * Scan les projets gitlab
      *
      * @return Project[]|null
-     * @throws GuzzleException|TechnicalException
+     * @throws GuzzleException|TechnicalException|DateMalformedStringException
      */
     public function scan(): ?array
     {
@@ -163,7 +163,7 @@ class GitlabService
         $pathInfo = $this->extractPathInfo($gitLabProject);
         $deploymentInfo = $this->getDeploymentInfo($gitLabProject);
         $mavenInfo = $this->scanPomXml($gitLabProject);
-        $mdmWorkloadVersion = $this->scanChartYaml($gitLabProject);
+        //$mdmWorkloadVersion = $this->scanChartYaml($gitLabProject);
         $techno = $this->getTechno($gitLabProject);
         $subscriptionName = $this->getSubscriptionName($gitLabProject);
 
@@ -180,12 +180,13 @@ class GitlabService
             'subscriptionName' => $subscriptionName,
             'webUrl' => $gitLabProject->getWebUrl(),
             'archived' => $gitLabProject->isArchived(),
-            'mdmWorkloadVersion' => $mdmWorkloadVersion,
+            'mdmWorkloadVersion' => $deploymentInfo['mdmWorkloadVersion'],
             'urlHealthCheck' => [],
             'urlLogs' => [],
             'urlFronts' => [],
             'urlPubsubs' => [],
             'urlsRundeck' => [],
+            'deploymentGcpUrl' => [],
             ...$mavenInfo ?? [],
         ];
         $project = ProjectMapper::projectFromArray($data);
@@ -195,6 +196,7 @@ class GitlabService
         $urlsFronts = [];
         $urlsPubsubs = [];
         $urlsRundeck = [];
+        $deploymentGcpUrl = [];
         foreach (EnumEnvironment::cases() as $env) {
             if ($techno === 'java') {
                 $urlsHealth[$env->value] = MonitoringUtils::buildUrlHealthCheck($project, $env, $this->excludeProjects);
@@ -211,8 +213,11 @@ class GitlabService
             if ($techno === 'php' && str_starts_with($projectName, 'zend')) {
                 $urlsFronts[$env->value] = MonitoringUtils::buildFrontPhpUrl($project, $env);
             }
-            if ($techno === 'php' && str_starts_with($projectName, 'batch')) {
+            if ($techno === 'java' && str_starts_with($projectName, 'batch')) {
                 $urlsRundeck[$env->value] = MonitoringUtils::buildRundeckUrl($project, $env);
+            }
+            if ($project->isCloudGCP()) {
+                $deploymentGcpUrl[$env->value] = MonitoringUtils::buildDeploymentGcpUrl($project, $env);
             }
         }
         $project->setUrlHealthCheck($urlsHealth);
@@ -220,6 +225,7 @@ class GitlabService
         $project->setUrlFronts($urlsFronts);
         $project->setUrlPubsubs($urlsPubsubs);
         $project->setUrlsRundeck($urlsRundeck);
+        $project->setDeploymentGcpUrl($deploymentGcpUrl);
 
         return $project;
     }
@@ -267,12 +273,14 @@ class GitlabService
 
     private function getDeploymentInfo(GitlabProject $gitLabProject): array
     {
-        $chartValuesFile = $this->client->getFile($gitLabProject->getId(), 'chart/values.yaml', true, $gitLabProject->getDefaultBranch());
-        $cloudGCP = (bool)$chartValuesFile;
+        $chartFile = $this->client->getFile($gitLabProject->getId(), 'chart/Chart.yaml', true, $gitLabProject->getDefaultBranch());
+        $cloudGCP = (bool)$chartFile;
+        $mdmWorkloadVersion = $chartFile ? $this->chartParser->parseChartYaml($chartFile) : null;
 
         $deployName = null;
         if (!$cloudGCP) {
-            // Ex : 648
+            // Ex : id = 648
+            // Récupère le nom du service à partir du fichier deploy.yml pour construire l'url kibana
             $deployYamlContent = $this->client->getFile($gitLabProject->getId(), 'deploy/conf/dev/deploy.yml', true, $gitLabProject->getDefaultBranch());
             if ($deployYamlContent) {
                 $deployName = MonitoringUtils::parseServiceName($deployYamlContent);
@@ -282,6 +290,7 @@ class GitlabService
         return [
             'cloudGCP' => $cloudGCP,
             'deployName' => $deployName,
+            'mdmWorkloadVersion' => $mdmWorkloadVersion,
         ];
     }
 

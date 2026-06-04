@@ -29,6 +29,7 @@ class ProjectMapper
         $projectEntity->setUrlFronts($data['urlFronts'] ?? []);
         $projectEntity->setUrlPubsubs($data['urlPubsubs'] ?? []);
         $projectEntity->setUrlsRundeck($data['urlsRundeck'] ?? []);
+        $projectEntity->setDeploymentGcpUrl($data['deploymentGcpUrl'] ?? []);
 
         return $projectEntity;
     }
@@ -54,6 +55,7 @@ class ProjectMapper
         $project->setUrlFronts($data['urlFronts'] ?? []);
         $project->setUrlPubsubs($data['urlPubsubs'] ?? []);
         $project->setUrlsRundeck($data['urlsRundeck'] ?? []);
+        $project->setDeploymentGcpUrl($data['deploymentGcpUrl'] ?? []);
 
         return $project;
     }
@@ -79,6 +81,7 @@ class ProjectMapper
         $project->setUrlFronts($entity->getUrlFronts());
         $project->setUrlPubsubs($entity->getUrlPubsubs());
         $project->setUrlsRundeck($entity->getUrlsRundeck());
+        $project->setDeploymentGcpUrl($entity->getDeploymentGcpUrl());
 
         return $project;
     }
@@ -103,7 +106,8 @@ class ProjectMapper
             $project->getUrlFronts(),
             $project->getUrlPubsubs(),
             $project->getMdmWorkloadVersion(),
-            $project->getUrlsRundeck()
+            $project->getUrlsRundeck(),
+            $project->getDeploymentGcpUrl()
         );
     }
 
@@ -128,6 +132,7 @@ class ProjectMapper
             'urlFronts' => $projectEntity->getUrlFronts(),
             'urlPubsubs' => $projectEntity->getUrlPubsubs(),
             'urlsRundeck' => $projectEntity->getUrlsRundeck(),
+            'deploymentGcpUrl' => $projectEntity->getDeploymentGcpUrl(),
         ];
     }
 }

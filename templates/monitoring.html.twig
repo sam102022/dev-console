@@ -76,7 +76,9 @@
                                         <i class="fa-solid fa-hourglass"></i> Health Check |
                                         <i class="fa-solid fa-desktop text-success"></i> Front |
                                         <i class="fa-solid fa-comment-dots text-primary"></i> Pub/Sub |
-                                        <i class="fa-solid fa-file-lines text-info"></i> Logs
+                                        <i class="fa-solid fa-file-lines text-info"></i> Logs |
+                                        <i class="fa-solid fa-code-branch text-danger"></i> Rundeck |
+                                        <i class="fa-solid fa-server text-secondary"></i> Déploiement
                                     </small>
                                 </div>
                             </div>
@@ -230,6 +232,18 @@
                                 {% if isEligibleForLogs and r.urlLogs[env] is defined and r.urlLogs[env] != '' %}
                                 <a href="{{ r.urlLogs[env] }}" class="log-link ml-2" target="_blank" title="Voir les logs de {{ env }}">
                                     <i class="fa-solid fa-file-lines text-info"></i>
+                                </a>
+                                {% endif %}
+
+                                {% if r.urlsRundeck[env] is defined and r.urlsRundeck[env] != '' %}
+                                <a href="{{ r.urlsRundeck[env] }}" class="url-link ml-2" target="_blank" title="Voir le Rundeck de {{ env }}">
+                                    <i class="fa-solid fa-code-branch text-danger"></i>
+                                </a>
+                                {% endif %}
+
+                                {% if r.deploymentGcpUrl[env] is defined and r.deploymentGcpUrl[env] != '' %}
+                                <a href="{{ r.deploymentGcpUrl[env] }}" class="url-link ml-2" target="_blank" title="Voir le déploiement de {{ env }}">
+                                    <i class="fa-solid fa-server text-secondary"></i>
                                 </a>
                                 {% endif %}
                             </td>

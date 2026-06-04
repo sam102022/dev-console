@@ -73,6 +73,7 @@ class IndexViewModelFactory
                 'cloudGCP' => $project->isCloudGCP(),
                 'springBoot' => $project->getSpringBoot(),
                 'java' => $project->getJava(),
+                'mdmWorkloadVersion' => $project->getMdmWorkloadVersion(),
                 'techno' => $project->getTechno(),
                 'webUrl' => $project->getWebUrl(),
                 'archived' => $project->isArchived(),
@@ -80,6 +81,7 @@ class IndexViewModelFactory
                 'urlLogs' => $project->getUrlLogs(),
                 'urlFronts' => $project->getUrlFronts(),
                 'urlPubsubs' => $project->getUrlPubsubs(),
+                'urlsRundeck' => $project->getUrlsRundeck(),
             ];
         }
 

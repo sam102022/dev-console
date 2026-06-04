@@ -14,6 +14,7 @@ use App\service\GitlabService;
 use App\tests\fixtures\GitlabProjectEntityFixtures;
 use App\tests\fixtures\GitlabProjectFixtures;
 use App\tests\fixtures\ProjectEntityFixtures;
+use DateMalformedStringException;
 use GuzzleHttp\Exception\GuzzleException;
 
 class GitlabServiceTest extends AbstractServiceCase
@@ -110,9 +111,9 @@ class GitlabServiceTest extends AbstractServiceCase
         $this->client->method('getFile')
             ->willReturnMap([
                 [1, 'pom.xml', true, 'main', '<pom1/>'],
-                [1, 'chart/values.yaml', true, 'main', 'content'],
+                [1, 'chart/Chart.yaml', true, 'main', 'content'],
                 [2, 'pom.xml', true, 'main', '<pom2/>'],
-                [2, 'chart/values.yaml', true, 'main', null],
+                [2, 'chart/Chart.yaml', true, 'main', null],
             ]);
 
         $this->mavenParser->method('parsePomXml')
@@ -136,7 +137,7 @@ class GitlabServiceTest extends AbstractServiceCase
 
     /**
      * @throws GuzzleException
-     * @throws TechnicalException
+     * @throws TechnicalException|DateMalformedStringException
      */
     final public function testScanFromCache(): void
     {

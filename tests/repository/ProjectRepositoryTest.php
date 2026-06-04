@@ -47,8 +47,8 @@ class ProjectRepositoryTest extends TestCase
     final public function testFindAllReturnsProjectObjects(): void
     {
         $projectsData = [
-            ['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a', 'java' => '11', 'archived' => false, 'urlsRundeck' => []],
-            ['name' => 'project-b', 'sf' => 'sf-b', 'sfName' => 'SF B', 'subsf' => 'sub-b', 'java' => '17', 'archived' => true, 'urlsRundeck' => []],
+            ['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a', 'java' => '11', 'archived' => false, 'urlsRundeck' => [], 'deploymentGcpUrl' => []],
+            ['name' => 'project-b', 'sf' => 'sf-b', 'sfName' => 'SF B', 'subsf' => 'sub-b', 'java' => '17', 'archived' => true, 'urlsRundeck' => [], 'deploymentGcpUrl' => []],
         ];
         $this->fileService->method('isFileExists')->willReturn(true);
         $this->fileService->method('read')->willReturn($projectsData);
@@ -76,8 +76,8 @@ class ProjectRepositoryTest extends TestCase
     final public function testFindByCodeReturnsProjectWhenFound(): void
     {
         $projectsData = [
-            ['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a', 'urlsRundeck' => []],
-            ['name' => 'project-b', 'sf' => 'sf-b', 'sfName' => 'SF B', 'subsf' => 'sub-b', 'urlsRundeck' => []],
+            ['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a', 'urlsRundeck' => [], 'deploymentGcpUrl' => []],
+            ['name' => 'project-b', 'sf' => 'sf-b', 'sfName' => 'SF B', 'subsf' => 'sub-b', 'urlsRundeck' => [], 'deploymentGcpUrl' => []],
         ];
         $this->fileService->method('isFileExists')->willReturn(true);
         $this->fileService->method('read')->willReturn($projectsData);
@@ -94,7 +94,7 @@ class ProjectRepositoryTest extends TestCase
      */
     final public function testFindByCodeReturnsNullWhenNotFound(): void
     {
-        $projectsData = [['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a', 'urlsRundeck' => []]];
+        $projectsData = [['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]];
         $this->fileService->method('isFileExists')->willReturn(true);
         $this->fileService->method('read')->willReturn($projectsData);
 
@@ -104,8 +104,8 @@ class ProjectRepositoryTest extends TestCase
 
     final public function testUpdateAll(): void
     {
-        $projectEntity1 = ProjectMapper::projectEntityFromArray(['name' => 'p1', 'sf' => 's', 'sfName' => 'sn', 'subsf' => 'ss', 'urlsRundeck' => []]);
-        $projectEntity2 = ProjectMapper::projectEntityFromArray(['name' => 'p2', 'sf' => 's', 'sfName' => 'sn', 'subsf' => 'ss', 'urlsRundeck' => []]);
+        $projectEntity1 = ProjectMapper::projectEntityFromArray(['name' => 'p1', 'sf' => 's', 'sfName' => 'sn', 'subsf' => 'ss', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]);
+        $projectEntity2 = ProjectMapper::projectEntityFromArray(['name' => 'p2', 'sf' => 's', 'sfName' => 'sn', 'subsf' => 'ss', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]);
         $projectEntities = [$projectEntity1, $projectEntity2];
 
         $this->fileService->expects($this->once())

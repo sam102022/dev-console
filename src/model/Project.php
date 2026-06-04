@@ -23,6 +23,7 @@ class Project extends AbstractModel
     public array $urlFronts = [];
     public array $urlPubsubs = [];
     public array $urlsRundeck = [];
+    public array $deploymentGcpUrl = [];
 
     /**
      * @return string
@@ -306,10 +307,21 @@ class Project extends AbstractModel
         return $this;
     }
 
+    public function getDeploymentGcpUrl(): array
+    {
+        return $this->deploymentGcpUrl;
+    }
+
+    public function setDeploymentGcpUrl(array $deploymentGcpUrl): self
+    {
+        $this->deploymentGcpUrl = $deploymentGcpUrl;
+        return $this;
+    }
+
     public static function build(string  $name, ?string $serviceName, ?string $sf, ?string $sfName, ?string $subsf, bool $cloudGCP,
                                  ?string $springBoot, ?string $java, ?string $techno, ?string $subscriptionName, string $webUrl,
                                  bool $archived, array $urlHealthCheck, array $urlLogs, array $urlFronts, array $urlPubsubs,
-                                 ?string $mdmWorkloadVersion = null, array $urlsRundeck = []): self
+                                 ?string $mdmWorkloadVersion = null, array $urlsRundeck = [], array $deploymentGcpUrl = []): self
     {
         $project = new self();
         $project->setName($name);
@@ -330,6 +342,7 @@ class Project extends AbstractModel
         $project->setUrlFronts($urlFronts);
         $project->setUrlPubsubs($urlPubsubs);
         $project->setUrlsRundeck($urlsRundeck);
+        $project->setDeploymentGcpUrl($deploymentGcpUrl);
         return $project;
     }
 
