@@ -15,12 +15,14 @@ class Project extends AbstractModel
     public ?string $java;
     public ?string $techno = null;
     public ?string $subscriptionName = null;
+    public ?string $mdmWorkloadVersion = null;
     private string $webUrl;
     private bool $archived;
     public array $urlHealthCheck = [];
     public array $urlLogs = [];
     public array $urlFronts = [];
     public array $urlPubsubs = [];
+    public array $urlsRundeck = [];
 
     /**
      * @return string
@@ -203,6 +205,24 @@ class Project extends AbstractModel
     }
 
     /**
+     * @return string|null
+     */
+    public function getMdmWorkloadVersion(): ?string
+    {
+        return $this->mdmWorkloadVersion;
+    }
+
+    /**
+     * @param string|null $mdmWorkloadVersion
+     * @return Project
+     */
+    public function setMdmWorkloadVersion(?string $mdmWorkloadVersion): self
+    {
+        $this->mdmWorkloadVersion = $mdmWorkloadVersion;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getWebUrl(): string
@@ -275,9 +295,21 @@ class Project extends AbstractModel
         return $this;
     }
 
+    public function getUrlsRundeck(): array
+    {
+        return $this->urlsRundeck;
+    }
+
+    public function setUrlsRundeck(array $urlsRundeck): self
+    {
+        $this->urlsRundeck = $urlsRundeck;
+        return $this;
+    }
+
     public static function build(string  $name, ?string $serviceName, ?string $sf, ?string $sfName, ?string $subsf, bool $cloudGCP,
                                  ?string $springBoot, ?string $java, ?string $techno, ?string $subscriptionName, string $webUrl,
-                                 bool $archived, array $urlHealthCheck, array $urlLogs, array $urlFronts, array $urlPubsubs): self
+                                 bool $archived, array $urlHealthCheck, array $urlLogs, array $urlFronts, array $urlPubsubs,
+                                 ?string $mdmWorkloadVersion = null, array $urlsRundeck = []): self
     {
         $project = new self();
         $project->setName($name);
@@ -290,12 +322,14 @@ class Project extends AbstractModel
         $project->setJava($java);
         $project->setTechno($techno);
         $project->setSubscriptionName($subscriptionName);
+        $project->setMdmWorkloadVersion($mdmWorkloadVersion);
         $project->setWebUrl($webUrl);
         $project->setArchived($archived);
         $project->setUrlHealthCheck($urlHealthCheck);
         $project->setUrlLogs($urlLogs);
         $project->setUrlFronts($urlFronts);
         $project->setUrlPubsubs($urlPubsubs);
+        $project->setUrlsRundeck($urlsRundeck);
         return $project;
     }
 

@@ -11,7 +11,7 @@ use App\tests\service\AbstractServiceCase;
 class GitlabProjectMapperTest extends AbstractServiceCase
 {
 
-    public function testFromArray(): void
+    final public function testFromArray(): void
     {
         $data = [
             'id' => 1,
@@ -28,7 +28,6 @@ class GitlabProjectMapperTest extends AbstractServiceCase
 
         $entity = GitlabProjectMapper::fromArray($data);
 
-        $this->assertInstanceOf(GitlabProjectEntity::class, $entity);
         $this->assertEquals(1, $entity->getId());
         $this->assertEquals('A project', $entity->getDescription());
         $this->assertEquals('project-name', $entity->getName());
@@ -41,7 +40,7 @@ class GitlabProjectMapperTest extends AbstractServiceCase
         $this->assertFalse($entity->isArchived());
     }
 
-    public function testFromEntity(): void
+    final public function testFromEntity(): void
     {
         $entity = new GitlabProjectEntity();
         $entity->setId(1);
@@ -57,7 +56,6 @@ class GitlabProjectMapperTest extends AbstractServiceCase
 
         $model = GitlabProjectMapper::fromEntity($entity);
 
-        $this->assertInstanceOf(GitlabProject::class, $model);
         $this->assertEquals(1, $model->getId());
         $this->assertEquals('A project', $model->getDescription());
         $this->assertEquals('project-name', $model->getName());
@@ -70,7 +68,7 @@ class GitlabProjectMapperTest extends AbstractServiceCase
         $this->assertFalse($model->isArchived());
     }
 
-    public function testToEntity(): void
+    final public function testToEntity(): void
     {
         $model = new GitlabProject();
         $model->setId(1);
@@ -86,7 +84,6 @@ class GitlabProjectMapperTest extends AbstractServiceCase
 
         $entity = GitlabProjectMapper::toEntity($model);
 
-        $this->assertInstanceOf(GitlabProjectEntity::class, $entity);
         $this->assertEquals(1, $entity->getId());
         $this->assertEquals('A project', $entity->getDescription());
         $this->assertEquals('project-name', $entity->getName());
@@ -99,7 +96,7 @@ class GitlabProjectMapperTest extends AbstractServiceCase
         $this->assertFalse($entity->isArchived());
     }
 
-    public function testToModel(): void
+    final public function testToModel(): void
     {
         $entity = new GitlabProjectEntity();
         $entity->setId(1);
@@ -115,7 +112,6 @@ class GitlabProjectMapperTest extends AbstractServiceCase
 
         $model = GitlabProjectMapper::toModel($entity);
 
-        $this->assertInstanceOf(GitlabProject::class, $model);
         $this->assertEquals(1, $model->getId());
         $this->assertEquals('A project', $model->getDescription());
         $this->assertEquals('project-name', $model->getName());
@@ -128,7 +124,7 @@ class GitlabProjectMapperTest extends AbstractServiceCase
         $this->assertFalse($model->isArchived());
     }
 
-    public function testToArray(): void
+    final public function testToArray(): void
     {
         $entity = new GitlabProjectEntity();
         $entity->setId(1);
@@ -154,8 +150,7 @@ class GitlabProjectMapperTest extends AbstractServiceCase
             'created_at' => '2023-01-01',
             'default_branch' => 'main',
             'web_url' => 'http://localhost/project',
-            'archived' => false,
-            'mdm_workload_version' => null
+            'archived' => false
         ];
 
         $this->assertEquals($expected, $data);

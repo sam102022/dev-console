@@ -34,7 +34,7 @@ class ProjectRepositoryTest extends TestCase
         $property->setValue($this->repository, $this->fileService);
     }
 
-    public function testFindAllThrowsExceptionWhenCacheIsEmpty(): void
+    final public function testFindAllThrowsExceptionWhenCacheIsEmpty(): void
     {
         $this->fileService->method('isFileExists')->willReturn(false);
         $this->expectException(TechnicalException::class);
@@ -44,11 +44,11 @@ class ProjectRepositoryTest extends TestCase
     /**
      * @throws TechnicalException
      */
-    public function testFindAllReturnsProjectObjects(): void
+    final public function testFindAllReturnsProjectObjects(): void
     {
         $projectsData = [
-            ['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a', 'java' => '11', 'archived' => false],
-            ['name' => 'project-b', 'sf' => 'sf-b', 'sfName' => 'SF B', 'subsf' => 'sub-b', 'java' => '17', 'archived' => true],
+            ['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a', 'java' => '11', 'archived' => false, 'urlsRundeck' => []],
+            ['name' => 'project-b', 'sf' => 'sf-b', 'sfName' => 'SF B', 'subsf' => 'sub-b', 'java' => '17', 'archived' => true, 'urlsRundeck' => []],
         ];
         $this->fileService->method('isFileExists')->willReturn(true);
         $this->fileService->method('read')->willReturn($projectsData);
@@ -63,7 +63,7 @@ class ProjectRepositoryTest extends TestCase
         $this->assertTrue($result[1]->isArchived());
     }
 
-    public function testFindByCodeThrowsExceptionWhenCacheIsEmpty(): void
+    final public function testFindByCodeThrowsExceptionWhenCacheIsEmpty(): void
     {
         $this->fileService->method('isFileExists')->willReturn(false);
         $this->expectException(TechnicalException::class);
@@ -73,11 +73,11 @@ class ProjectRepositoryTest extends TestCase
     /**
      * @throws TechnicalException
      */
-    public function testFindByCodeReturnsProjectWhenFound(): void
+    final public function testFindByCodeReturnsProjectWhenFound(): void
     {
         $projectsData = [
-            ['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a'],
-            ['name' => 'project-b', 'sf' => 'sf-b', 'sfName' => 'SF B', 'subsf' => 'sub-b'],
+            ['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a', 'urlsRundeck' => []],
+            ['name' => 'project-b', 'sf' => 'sf-b', 'sfName' => 'SF B', 'subsf' => 'sub-b', 'urlsRundeck' => []],
         ];
         $this->fileService->method('isFileExists')->willReturn(true);
         $this->fileService->method('read')->willReturn($projectsData);
@@ -92,9 +92,9 @@ class ProjectRepositoryTest extends TestCase
     /**
      * @throws TechnicalException
      */
-    public function testFindByCodeReturnsNullWhenNotFound(): void
+    final public function testFindByCodeReturnsNullWhenNotFound(): void
     {
-        $projectsData = [['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a']];
+        $projectsData = [['name' => 'project-a', 'sf' => 'sf-a', 'sfName' => 'SF A', 'subsf' => 'sub-a', 'urlsRundeck' => []]];
         $this->fileService->method('isFileExists')->willReturn(true);
         $this->fileService->method('read')->willReturn($projectsData);
 
@@ -102,10 +102,10 @@ class ProjectRepositoryTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function testUpdateAll(): void
+    final public function testUpdateAll(): void
     {
-        $projectEntity1 = ProjectMapper::projectEntityFromArray(['name' => 'p1', 'sf' => 's', 'sfName' => 'sn', 'subsf' => 'ss']);
-        $projectEntity2 = ProjectMapper::projectEntityFromArray(['name' => 'p2', 'sf' => 's', 'sfName' => 'sn', 'subsf' => 'ss']);
+        $projectEntity1 = ProjectMapper::projectEntityFromArray(['name' => 'p1', 'sf' => 's', 'sfName' => 'sn', 'subsf' => 'ss', 'urlsRundeck' => []]);
+        $projectEntity2 = ProjectMapper::projectEntityFromArray(['name' => 'p2', 'sf' => 's', 'sfName' => 'sn', 'subsf' => 'ss', 'urlsRundeck' => []]);
         $projectEntities = [$projectEntity1, $projectEntity2];
 
         $this->fileService->expects($this->once())
@@ -114,7 +114,7 @@ class ProjectRepositoryTest extends TestCase
         $this->repository->updateAll($projectEntities);
     }
 
-    public function testPurgeAll(): void
+    final public function testPurgeAll(): void
     {
         $this->fileService->expects($this->once())
             ->method('delete')

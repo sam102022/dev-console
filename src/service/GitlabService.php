@@ -68,10 +68,6 @@ class GitlabService
             $entities = [];
             foreach ($gitLabProjectsData as $gitlabProject) {
                 $entity = GitlabProjectMapper::fromArray($gitlabProject);
-                $chartContent = $this->client->getFile($entity->getId(), 'Chart.yaml', true, $entity->getDefaultBranch());
-                if ($chartContent) {
-                    $entity->setMdmWorkloadVersion($this->chartParser->parse($chartContent));
-                }
                 $entities[] = $entity;
             }
 
@@ -167,6 +163,7 @@ class GitlabService
         $pathInfo = $this->extractPathInfo($gitLabProject);
         $deploymentInfo = $this->getDeploymentInfo($gitLabProject);
         $mavenInfo = $this->scanPomXml($gitLabProject);
+        $mdmWorkloadVersion = $this->scanChartYaml($gitLabProject);
         $techno = $this->getTechno($gitLabProject);
         $subscriptionName = $this->getSubscriptionName($gitLabProject);
 
@@ -183,10 +180,12 @@ class GitlabService
             'subscriptionName' => $subscriptionName,
             'webUrl' => $gitLabProject->getWebUrl(),
             'archived' => $gitLabProject->isArchived(),
+            'mdmWorkloadVersion' => $mdmWorkloadVersion,
             'urlHealthCheck' => [],
             'urlLogs' => [],
             'urlFronts' => [],
             'urlPubsubs' => [],
+            'urlsRundeck' => [],
             ...$mavenInfo ?? [],
         ];
         $project = ProjectMapper::projectFromArray($data);
@@ -220,6 +219,7 @@ class GitlabService
         $project->setUrlLogs($urlsLogs);
         $project->setUrlFronts($urlsFronts);
         $project->setUrlPubsubs($urlsPubsubs);
+        $project->setUrlsRundeck($urlsRundeck);
 
         return $project;
     }
@@ -236,7 +236,22 @@ class GitlabService
         if (!$pom) {
             return null;
         }
-        return $this->mavenParser->parse($pom);
+        return $this->mavenParser->parsePomXml($pom);
+    }
+
+    /**
+     * Scan un fichier chart.yaml d'un projet gitlab
+     *
+     * @param GitlabProject $gitLabProject Le projet gitlab à scanner
+     * @return array|null
+     */
+    private function scanChartYaml(GitlabProject $gitLabProject): ?string
+    {
+        $chartFile = $this->client->getFile($gitLabProject->getId(), 'chart/Chart.yaml', true, $gitLabProject->getDefaultBranch());
+        if (!$chartFile) {
+            return null;
+        }
+        return $this->chartParser->parseChartYaml($chartFile);
     }
 
     private function extractPathInfo(GitlabProject $gitLabProject): array

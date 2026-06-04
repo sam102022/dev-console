@@ -15,12 +15,14 @@ class ProjectEntity
     private ?string $javaVersion;
     private ?string $techno = null;
     private ?string $subscriptionName = null;
+    private ?string $mdmWorkloadVersion = null;
     private string $webUrl;
     private bool $archived;
     private array $urlHealthCheck = [];
     private array $urlLogs = [];
     private array $urlFronts = [];
     private array $urlPubsubs = [];
+    private array $urlsRundeck = [];
 
     public function getName(): string
     {
@@ -75,6 +77,11 @@ class ProjectEntity
         return $this->subscriptionName;
     }
 
+    public function getMdmWorkloadVersion(): ?string
+    {
+        return $this->mdmWorkloadVersion;
+    }
+
     /**
      * @return string
      */
@@ -106,6 +113,11 @@ class ProjectEntity
     public function getUrlPubsubs(): array
     {
         return $this->urlPubsubs;
+    }
+
+    public function getUrlsRundeck(): array
+    {
+        return $this->urlsRundeck;
     }
 
     public function setName(string $name): void
@@ -163,6 +175,11 @@ class ProjectEntity
         $this->subscriptionName = $subscriptionName;
     }
 
+    public function setMdmWorkloadVersion(?string $mdmWorkloadVersion): void
+    {
+        $this->mdmWorkloadVersion = $mdmWorkloadVersion;
+    }
+
     /**
      * @param string $webUrl
      * @return ProjectEntity
@@ -199,6 +216,11 @@ class ProjectEntity
         $this->urlPubsubs = $urlPubsubs;
     }
 
+    public function setUrlsRundeck(array $urlsRundeck): void
+    {
+        $this->urlsRundeck = $urlsRundeck;
+    }
+
     public static function build(
         string  $name,
         ?string $serviceName,
@@ -215,7 +237,9 @@ class ProjectEntity
         array   $urlHealthCheck = [],
         array   $urlLogs = [],
         array   $urlFronts = [],
-        array   $urlPubsubs = []
+        array   $urlPubsubs = [],
+        ?string $mdmWorkloadVersion = null,
+        array   $urlsRundeck = []
     ): self
     {
         $project = new self();
@@ -229,10 +253,12 @@ class ProjectEntity
         $project->setJavaVersion($javaVersion);
         $project->setTechno($techno);
         $project->setSubscriptionName($subscriptionName);
+        $project->setMdmWorkloadVersion($mdmWorkloadVersion);
         $project->setUrlHealthCheck($urlHealthCheck);
         $project->setUrlLogs($urlLogs);
         $project->setUrlFronts($urlFronts);
         $project->setUrlPubsubs($urlPubsubs);
+        $project->setUrlsRundeck($urlsRundeck);
         $project->setWebUrl($webUrl);
         $project->setArchived($archived);
         return $project;

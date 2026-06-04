@@ -12,7 +12,8 @@ class ProjectEntityFixtures
         return ProjectEntity::build('project-a', 'serviceName',
             'sf', 'sfName', 'subsf', true,
             '2.7.0', '17', 'java',
-            'subscriptionName', 'http://url', false);
+            'subscriptionName', 'http://url', false,
+            [], [], [], [], null, []);
     }
 
     public static function getProjectBEntity(): ProjectEntity
@@ -20,6 +21,7 @@ class ProjectEntityFixtures
         return ProjectEntity::build('project-b', null,
             'e', ' e ', 'f', false,
             null, null, '', null,
-            'http://url/b', false);
+            'http://url/b', false,
+            [], [], [], [], null, []);
     }
 }

@@ -11,12 +11,12 @@ class ProjectFixtures
     {
         return Project::build('New Project', 'service-name', 'sf', 'sfName', 'subsf', false,
             '2.7.18', '21',  'java', null, 'http://url/a', false,
-            ['dev' => 'http://url/dev', 'rec' => 'http://url/rec', 'pp' => 'http://url/pp', 'prod' => 'http://url/prod'], [], [], []);
+            ['dev' => 'http://url/dev', 'rec' => 'http://url/rec', 'pp' => 'http://url/pp', 'prod' => 'http://url/prod'], [], [], [], null, []);
     }
 
     public static function getMonitoringProject(string $name, bool $isCloudGcp): Project
     {
         return Project::build($name, null, 'sf', 'SF Name', 'subsf', $isCloudGcp,
-            null, null, '', null, 'http://url', false, [], [], [], []);
+            null, null, '', null, 'http://url', false, [], [], [], [], null, []);
     }
 }

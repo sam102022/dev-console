@@ -7,13 +7,19 @@ use Symfony\Component\Yaml\Yaml;
 
 class ChartParser
 {
-    public function parse(string $content): ?string
+    /**
+     * Analyse le contenu d'un fichier Chart.yaml pour extraire la version de la dépendance mdm-workload.
+     *
+     * @param string $content Le contenu du fichier Chart.yaml.
+     * @return string|null
+     */
+    public function parseChartYaml(string $content): ?string
     {
         if (empty($content)) {
             return null;
         }
 
-        $chart = Yaml::parse($content);
+        $chart = $this->parse($content);
         $dependencies = $chart['dependencies'] ?? [];
 
         foreach ($dependencies as $dependency) {
@@ -23,5 +29,19 @@ class ChartParser
         }
 
         return null;
+    }
+
+    /**
+     * Récupère le contenu d'un fichier .yaml
+     *
+     * @param string $content Le contenu d'un fichier yaml.
+     * @return array|null
+     */
+    private function parse(string $content): ?array
+    {
+        if (empty($content)) {
+            return null;
+        }
+        return Yaml::parse($content);
     }
 }

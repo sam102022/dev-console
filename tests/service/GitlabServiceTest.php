@@ -58,12 +58,9 @@ class GitlabServiceTest extends AbstractServiceCase
         $projects = [['id' => 1, 'description' => 'New Project', 'name' => 'New Project', 'name_with_namespace' => 'name-with-namespace', 'path' => 'path', 'path_with_namespace' => 'path-with-namespace', 'created_at' => '2023-01-01', 'default_branch' => 'main', 'web_url' => 'http://url']];
         $gitlabProjects = [];
         $expectedProjects = [];
-        $chartContent = "dependencies:\n  - name: mdm-workload\n    version: 1.5.0";
 
         $this->gitLabRepository->method('findAll')->willReturn(null)->willReturn($gitlabProjects);
         $this->client->expects($this->once())->method('getAllProjects')->with('group/path')->willReturn($projects);
-        $this->client->expects($this->once())->method('getFile')->with(1, 'Chart.yaml', true, 'main')->willReturn($chartContent);
-        $this->chartParser->expects($this->once())->method('parse')->with($chartContent)->willReturn('1.5.0');
         $this->gitLabRepository->expects($this->once())->method('updateAll');
 
         $result = $this->service->getProjects('group/path');
@@ -79,7 +76,7 @@ class GitlabServiceTest extends AbstractServiceCase
 
         $this->gitLabRepository->method('findAll')->willReturn(null)->willReturn($gitlabProjects);
         $this->client->expects($this->never())->method('getAllProjects')->with('group/path')->willReturn($projects);
-        $this->chartParser->expects($this->never())->method('parse')->with($chartContent)->willReturn('1.5.0');
+        $this->chartParser->expects($this->never())->method('parseChartYaml')->with($chartContent)->willReturn('1.5.0');
         $this->gitLabRepository->expects($this->never())->method('updateAll');
 
         $result = $this->service->getProjects('group/path');
@@ -118,7 +115,7 @@ class GitlabServiceTest extends AbstractServiceCase
                 [2, 'chart/values.yaml', true, 'main', null],
             ]);
 
-        $this->mavenParser->method('parse')
+        $this->mavenParser->method('parsePomXml')
             ->willReturnMap([
                 ['<pom1/>', ['springBoot' => '2.0', 'java' => '11']],
                 ['<pom2/>', ['springBoot' => '1.5', 'java' => '8']],

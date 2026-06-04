@@ -15,7 +15,6 @@ class GitlabProjectEntity
     private string $defaultBranch;
     private string $webUrl;
     private bool $archived;
-    private ?string $mdmWorkloadVersion = null;
 
     /**
      * @return int
@@ -190,20 +189,9 @@ class GitlabProjectEntity
         return $this;
     }
 
-    public function getMdmWorkloadVersion(): ?string
-    {
-        return $this->mdmWorkloadVersion;
-    }
-
-    public function setMdmWorkloadVersion(?string $mdmWorkloadVersion): self
-    {
-        $this->mdmWorkloadVersion = $mdmWorkloadVersion;
-        return $this;
-    }
-
     public static function build(int $id, ?string $description, string $name, string $nameWithNamespace,
                                  string $path, string $path_with_namespace, string $default_branch,
-                                 string $created_at, string $web_url, bool $archived, ?string $mdmWorkloadVersion): self
+                                 string $created_at, string $web_url, bool $archived): self
     {
         $project = new self();
         $project->setId($id);
@@ -216,7 +204,6 @@ class GitlabProjectEntity
         $project->setCreatedAt($created_at);
         $project->setWebUrl($web_url);
         $project->setArchived($archived);
-        $project->setMdmWorkloadVersion($mdmWorkloadVersion);
 
         return $project;
     }

@@ -21,12 +21,14 @@ class ProjectMapper
         $projectEntity->setJavaVersion($data['java'] ?? null);
         $projectEntity->setTechno($data['techno'] ?? null);
         $projectEntity->setSubscriptionName($data['subscriptionName'] ?? null);
+        $projectEntity->setMdmWorkloadVersion($data['mdmWorkloadVersion'] ?? null);
         $projectEntity->setWebUrl($data['webUrl'] ?? '');
         $projectEntity->setArchived($data['archived'] ?? false);
         $projectEntity->setUrlHealthCheck($data['urlHealthCheck'] ?? []);
         $projectEntity->setUrlLogs($data['urlLogs'] ?? []);
         $projectEntity->setUrlFronts($data['urlFronts'] ?? []);
         $projectEntity->setUrlPubsubs($data['urlPubsubs'] ?? []);
+        $projectEntity->setUrlsRundeck($data['urlsRundeck'] ?? []);
 
         return $projectEntity;
     }
@@ -44,12 +46,14 @@ class ProjectMapper
         $project->setJava($data['java'] ?? null);
         $project->setTechno($data['techno'] ?? null);
         $project->setSubscriptionName($data['subscriptionName'] ?? null);
+        $project->setMdmWorkloadVersion($data['mdmWorkloadVersion'] ?? null);
         $project->setWebUrl($data['webUrl'] ?? '');
         $project->setArchived($data['archived'] ?? false);
         $project->setUrlHealthCheck($data['urlHealthCheck'] ?? []);
         $project->setUrlLogs($data['urlLogs'] ?? []);
         $project->setUrlFronts($data['urlFronts'] ?? []);
         $project->setUrlPubsubs($data['urlPubsubs'] ?? []);
+        $project->setUrlsRundeck($data['urlsRundeck'] ?? []);
 
         return $project;
     }
@@ -67,12 +71,14 @@ class ProjectMapper
         $project->setJava($entity->getJavaVersion());
         $project->setTechno($entity->getTechno());
         $project->setSubscriptionName($entity->getSubscriptionName());
+        $project->setMdmWorkloadVersion($entity->getMdmWorkloadVersion());
         $project->setWebUrl($entity->getWebUrl());
         $project->setArchived($entity->isArchived());
         $project->setUrlHealthCheck($entity->getUrlHealthCheck());
         $project->setUrlLogs($entity->getUrlLogs());
         $project->setUrlFronts($entity->getUrlFronts());
         $project->setUrlPubsubs($entity->getUrlPubsubs());
+        $project->setUrlsRundeck($entity->getUrlsRundeck());
 
         return $project;
     }
@@ -95,7 +101,9 @@ class ProjectMapper
             $project->getUrlHealthCheck(),
             $project->getUrlLogs(),
             $project->getUrlFronts(),
-            $project->getUrlPubsubs()
+            $project->getUrlPubsubs(),
+            $project->getMdmWorkloadVersion(),
+            $project->getUrlsRundeck()
         );
     }
 
@@ -112,12 +120,14 @@ class ProjectMapper
             'java' => $projectEntity->getJavaVersion(),
             'techno' => $projectEntity->getTechno(),
             'subscriptionName' => $projectEntity->getSubscriptionName(),
+            'mdmWorkloadVersion' => $projectEntity->getMdmWorkloadVersion(),
             'webUrl' => $projectEntity->getWebUrl(),
             'archived' => $projectEntity->isArchived(),
             'urlHealthCheck' => $projectEntity->getUrlHealthCheck(),
             'urlLogs' => $projectEntity->getUrlLogs(),
             'urlFronts' => $projectEntity->getUrlFronts(),
             'urlPubsubs' => $projectEntity->getUrlPubsubs(),
+            'urlsRundeck' => $projectEntity->getUrlsRundeck(),
         ];
     }
 }

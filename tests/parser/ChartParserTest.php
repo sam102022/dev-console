@@ -53,8 +53,8 @@ YAML,
     }
 
     #[DataProvider('chartContentProvider')]
-    public function testParse(string $content, ?string $expectedVersion): void
+    final public function testParse(string $content, ?string $expectedVersion): void
     {
-        $this->assertEquals($expectedVersion, $this->parser->parse($content));
+        $this->assertEquals($expectedVersion, $this->parser->parseChartYaml($content));
     }
 }

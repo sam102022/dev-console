@@ -11,22 +11,21 @@ class GitlabProjectEntityFixtures
     {
         return GitlabProjectEntity::build(1, 'New Project', 'project-a',
             'name-with-namespace', 'path', 'path-with-namespace',
-            'main', '2023-01-01', 'http://url/a', false, null);
+            'main', '2023-01-01', 'http://url/a', false);
     }
 
     public static function getGitlabProjectEntityB(): GitlabProjectEntity
     {
         return GitlabProjectEntity::build(2, 'New Project', 'project-b',
             'a / b / e / f', 'a/b/e/f', 'a/b/e/f',
-            'main', '2023-01-01', 'http://url/b', false,
-            null);
+            'main', '2023-01-01', 'http://url/b', false);
     }
 
     public static function getGitlabProjectEntityExcluded(): GitlabProjectEntity
     {
         return GitlabProjectEntity::build(3, 'New Project', 'excluded-project',
             'a / b / g / h', 'a/b/g/h', 'a/b/g/h',
-            'main', '2023-01-01', 'http://url/c', false, null);
+            'main', '2023-01-01', 'http://url/c', false);
     }
 
     public static function getGitlabProjectEntity(): GitlabProjectEntity
@@ -34,7 +33,7 @@ class GitlabProjectEntityFixtures
         return GitlabProjectEntity::build(1, 'New Project', 'New Project',
             'name-with-namespace', 'path',
             'path-with-namespace', 'main', '2023-01-01',
-            'http://url', false, null);
+            'http://url', false);
     }
 
     public static function getGitlabProjectData(): array
@@ -42,15 +41,13 @@ class GitlabProjectEntityFixtures
         return ['id' => 1, 'description' => 'New Project', 'name' => 'New Project',
             'name_with_namespace' => 'name-with-namespace', 'path' => 'path',
             'path_with_namespace' => 'path-with-namespace', 'created_at' => '2023-01-01',
-            'default_branch' => 'main', 'web_url' => 'http://url', 'archived' => false,
-            'mdm_workload_version' => null];
+            'default_branch' => 'main', 'web_url' => 'http://url', 'archived' => false];
     }
 
     public static function getGitlabProjectEntityFromCache(): GitlabProjectEntity
     {
         return GitlabProjectEntity::build(1, 'New Project', 'Project From Cache',
             'name-with-namespace', 'path', 'path-with-namespace',
-            'main', '2023-01-01', 'http://url', false,
-            null);
+            'main', '2023-01-01', 'http://url', false);
     }
 }
