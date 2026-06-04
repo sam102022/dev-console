@@ -82,6 +82,7 @@ class IndexViewModelFactory
                 'urlFronts' => $project->getUrlFronts(),
                 'urlPubsubs' => $project->getUrlPubsubs(),
                 'urlsRundeck' => $project->getUrlsRundeck(),
+                'urlsDeploymentGcp' => $project->getUrlsDeploymentGcp(),
             ];
         }
 

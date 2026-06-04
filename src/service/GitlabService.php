@@ -186,7 +186,7 @@ class GitlabService
             'urlFronts' => [],
             'urlPubsubs' => [],
             'urlsRundeck' => [],
-            'deploymentGcpUrl' => [],
+            'urlsDeploymentGcp' => [],
             ...$mavenInfo ?? [],
         ];
         $project = ProjectMapper::projectFromArray($data);
@@ -196,7 +196,7 @@ class GitlabService
         $urlsFronts = [];
         $urlsPubsubs = [];
         $urlsRundeck = [];
-        $deploymentGcpUrl = [];
+        $urlsDeploymentGcp = [];
         foreach (EnumEnvironment::cases() as $env) {
             if ($techno === 'java') {
                 $urlsHealth[$env->value] = MonitoringUtils::buildUrlHealthCheck($project, $env, $this->excludeProjects);
@@ -217,7 +217,7 @@ class GitlabService
                 $urlsRundeck[$env->value] = MonitoringUtils::buildRundeckUrl($project, $env);
             }
             if ($project->isCloudGCP()) {
-                $deploymentGcpUrl[$env->value] = MonitoringUtils::buildDeploymentGcpUrl($project, $env);
+                $urlsDeploymentGcp[$env->value] = MonitoringUtils::buildDeploymentGcpUrl($project, $env);
             }
         }
         $project->setUrlHealthCheck($urlsHealth);
@@ -225,7 +225,7 @@ class GitlabService
         $project->setUrlFronts($urlsFronts);
         $project->setUrlPubsubs($urlsPubsubs);
         $project->setUrlsRundeck($urlsRundeck);
-        $project->setDeploymentGcpUrl($deploymentGcpUrl);
+        $project->setUrlsDeploymentGcp($urlsDeploymentGcp);
 
         return $project;
     }

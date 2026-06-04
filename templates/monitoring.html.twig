@@ -209,7 +209,7 @@
                             </td>
 
                             {% for env in ['dev', 'rec', 'pp', 'prod'] %}
-                            <td class="col-{{ env }} text-center" data-env="{{ env }}"
+                            <td class="col-{{ env }} text-left" data-env="{{ env }}"
                                 data-url-health="{% if isEligibleForHealth %}{{ r.urlHealthCheck[env] | default('') }}{% endif %}"
                                 data-url-logs="{{ r.urlLogs[env] | default('') }}">
 
@@ -241,8 +241,8 @@
                                 </a>
                                 {% endif %}
 
-                                {% if r.deploymentGcpUrl[env] is defined and r.deploymentGcpUrl[env] != '' %}
-                                <a href="{{ r.deploymentGcpUrl[env] }}" class="url-link ml-2" target="_blank" title="Voir le déploiement de {{ env }}">
+                                {% if r.urlsDeploymentGcp[env] is defined and r.urlsDeploymentGcp[env] != '' %}
+                                <a href="{{ r.urlsDeploymentGcp[env] }}" class="url-link ml-2" target="_blank" title="Voir le déploiement de {{ env }}">
                                     <i class="fa-solid fa-server text-secondary"></i>
                                 </a>
                                 {% endif %}

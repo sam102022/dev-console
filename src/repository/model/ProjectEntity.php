@@ -23,7 +23,7 @@ class ProjectEntity
     private array $urlFronts = [];
     private array $urlPubsubs = [];
     private array $urlsRundeck = [];
-    private array $deploymentGcpUrl = [];
+    private array $urlsDeploymentGcp = [];
 
     public function getName(): string
     {
@@ -121,9 +121,9 @@ class ProjectEntity
         return $this->urlsRundeck;
     }
 
-    public function getDeploymentGcpUrl(): array
+    public function getUrlsDeploymentGcp(): array
     {
-        return $this->deploymentGcpUrl;
+        return $this->urlsDeploymentGcp;
     }
 
     public function setName(string $name): void
@@ -227,9 +227,9 @@ class ProjectEntity
         $this->urlsRundeck = $urlsRundeck;
     }
 
-    public function setDeploymentGcpUrl(array $deploymentGcpUrl): void
+    public function setUrlsDeploymentGcp(array $urlsDeploymentGcp): void
     {
-        $this->deploymentGcpUrl = $deploymentGcpUrl;
+        $this->urlsDeploymentGcp = $urlsDeploymentGcp;
     }
 
     public static function build(
@@ -251,7 +251,7 @@ class ProjectEntity
         array   $urlPubsubs = [],
         ?string $mdmWorkloadVersion = null,
         array   $urlsRundeck = [],
-        array   $deploymentGcpUrl = []
+        array   $urlsDeploymentGcp = []
     ): self
     {
         $project = new self();
@@ -271,7 +271,7 @@ class ProjectEntity
         $project->setUrlFronts($urlFronts);
         $project->setUrlPubsubs($urlPubsubs);
         $project->setUrlsRundeck($urlsRundeck);
-        $project->setDeploymentGcpUrl($deploymentGcpUrl);
+        $project->setUrlsDeploymentGcp($urlsDeploymentGcp);
         $project->setWebUrl($webUrl);
         $project->setArchived($archived);
         return $project;

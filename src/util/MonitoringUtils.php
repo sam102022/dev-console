@@ -352,7 +352,7 @@ class MonitoringUtils
     }
 
     /**
-     * Construit l'URL du rundeck d'un projet.
+     * Construit l'URL du serveur rundeck d'un sf.
      *
      * @param Project $project L'objet projet PHP.
      * @param EnumEnvironment $env L'environnement ciblé.
@@ -365,10 +365,19 @@ class MonitoringUtils
         return sprintf($pattern, $env->value, $project->getSubsf());
     }
 
-    public static function buildDeploymentGcpUrl(Project $project, EnumEnvironment $env): string{
-
+    /**
+     * Construit l'URL de deploiement GCP d'un projet.
+     *
+     * @param Project $project L'objet projet PHP.
+     * @param EnumEnvironment $env L'environnement ciblé.
+     * @return string L'URL de deploiement GCP.
+     */
+    public static function buildDeploymentGcpUrl(Project $project, EnumEnvironment $env): string
+    {
         // Ex : https://console.cloud.google.com/kubernetes/deployment/europe-west1/kube-dev/stores-stock/flow-stores-stock-composition/overview?hl=fr&project=mdm-core-infra-dev&supportedpurview=project
-        $pattern = 'https://console.cloud.google.com/kubernetes/deployment/europe-west1/kube-%s/%s/%s/overview?hl=fr&project=mdm-core-infra-%s&supportedpurview=project';
+        $urlBase = 'https://console.cloud.google.com/kubernetes/deployment/europe-west1/kube-%s/%s/%s/overview';
+        $query = '?hl=fr&project=mdm-core-infra-%s&supportedpurview=project';
+        $pattern = $urlBase . $query;
 
         return sprintf($pattern, $env->value, $project->getSubsf(), $project->getName(), $env->value);
     }
