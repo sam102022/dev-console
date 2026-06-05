@@ -44,11 +44,11 @@ class GitlabController
                     $response = $this->gitlabService->scan();
                     break;
                 case ACTION_GITLAB_TREE:
-                    $projectId = $this->appConfig->getParamConfig()->getGitlabBusinessContractProjectId();
+                    $projectId = $this->appConfig->getParamConfig()->getParamGitLab()->getGitlabBusinessContractProjectId();
                     $response = $this->gitlabService->getTree($projectId, $_REQUEST['path'] ?? '');
                     break;
                 case ACTION_GITLAB_FILE:
-                    $projectId = $this->appConfig->getParamConfig()->getGitlabBusinessContractProjectId();
+                    $projectId = $this->appConfig->getParamConfig()->getParamGitLab()->getGitlabBusinessContractProjectId();
                     $response = $this->gitlabService->getFile($projectId, $_REQUEST['file'] ?? '');
                     break;
                 case ACTION_NEW_RELIC_URL:

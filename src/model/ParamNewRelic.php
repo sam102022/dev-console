@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\model;
 
+use InvalidArgumentException;
+
 class ParamNewRelic
 {
     private string $apiUser;
@@ -90,4 +92,26 @@ class ParamNewRelic
         return $this;
     }
 
+    public static function parse(array $params): self
+    {
+        if (!isset($params['newrelic-api-user'],
+            //$params['newrelic-account-id-dev'],
+            $params['newrelic-account-id-rec'],
+            //$params['newrelic-account-id-pp'],
+            $params['newrelic-account-id-prod'],
+            $params['newrelic-api-key-rec'], $params['newrelic-api-key-prod'])) {
+            throw new InvalidArgumentException("Certains paramètres newRelic requis sont manquants.");
+        }
+
+        $paramNewRelic = new self();
+        $paramNewRelic->setApiUser($params['newrelic-api-user'] ?? '');
+        $paramNewRelic->setApiKeyRec($params['newrelic-api-key-rec'] ?? '');
+        $paramNewRelic->setApiKeyProd($params['newrelic-api-key-prod'] ?? '');
+        $paramNewRelic->setAccountIdDev((int)($params['newrelic-account-id-dev'] ?? 0));
+        $paramNewRelic->setAccountIdRec((int)($params['newrelic-account-id-rec'] ?? 0));
+        $paramNewRelic->setAccountIdPreprod((int)($params['newrelic-account-id-pp'] ?? 0));
+        $paramNewRelic->setAccountIdProd((int)($params['newrelic-account-id-prod'] ?? 0));
+
+        return $paramNewRelic;
+    }
 }

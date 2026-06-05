@@ -17,17 +17,15 @@ class GitLabClient
     private const string BASE_URI = '/api/v4/projects';
 
     private string $token;
-    private readonly Client $client;
     private Logger $logger;
 
     public function __construct(
-        Client        $client,
-        AppConfig     $appConfig,
-        LoggerFactory $loggerFactory)
+        private readonly Client $client,
+        AppConfig               $appConfig,
+        LoggerFactory           $loggerFactory)
     {
-        $this->token = $appConfig->getParamConfig()->getGitlabToken();
-        $this->client = $client;
         $this->logger = $loggerFactory->get(__CLASS__);
+        $this->token = $appConfig->getParamConfig()->getParamGitLab()->getGitlabToken();
     }
 
     /**

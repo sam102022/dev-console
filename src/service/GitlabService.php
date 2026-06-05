@@ -42,7 +42,7 @@ class GitlabService
     )
     {
         $this->logger = $loggerFactory->get(__CLASS__);
-        $this->excludeProjects = $this->appConfig->getParamConfig()->getExcludeProjects();
+        $this->excludeProjects = $this->appConfig->getParamConfig()->getParamGitLab()->getExcludeProjects();
     }
 
     /**
@@ -368,7 +368,7 @@ class GitlabService
     private function initProjects(): array
     {
         $this->logger->info("Le cache des projets Java est vide, scan en cours...");
-        $gitlabProjects = $this->getProjects($this->appConfig->getParamConfig()->getGitlabPathGroupDefault());
+        $gitlabProjects = $this->getProjects($this->appConfig->getParamConfig()->getParamGitLab()->getGitlabPathGroupDefault());
         $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . ' nb gitlab projects:' . count($gitlabProjects));
 
         $projects = [];

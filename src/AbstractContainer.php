@@ -149,7 +149,7 @@ abstract class AbstractContainer
         // Clients
         $this->set(GitLabClient::class, fn($c) => new GitLabClient(
             new Client([
-                'base_uri' => $c->get(AppConfig::class)->getParamConfig()->getGitlabUrl()
+                'base_uri' => $c->get(AppConfig::class)->getParamConfig()->getParamGitLab()->getGitlabUrl()
             ]),
             $c->get(AppConfig::class),
             $c->get(LoggerFactory::class)
