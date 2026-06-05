@@ -13,7 +13,7 @@ class ProjectMapper
         $projectEntity = new ProjectEntity();
         $projectEntity->setName($data['name']);
         $projectEntity->setServiceName($data['serviceName']);
-        $projectEntity->setSf($data['sf'] ?? '');
+        $projectEntity->setDomain($data['domain'] ?? '');
         $projectEntity->setDomainName($data['domainName'] ?? '');
         $projectEntity->setSubsf($data['subsf'] ?? '');
         $projectEntity->setCloudGCP($data['cloudGCP'] ?? false);
@@ -39,7 +39,7 @@ class ProjectMapper
         $project = new Project();
         $project->setName($data['name']);
         $project->setServiceName($data['serviceName']);
-        $project->setSf($data['sf'] ?? '');
+        $project->setDomain($data['domain'] ?? '');
         $project->setDomainName($data['domainName'] ?? '');
         $project->setSubsf($data['subsf'] ?? '');
         $project->setCloudGCP($data['cloudGCP'] ?? false);
@@ -65,7 +65,7 @@ class ProjectMapper
         $project = new Project();
         $project->setName($entity->getName());
         $project->setServiceName($entity->getServiceName());
-        $project->setSf($entity->getSf());
+        $project->setDomain($entity->getDomain());
         $project->setDomainName($entity->getDomainName());
         $project->setSubsf($entity->getSubsf());
         $project->setCloudGCP($entity->isCloudGCP());
@@ -91,7 +91,7 @@ class ProjectMapper
         return ProjectEntity::build(
             $project->getName(),
             $project->getServiceName(),
-            $project->getSf() ?? '',
+            $project->getDomain() ?? '',
             $project->getDomainName() ?? '',
             $project->getSubsf() ?? '',
             $project->isCloudGCP(),
@@ -116,7 +116,7 @@ class ProjectMapper
         return [
             'name' => $projectEntity->getName(),
             'serviceName' => $projectEntity->getName(),
-            'sf' => $projectEntity->getSf(),
+            'domain' => $projectEntity->getDomain(),
             'domainName' => $projectEntity->getDomainName(),
             'subsf' => $projectEntity->getSubsf(),
             'cloudGCP' => $projectEntity->isCloudGCP(),

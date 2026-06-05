@@ -56,8 +56,8 @@ class IndexViewModelFactory
 
         /** @var Project $project */
         foreach ($this->results as $project) {
-            if ($project->getSf()) {
-                $domains[$project->getSf()] = $project->getDomainName();
+            if ($project->getDomain()) {
+                $domains[$project->getDomain()] = $project->getDomainName();
             }
             if ($project->getSubsf()) {
                 $subsfs[$project->getSubsf()] = $project->getSubsf();
@@ -69,7 +69,7 @@ class IndexViewModelFactory
             // Formate chaque projet pour inclure les URLs directement
             $formattedResults[] = [
                 'name' => $project->getName(),
-                'domain' => $project->getSf(),
+                'domain' => $project->getDomain(),
                 'domainName' => $project->getDomainName(),
                 'subsf' => $project->getSubsf(),
                 'cloudGCP' => $project->isCloudGCP(),

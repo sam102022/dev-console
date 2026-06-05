@@ -7,7 +7,7 @@ class ProjectEntity
 {
     private string $name;
     public ?string $serviceName = null;
-    private string $sf;
+    private string $domain;
     private string $domainName;
     private string $subsf;
     private bool $cloudGCP;
@@ -38,9 +38,9 @@ class ProjectEntity
         return $this->serviceName;
     }
 
-    public function getSf(): string
+    public function getDomain(): string
     {
-        return $this->sf;
+        return $this->domain;
     }
 
     public function getDomainName(): string
@@ -141,9 +141,9 @@ class ProjectEntity
         return $this;
     }
 
-    public function setSf(string $sf): void
+    public function setDomain(string $domain): void
     {
-        $this->sf = $sf;
+        $this->domain = $domain;
     }
 
     public function setDomainName(string $domainName): void
@@ -235,7 +235,7 @@ class ProjectEntity
     public static function build(
         string  $name,
         ?string $serviceName,
-        string  $sf,
+        string  $domain,
         string  $domainName,
         string  $subsf,
         bool    $cloudGCP,
@@ -257,7 +257,7 @@ class ProjectEntity
         $project = new self();
         $project->setName($name);
         $project->setServiceName($serviceName);
-        $project->setSf($sf);
+        $project->setDomain($domain);
         $project->setDomainName($domainName);
         $project->setSubsf($subsf);
         $project->setCloudGCP($cloudGCP);

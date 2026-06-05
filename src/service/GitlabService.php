@@ -186,7 +186,7 @@ class GitlabService
         $data = [
             'name' => $projectName,
             'serviceName' => $deploymentInfo['deployName'],
-            'sf' => $pathInfo['sf'],
+            'domain' => $pathInfo['domain'],
             'domainName' => $pathInfo['domainName'],
             'subsf' => $pathInfo['subsf'],
             'cloudGCP' => $deploymentInfo['cloudGCP'],
@@ -264,7 +264,7 @@ class GitlabService
         $path = explode('/', $gitLabProject->getPathWithNamespace() ?? '');
         $namePath = explode('/', $gitLabProject->getNameWithNamespace() ?? '');
         return [
-            'sf' => $path[2] ?? null,
+            'domain' => $path[2] ?? null,
             'domainName' => $namePath[2] ?? null,
             'subsf' => $path[3] ?? null,
         ];

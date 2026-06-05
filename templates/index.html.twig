@@ -34,7 +34,7 @@
             <thead class="thead-dark">
                 <tr>
                     <th>#</th>
-                    <th><a class="sortable-header" data-sort="sf">SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                    <th><a class="sortable-header" data-sort="domain">Domaine <i class="fa-solid fa-sort sort-icon"></i></a></th>
                     <th><a class="sortable-header" data-sort="subsf">sub SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
                     <th><a class="sortable-header" data-sort="name">Projet <i class="fa-solid fa-sort sort-icon"></i></a></th>
                     <th><a class="sortable-header" data-sort="gcp">GCP <i class="fa-solid fa-sort sort-icon"></i></a></th>
@@ -46,9 +46,9 @@
                 <tr>
                     <th></th>
                     <th>
-                        <select id="filter_sf" class="form-control filter-input">
+                        <select id="filter_domain" class="form-control filter-input">
                             <option value="all">Tous</option>
-{% for key, value in sfs %}
+{% for key, value in domains %}
                             <option value="{{ key }}">{{ value }}</option>
 {% endfor %}
                         </select>
@@ -102,7 +102,7 @@
                 {% for r in results %}
                     <tr class="project-row">
                         <td class="col-index text-muted font-weight-bold"></td>
-                        <td class="col-sf" data-value="{{ r.sf }}">{{ r.sf }}</td>
+                        <td class="col-domain" data-value="{{ r.domain }}">{{ r.domain }}</td>
                         <td class="col-subsf" data-value="{{ r.subsf }}">{{ r.subsf }}</td>
                         <td class="col-name">
                             {% if r.webUrl is defined and r.webUrl != '' %}
@@ -182,7 +182,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Éléments DOM (Filtres)
-    const filterSf = document.getElementById('filter_sf');
+    const filterDomain = document.getElementById('filter_domain');
     const filterSubsf = document.getElementById('filter_subsf');
     const filterProjectName = document.getElementById('filter_project_name');
     const filterGcp = document.getElementById('filter_gcp');
@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getColumnValue(row, column) {
         switch(column) {
-            case 'sf': return row.querySelector('.col-sf').getAttribute('data-value');
+            case 'domain': return row.querySelector('.col-domain').getAttribute('data-value');
             case 'subsf': return row.querySelector('.col-subsf').getAttribute('data-value');
             case 'name': return row.querySelector('.col-name').textContent.trim();
             case 'gcp': return row.querySelector('.col-gcp').getAttribute('data-value');
@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- LOGIQUE DE FILTRAGE ---
     function applyFilters() {
-        const valSf = filterSf.value.toLowerCase();
+        const valDomain = filterDomain.value.toLowerCase();
         const valSubsf = filterSubsf.value.toLowerCase();
         const valName = filterProjectName.value.toLowerCase();
         const valGcp = filterGcp.value.toLowerCase();
@@ -292,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
         rows.forEach(row => {
             row.style.display = 'none';
 
-            const sf = row.querySelector('.col-sf').getAttribute('data-value').toLowerCase();
+            const domain = row.querySelector('.col-domain').getAttribute('data-value').toLowerCase();
             const subsf = row.querySelector('.col-subsf').getAttribute('data-value').toLowerCase();
             const name = row.querySelector('.col-name').textContent.toLowerCase();
             const gcp = row.querySelector('.col-gcp').getAttribute('data-value').toLowerCase();
@@ -301,7 +301,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const mdm = row.querySelector('.col-mdm').textContent.toLowerCase();
             const status = row.querySelector('.status-label').textContent.trim().toLowerCase();
 
-            const matchSf = (valSf === 'all' || sf === valSf);
+            const matchDomain = (valDomain === 'all' || domain === valDomain);
             const matchSubsf = (valSubsf === 'all' || subsf === valSubsf);
             const matchName = (valName === '' || name.includes(valName));
             const matchGcp = (valGcp === 'all' || gcp === valGcp);
@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const matchMdm = (valMdm === '' || mdm.includes(valMdm));
             const matchStatus = (valStatus === 'all' || status === valStatus);
 
-            if (matchSf && matchSubsf && matchName && matchGcp && matchSb && matchJava && matchMdm && matchStatus) {
+            if (matchDomain && matchSubsf && matchName && matchGcp && matchSb && matchJava && matchMdm && matchStatus) {
                 filteredRows.push(row);
             }
         });

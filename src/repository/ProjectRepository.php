@@ -59,6 +59,7 @@ class ProjectRepository
 
     /**
      * @param ProjectEntity[] $projectEntities
+     * @throws TechnicalException
      */
     public function updateAll(array $projectEntities): void
     {

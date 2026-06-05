@@ -47,8 +47,8 @@ class ProjectRepositoryTest extends TestCase
     final public function testFindAllReturnsProjectObjects(): void
     {
         $projectsData = [
-            ['name' => 'project-a', 'serviceName' => null, 'sf' => 'sf-a', 'domainName' => 'SF A', 'subsf' => 'sub-a', 'java' => '11', 'archived' => false, 'urlsRundeck' => [], 'deploymentGcpUrl' => []],
-            ['name' => 'project-b', 'serviceName' => null, 'sf' => 'sf-b', 'domainName' => 'SF B', 'subsf' => 'sub-b', 'java' => '17', 'archived' => true, 'urlsRundeck' => [], 'deploymentGcpUrl' => []]
+            ['name' => 'project-a', 'serviceName' => null, 'domain' => 'sf-a', 'domainName' => 'SF A', 'subsf' => 'sub-a', 'java' => '11', 'archived' => false, 'urlsRundeck' => [], 'deploymentGcpUrl' => []],
+            ['name' => 'project-b', 'serviceName' => null, 'domain' => 'sf-b', 'domainName' => 'SF B', 'subsf' => 'sub-b', 'java' => '17', 'archived' => true, 'urlsRundeck' => [], 'deploymentGcpUrl' => []]
         ];
         $this->fileService->method('isFileExists')->willReturn(true);
         $this->fileService->method('read')->willReturn($projectsData);
@@ -76,8 +76,8 @@ class ProjectRepositoryTest extends TestCase
     final public function testFindByCodeReturnsProjectWhenFound(): void
     {
         $projectsData = [
-            ['name' => 'project-a', 'serviceName' => null, 'sf' => 'sf-a', 'domainName' => 'SF A', 'subsf' => 'sub-a', 'urlsRundeck' => [], 'deploymentGcpUrl' => []],
-            ['name' => 'project-b', 'serviceName' => null, 'sf' => 'sf-b', 'domainName' => 'SF B', 'subsf' => 'sub-b', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]
+            ['name' => 'project-a', 'serviceName' => null, 'domain' => 'sf-a', 'domainName' => 'SF A', 'subsf' => 'sub-a', 'urlsRundeck' => [], 'deploymentGcpUrl' => []],
+            ['name' => 'project-b', 'serviceName' => null, 'domain' => 'sf-b', 'domainName' => 'SF B', 'subsf' => 'sub-b', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]
         ];
         $this->fileService->method('isFileExists')->willReturn(true);
         $this->fileService->method('read')->willReturn($projectsData);
@@ -86,7 +86,7 @@ class ProjectRepositoryTest extends TestCase
 
         $this->assertInstanceOf(ProjectEntity::class, $result);
         $this->assertEquals('project-b', $result->getName());
-        $this->assertEquals('sf-b', $result->getSf());
+        $this->assertEquals('sf-b', $result->getDomain());
     }
 
     /**
@@ -94,7 +94,7 @@ class ProjectRepositoryTest extends TestCase
      */
     final public function testFindByCodeReturnsNullWhenNotFound(): void
     {
-        $projectsData = [['name' => 'project-a', 'serviceName' => null, 'sf' => 'sf-a', 'domainName' => 'SF A', 'subsf' => 'sub-a', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]];
+        $projectsData = [['name' => 'project-a', 'serviceName' => null, 'domain' => 'sf-a', 'domainName' => 'SF A', 'subsf' => 'sub-a', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]];
 
         $this->fileService->method('isFileExists')->willReturn(true);
         $this->fileService->method('read')->willReturn($projectsData);
@@ -105,8 +105,8 @@ class ProjectRepositoryTest extends TestCase
 
     final public function testUpdateAll(): void
     {
-        $projectEntity1 = ProjectMapper::projectEntityFromArray(['name' => 'p1', 'sf' => 's', 'domainName' => 'sn', 'subsf' => 'ss', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]);
-        $projectEntity2 = ProjectMapper::projectEntityFromArray(['name' => 'p2', 'sf' => 's', 'domainName' => 'sn', 'subsf' => 'ss', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]);
+        $projectEntity1 = ProjectMapper::projectEntityFromArray(['name' => 'p1', 'domain' => 's', 'domainName' => 'sn', 'subsf' => 'ss', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]);
+        $projectEntity2 = ProjectMapper::projectEntityFromArray(['name' => 'p2', 'domain' => 's', 'domainName' => 'sn', 'subsf' => 'ss', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]);
         $projectEntities = [$projectEntity1, $projectEntity2];
 
         $this->fileService->expects($this->once())
