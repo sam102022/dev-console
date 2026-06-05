@@ -31,11 +31,8 @@ class ParamConfig extends AbstractModel
     /** @var ParamGitLab Les paramètres GitLab. */
     private ParamGitLab $paramGitLab;
 
-    /** @var string L'API Key de Postman. */
-    private string $postmanApiKey;
-
-    /** @var string L'URL de l'API Postman. */
-    private string $postmanApiUrl;
+    /** @var ParamPostman Les paramètres Postman. */
+    private ParamPostman $paramPostman;
 
     /** @var string Le token e107. */
     private string $tokenE107;
@@ -69,14 +66,9 @@ class ParamConfig extends AbstractModel
         return $this->paramGitLab;
     }
 
-    public function getPostmanApiUrl(): string
+    public function getParamPostman(): ParamPostman
     {
-        return $this->postmanApiUrl;
-    }
-
-    public function getPostmanApiKey(): string
-    {
-        return $this->postmanApiKey;
+        return $this->paramPostman;
     }
 
     public function getTokenE107(): string
@@ -114,14 +106,9 @@ class ParamConfig extends AbstractModel
         $this->paramGitLab = $paramGitLab;
     }
 
-    public function setPostmanApiKey(string $postmanApiKey): void
+    public function setParamPostman(ParamPostman $paramPostman): void
     {
-        $this->postmanApiKey = $postmanApiKey;
-    }
-
-    public function setPostmanApiUrl(string $postmanApiUrl): void
-    {
-        $this->postmanApiUrl = $postmanApiUrl;
+        $this->paramPostman = $paramPostman;
     }
 
     public function setTokenE107(string $tokenE107): void
@@ -145,30 +132,27 @@ class ParamConfig extends AbstractModel
         if (empty($params)) {
             throw new InvalidArgumentException("Le tableau de paramètres est vide.");
         }
-        if (!isset($params['base_url'], $params['host'], $params['port'],
-            $params['postman_api_key'], $params['postman_api_url'])) {
+        if (!isset($params['base_url'], $params['host'], $params['port'])) {
             throw new InvalidArgumentException("Certains paramètres requis sont manquants.");
         }
         $paramRepository = ParamRepository::parse($params);
         $paramGitLab = ParamGitLab::parse($params);
+        $paramPostman = ParamPostman::parse($params);
         $paramNewRelic = ParamNewRelic::parse($params);
 
         $urlServer = $params['base_url'] ?? '';
         $ipLocal = $params['host'] ?? 'localhost';
         $portLocal = (int)($params['port'] ?? 80);
 
-        $postmanApiKey = $params['postman_api_key'] ?? '';
-        $postmanApiUrl = $params['postman_api_url'] ?? '';
         $tokenE107 = $params['token_e107'] ?? '';
 
         $paramConfig = new self();
         $paramConfig->setParamRepository($paramRepository);
         $paramConfig->setParamGitLab($paramGitLab);
+        $paramConfig->setParamPostman($paramPostman);
         $paramConfig->setIpLocal($ipLocal);
         $paramConfig->setPortLocal($portLocal);
         $paramConfig->setUrlServer($urlServer);
-        $paramConfig->setPostmanApiKey($postmanApiKey);
-        $paramConfig->setPostmanApiUrl($postmanApiUrl);
         $paramConfig->setTokenE107($tokenE107);
         $paramConfig->setParamNewRelic($paramNewRelic);
 

@@ -46,8 +46,8 @@
                             <label class="form-check-label" for="toggle-col-domain">Domaine</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-subsf" data-column="subsf" checked>
-                            <label class="form-check-label" for="toggle-col-subsf">SF</label>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-sf" data-column="sf" checked>
+                            <label class="form-check-label" for="toggle-col-sf">SF</label>
                         </div>
                         <div class="form-check">
                             <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-techno" data-column="techno" checked>
@@ -94,7 +94,7 @@
                         </th>
                         <th style="width: 50px;">#</th>
                         <th data-column="domain"><a class="sortable-header" data-sort="domain">Domaine <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th data-column="subsf"><a class="sortable-header" data-sort="subsf">SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                        <th data-column="sf"><a class="sortable-header" data-sort="sf">SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
                         <th><a class="sortable-header" data-sort="name">Nom <i class="fa-solid fa-sort sort-icon"></i></a></th>
                         <th data-column="techno"><a class="sortable-header" data-sort="techno">Techno <i class="fa-solid fa-sort sort-icon"></i></a></th>
                         <th data-column="archived"><a class="sortable-header" data-sort="archived">Archivé <i class="fa-solid fa-sort sort-icon"></i></a></th>
@@ -148,16 +148,16 @@
                                 </div>
                             </div>
                         </th>
-                        <th data-column="subsf">
+                        <th data-column="sf">
                             <div class="input-group input-group-sm">
-                                <select id="filter_subsf" class="form-control custom-select filter-input">
+                                <select id="filter_sf" class="form-control custom-select filter-input">
                                     <option value="all">Tous</option>
-                                    {% for key, value in subsfs %}
+                                    {% for key, value in sfs %}
                                         <option value="{{ key }}">{{ value }}</option>
                                     {% endfor %}
                                 </select>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_subsf').value='all'; document.getElementById('filter_subsf').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_sf').value='all'; document.getElementById('filter_sf').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                             </div>
                         </th>
@@ -233,7 +233,7 @@
                             </td>
                             <td class="col-index text-muted font-weight-bold"></td>
                             <td class="col-domain" data-column="domain" data-value="{{ r.domain }}">{{ r.domain }}</td>
-                            <td class="col-subsf" data-column="subsf" data-value="{{ r.subsf }}">{{ r.subsf }}</td>
+                            <td class="col-sf" data-column="sf" data-value="{{ r.sf }}">{{ r.sf }}</td>
                             <td class="col-name">
                                 {% set projectName = r.name|length > 35
                                     ? r.name|slice(0, 35) ~ '...'
@@ -350,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Éléments DOM (Filtres)
     const filterDomain = document.getElementById('filter_domain');
-    const filterSubsf = document.getElementById('filter_subsf');
+    const filterSf = document.getElementById('filter_sf');
     const filterProjectName = document.getElementById('filter_project_name');
     const filterTechno = document.getElementById('filter_techno');
     const filterArchived = document.getElementById('filter_archived');
@@ -482,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function getColumnValue(row, column) {
         switch(column) {
             case 'domain': return row.querySelector('.col-domain').getAttribute('data-value');
-            case 'subsf': return row.querySelector('.col-subsf').getAttribute('data-value');
+            case 'sf': return row.querySelector('.col-sf').getAttribute('data-value');
             case 'name': return row.querySelector('.col-name').textContent.trim();
             case 'techno': return row.querySelector('.col-techno').getAttribute('data-value');
             case 'archived': return row.querySelector('.col-archived').getAttribute('data-value');
@@ -494,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function applyFilters() {
         const valDomain = filterDomain.value.toLowerCase();
-        const valSubsf = filterSubsf.value.toLowerCase();
+        const valSf = filterSf.value.toLowerCase();
         const valName = filterProjectName.value.toLowerCase();
         const valTechno = filterTechno.value.toLowerCase();
         const valArchived = filterArchived.value.toLowerCase();
@@ -506,20 +506,20 @@ document.addEventListener('DOMContentLoaded', function() {
             row.style.display = 'none';
 
             const domain = row.querySelector('.col-domain').getAttribute('data-value').toLowerCase();
-            const subsf = row.querySelector('.col-subsf').getAttribute('data-value').toLowerCase();
+            const sf = row.querySelector('.col-sf').getAttribute('data-value').toLowerCase();
             const name = row.querySelector('.col-name').textContent.toLowerCase();
             const techno = row.querySelector('.col-techno').getAttribute('data-value').toLowerCase();
             const archived = row.querySelector('.col-archived').getAttribute('data-value').toLowerCase();
             const gcp = row.querySelector('.col-gcp').getAttribute('data-value').toLowerCase();
 
             const matchDomain = (valDomain === 'all' || domain === valDomain);
-            const matchSubsf = (valSubsf === 'all' || subsf === valSubsf);
+            const matchSf = (valSf === 'all' || sf === valSf);
             const matchName = (valName === '' || name.includes(valName));
             const matchTechno = (valTechno === 'all' || techno === valTechno);
             const matchArchived = (valArchived === 'all' || archived === valArchived);
             const matchGcp = (valGcp === 'all' || gcp === valGcp);
 
-            if (matchDomain && matchSubsf && matchName && matchTechno && matchArchived && matchGcp) {
+            if (matchDomain && matchSf && matchName && matchTechno && matchArchived && matchGcp) {
                 filteredRows.push(row);
             }
         });
@@ -612,7 +612,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnResetFilters) {
         btnResetFilters.addEventListener('click', function() {
             filterDomain.value = 'all';
-            filterSubsf.value = 'all';
+            filterSf.value = 'all';
             filterProjectName.value = '';
             filterTechno.value = 'all';
             filterArchived.value = 'all';

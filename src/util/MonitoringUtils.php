@@ -201,7 +201,7 @@ class MonitoringUtils
     public static function buildKibanaLogUrl(Project $project, ?EnumEnvironment $env): string
     {
         $projectName = $project->getServiceName() ?? $project->getname();
-        $subSf = $project->getSubsf();
+        $subSf = $project->getSf();
 
         $envName = $env?->value ?? '%s';
 
@@ -236,7 +236,7 @@ class MonitoringUtils
     public static function buildGCPLogUrl(Project $project, ?EnumEnvironment $env): string
     {
         $projectName = $project->getname();
-        $subSf = $project->getSubsf();
+        $subSf = $project->getSf();
 
         $envName = $env?->value ?? '%s';
 
@@ -300,7 +300,7 @@ class MonitoringUtils
         $url = 'https://' . $projectName;
         if (!$project->isCloudGCP()) {
             $envPart = ($env->value !== EnumEnvironment::PROD->value) ? '-' . $env->value : '';
-            $url .= sprintf('.%s.app%s.xm', $project->getSubsf(), $envPart);
+            $url .= sprintf('.%s.app%s.xm', $project->getSf(), $envPart);
         } else {
             $url .= '.' . $env->value . '.mdm-int.net';
         }
@@ -330,7 +330,7 @@ class MonitoringUtils
         if ($env !== EnumEnvironment::PROD) {
             $url .= $env->value . '-';
         }
-        $url .= 'mdm-' . $project->getSubsf() . '&inv=1&invt=Ab5XmQ&tab=messages';
+        $url .= 'mdm-' . $project->getSf() . '&inv=1&invt=Ab5XmQ&tab=messages';
 
         return $url;
     }
@@ -362,7 +362,7 @@ class MonitoringUtils
     {
         $pattern = 'https://rundeck-%s.siege.xm/project/%s/jobs';
 
-        return sprintf($pattern, $env->value, $project->getSubsf());
+        return sprintf($pattern, $env->value, $project->getSf());
     }
 
     /**
@@ -379,6 +379,6 @@ class MonitoringUtils
         $query = '?hl=fr&project=mdm-core-infra-%s&supportedpurview=project';
         $pattern = $urlBase . $query;
 
-        return sprintf($pattern, $env->value, $project->getSubsf(), $project->getName(), $env->value);
+        return sprintf($pattern, $env->value, $project->getSf(), $project->getName(), $env->value);
     }
 }

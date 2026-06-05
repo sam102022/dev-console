@@ -9,7 +9,7 @@ class Project extends AbstractModel
     public ?string $serviceName = null;
     public ?string $domain;
     public ?string $domainName;
-    public ?string $subsf;
+    public ?string $sf;
     public bool $cloudGCP;
     public ?string $springBoot;
     public ?string $java;
@@ -100,18 +100,18 @@ class Project extends AbstractModel
     /**
      * @return string|null
      */
-    public function getSubsf(): ?string
+    public function getSf(): ?string
     {
-        return $this->subsf;
+        return $this->sf;
     }
 
     /**
-     * @param string|null $subsf
+     * @param string|null $sf
      * @return Project
      */
-    public function setSubsf(?string $subsf): self
+    public function setSf(?string $sf): self
     {
-        $this->subsf = $subsf;
+        $this->sf = $sf;
         return $this;
     }
 
@@ -318,7 +318,7 @@ class Project extends AbstractModel
         return $this;
     }
 
-    public static function build(string  $name, ?string $serviceName, ?string $domain, ?string $domainName, ?string $subsf, bool $cloudGCP,
+    public static function build(string  $name, ?string $serviceName, ?string $domain, ?string $domainName, ?string $sf, bool $cloudGCP,
                                  ?string $springBoot, ?string $java, ?string $techno, ?string $subscriptionName, string $webUrl,
                                  bool    $archived, array $urlHealthCheck, array $urlLogs, array $urlFronts, array $urlPubsubs,
                                  ?string $mdmWorkloadVersion = null, array $urlsRundeck = [], array $urlsDeploymentGcp = []): self
@@ -328,7 +328,7 @@ class Project extends AbstractModel
         $project->setServiceName($serviceName);
         $project->setDomain($domain);
         $project->setDomainName($domainName);
-        $project->setSubsf($subsf);
+        $project->setSf($sf);
         $project->setCloudGCP($cloudGCP);
         $project->setSpringBoot($springBoot);
         $project->setJava($java);

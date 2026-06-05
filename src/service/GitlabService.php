@@ -188,7 +188,7 @@ class GitlabService
             'serviceName' => $deploymentInfo['deployName'],
             'domain' => $pathInfo['domain'],
             'domainName' => $pathInfo['domainName'],
-            'subsf' => $pathInfo['subsf'],
+            'sf' => $pathInfo['sf'],
             'cloudGCP' => $deploymentInfo['cloudGCP'],
             'techno' => $techno,
             'subscriptionName' => $subscriptionName,
@@ -266,7 +266,7 @@ class GitlabService
         return [
             'domain' => $path[2] ?? null,
             'domainName' => $namePath[2] ?? null,
-            'subsf' => $path[3] ?? null,
+            'sf' => $path[3] ?? null,
         ];
     }
 
@@ -384,15 +384,15 @@ class GitlabService
         }
 
         usort($projects, static function (Project $a, Project $b) {
-            // 1. Trier par 'subsf' en premier
-            $subsfComparison = $a->getSubsf() <=> $b->getSubsf();
+            // 1. Trier par 'sf' en premier
+            $sfComparison = $a->getSf() <=> $b->getSf();
 
-            // Si les 'subsf' sont différents, on retourne le résultat de la comparaison
-            if ($subsfComparison !== 0) {
-                return $subsfComparison;
+            // Si les 'sf' sont différents, on retourne le résultat de la comparaison
+            if ($sfComparison !== 0) {
+                return $sfComparison;
             }
 
-            // 2. Si les 'subsf' sont identiques, on trie par 'name'
+            // 2. Si les 'sf' sont identiques, on trie par 'name'
             return $a->getName() <=> $b->getName();
         });
 

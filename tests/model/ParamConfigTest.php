@@ -5,6 +5,7 @@ namespace App\tests\model;
 
 use App\model\ParamConfig;
 use App\model\ParamGitLab;
+use App\model\ParamPostman;
 use App\model\ParamNewRelic;
 use App\model\ParamRepository;
 use InvalidArgumentException;
@@ -17,6 +18,7 @@ class ParamConfigTest extends TestCase
         $paramConfig = new ParamConfig();
         $paramRepository = new ParamRepository();
         $paramGitLab = new ParamGitLab();
+        $paramPostman = new ParamPostman();
 
         $paramRepository->setDatabaseHost('localhost');
         $paramConfig->setParamRepository($paramRepository);
@@ -35,11 +37,9 @@ class ParamConfigTest extends TestCase
         $paramConfig->setParamGitLab($paramGitLab);
         $this->assertEquals($paramGitLab, $paramConfig->getParamGitLab());
 
-        $paramConfig->setPostmanApiKey('postman-key');
-        $this->assertEquals('postman-key', $paramConfig->getPostmanApiKey());
-
-        $paramConfig->setPostmanApiUrl('https://api.postman.com');
-        $this->assertEquals('https://api.postman.com', $paramConfig->getPostmanApiUrl());
+        $paramPostman->setPostmanApiKey('postman-key');
+        $paramConfig->setParamPostman($paramPostman);
+        $this->assertEquals($paramPostman, $paramConfig->getParamPostman());
 
         $paramConfig->setTokenE107('my-token-e107');
         $this->assertEquals('my-token-e107', $paramConfig->getTokenE107());
@@ -84,8 +84,8 @@ class ParamConfigTest extends TestCase
         $this->assertEquals('http://base.url', $paramConfig->getUrlServer());
         $this->assertEquals('local_host', $paramConfig->getIpLocal());
         $this->assertEquals(8080, $paramConfig->getPortLocal());
-        $this->assertEquals('pm_key', $paramConfig->getPostmanApiKey());
-        $this->assertEquals('https://pm.test', $paramConfig->getPostmanApiUrl());
+        $this->assertEquals('pm_key', $paramConfig->getParamPostman()->getPostmanApiKey());
+        $this->assertEquals('https://pm.test', $paramConfig->getParamPostman()->getPostmanApiUrl());
         $this->assertEquals('e107_token_val', $paramConfig->getTokenE107());
         $this->assertEquals('db_host', $paramConfig->getParamRepository()->getDatabaseHost());
         $this->assertEquals('https://gitlab.test', $paramConfig->getParamGitLab()->getGitlabUrl());
@@ -110,6 +110,9 @@ class ParamConfigTest extends TestCase
         $paramGitLab = new ParamGitLab();
         $paramGitLab->setGitlabBusinessContractProjectId(42);
         $paramConfig->setParamGitLab($paramGitLab);
+        $paramPostman = new ParamPostman();
+        $paramPostman->setPostmanApiKey('pm_key');
+        $paramConfig->setParamPostman($paramPostman);
         $paramNewRelic = new ParamNewRelic();
         $paramNewRelic->setApiUser('user');
         $paramNewRelic->setApiKeyRec('key');
@@ -120,6 +123,7 @@ class ParamConfigTest extends TestCase
 
         $this->assertArrayHasKey('paramRepository', $decoded);
         $this->assertArrayHasKey('paramGitLab', $decoded);
+        $this->assertArrayHasKey('paramPostman', $decoded);
         $this->assertArrayHasKey('paramNewRelic', $decoded);
     }
 }

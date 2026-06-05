@@ -50,7 +50,7 @@ class IndexViewModelFactory
 
         // Préparation des données pour la vue
         $domains = [];
-        $subsfs = [];
+        $sfs = [];
         $technos = [];
         $formattedResults = [];
 
@@ -59,8 +59,8 @@ class IndexViewModelFactory
             if ($project->getDomain()) {
                 $domains[$project->getDomain()] = $project->getDomainName();
             }
-            if ($project->getSubsf()) {
-                $subsfs[$project->getSubsf()] = $project->getSubsf();
+            if ($project->getSf()) {
+                $sfs[$project->getSf()] = $project->getSf();
             }
             if ($project->getTechno()) {
                 $technos[$project->getTechno()] = $project->getTechno();
@@ -71,7 +71,7 @@ class IndexViewModelFactory
                 'name' => $project->getName(),
                 'domain' => $project->getDomain(),
                 'domainName' => $project->getDomainName(),
-                'subsf' => $project->getSubsf(),
+                'sf' => $project->getSf(),
                 'cloudGCP' => $project->isCloudGCP(),
                 'springBoot' => $project->getSpringBoot(),
                 'java' => $project->getJava(),
@@ -97,7 +97,7 @@ class IndexViewModelFactory
             'colorLink' => $themesColor[$theme]['colorLink'],
             'colorText' => $themesColor[$theme]['colorText'],
             'domains' => $domains,
-            'subsfs' => $subsfs,
+            'sfs' => $sfs,
             'technos' => $technos,
             'results' => $formattedResults, // Utilise les résultats formatés
             'messageScanResults' => UtilsService::buildAlertHtml($this->twig, $messages[MESSAGES_SCAN_RESULTS] ?? []),

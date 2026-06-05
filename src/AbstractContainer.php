@@ -157,9 +157,9 @@ abstract class AbstractContainer
 
         $this->set(PostmanClient::class, fn($c) => new PostmanClient(
             new Client([
-                'base_uri' => $c->get(AppConfig::class)->getParamConfig()->getPostmanApiUrl(),
+                'base_uri' => $c->get(AppConfig::class)->getParamConfig()->getParamPostman()->getPostmanApiUrl(),
                 'headers' => [
-                    'X-Api-Key' => $c->get(AppConfig::class)->getParamConfig()->getPostmanApiKey(),
+                    'X-Api-Key' => $c->get(AppConfig::class)->getParamConfig()->getParamPostman()->getPostmanApiKey(),
                     'Content-Type' => 'application/json'
                 ]
             ])
