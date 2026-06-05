@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\tests\service;
 
 use App\client\GitLabClient;
+use App\client\NewRelicClient;
 use App\exception\TechnicalException;
 use App\parser\ChartParser;
 use App\parser\MavenParser;
@@ -11,6 +12,7 @@ use App\repository\GitLabRepository;
 use App\repository\mapper\ProjectMapper;
 use App\repository\ProjectRepository;
 use App\service\GitlabService;
+use App\service\NewRelicService;
 use App\tests\fixtures\GitlabProjectEntityFixtures;
 use App\tests\fixtures\GitlabProjectFixtures;
 use App\tests\fixtures\ProjectEntityFixtures;
@@ -24,6 +26,7 @@ class GitlabServiceTest extends AbstractServiceCase
     private ChartParser $chartParser;
     private GitLabRepository $gitLabRepository;
     private ProjectRepository $projectRepository;
+    private NewRelicClient $newRelicClient;
     private GitlabService $service;
 
     final protected function setUp(): void
@@ -35,6 +38,7 @@ class GitlabServiceTest extends AbstractServiceCase
         $this->chartParser = $this->createMock(ChartParser::class);
         $this->gitLabRepository = $this->createMock(GitLabRepository::class);
         $this->projectRepository = $this->createMock(ProjectRepository::class);
+        $this->newRelicClient = $this->createMock(NewRelicClient::class);
 
         $this->service = new GitlabService(
             $this->client,
@@ -42,6 +46,7 @@ class GitlabServiceTest extends AbstractServiceCase
             $this->chartParser,
             $this->gitLabRepository,
             $this->projectRepository,
+            $this->newRelicClient,
             self::$appConfig,
             self::$loggerFactory
         );
@@ -68,6 +73,9 @@ class GitlabServiceTest extends AbstractServiceCase
         $this->assertEquals($expectedProjects, $result);
     }
 
+    /**
+     * @throws TechnicalException
+     */
     final public function testGetProjectsFromApiWhenCacheIsNotEmpty(): void
     {
         $projects = [['id' => 1, 'description' => 'New Project', 'name' => 'New Project', 'name_with_namespace' => 'name-with-namespace', 'path' => 'path', 'path_with_namespace' => 'path-with-namespace', 'created_at' => '2023-01-01', 'default_branch' => 'main', 'web_url' => 'http://url']];

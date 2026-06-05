@@ -67,6 +67,9 @@ class ParamConfig extends AbstractModel
     /** @var string Le token e107. */
     private string $tokenE107;
 
+    /** @var ParamNewRelic Les paramètres New Relic. */
+    private ParamNewRelic $paramNewRelic;
+
 
     public function getDatabaseHost(): string
     {
@@ -157,6 +160,11 @@ class ParamConfig extends AbstractModel
     public function getTokenE107(): string
     {
         return $this->tokenE107;
+    }
+
+    public function getParamNewRelic(): ParamNewRelic
+    {
+        return $this->paramNewRelic;
     }
 
     public function setDatabaseHost(string $databaseHost): void
@@ -250,6 +258,11 @@ class ParamConfig extends AbstractModel
         $this->tokenE107 = $tokenE107;
     }
 
+    public function setParamNewRelic(ParamNewRelic $paramNewRelic): void
+    {
+        $this->paramNewRelic = $paramNewRelic;
+    }
+
     /**
      * Méthode de fabrique statique pour analyser un tableau de paramètres et créer un objet ParamConfig.
      *
@@ -261,20 +274,23 @@ class ParamConfig extends AbstractModel
         if (empty($params)) {
             throw new InvalidArgumentException("Le tableau de paramètres est vide.");
         }
-        if (!isset($params['base_url'], $params['host'], $params['port'], $params['database_host'], $params['database_port'], $params['database_user'], $params['database_password'], $params['database_name'], $params['gitlab_url'], $params['gitlab_token'], $params['gitlab_business_contract_project_id'], $params['gitlab_path_group_default'], $params['postman_api_key'], $params['postman_api_url'])) {
+        if (!isset($params['base_url'], $params['host'], $params['port'], $params['database_host'], $params['database_port'], $params['database_user'], $params['database_password'], $params['database_name'],
+            $params['gitlab_url'], $params['gitlab_token'], $params['gitlab_business_contract_project_id'], $params['gitlab_path_group_default'],
+            $params['postman_api_key'], $params['postman_api_url'],
+            $params['newrelic-api-user'], $params['newrelic-account-id-rec'], $params['newrelic-account-id-prod'], $params['newrelic-api-key-rec'], $params['newrelic-api-key-prod'])) {
             throw new InvalidArgumentException("Certains paramètres requis sont manquants.");
         }
         $urlServer = $params['base_url'] ?? '';
         $ipLocal = $params['host'] ?? 'localhost';
-        $portLocal = (int) ($params['port'] ?? 80);
+        $portLocal = (int)($params['port'] ?? 80);
         $databaseHost = $params['database_host'] ?? 'localhost';
-        $databasePort = (int) ($params['database_port'] ?? 3306);
+        $databasePort = (int)($params['database_port'] ?? 3306);
         $databaseUser = $params['database_user'] ?? '';
         $databasePassword = $params['database_password'] ?? '';
         $databaseName = $params['database_name'] ?? '';
         $gitlabUrl = $params['gitlab_url'] ?? '';
         $gitlabToken = $params['gitlab_token'] ?? '';
-        $gitlabBusinessContractProjectId = (int) ($params['gitlab_business_contract_project_id'] ?? 0);
+        $gitlabBusinessContractProjectId = (int)($params['gitlab_business_contract_project_id'] ?? 0);
         $gitlabPathGroupDefault = $params['gitlab_path_group_default'] ?? '';
         $postmanApiKey = $params['postman_api_key'] ?? '';
         $postmanApiUrl = $params['postman_api_url'] ?? '';
@@ -289,6 +305,15 @@ class ParamConfig extends AbstractModel
         if (!empty($params['exclude_projects'])) {
             $excludeProjects = array_map('trim', explode(',', $params['exclude_projects']));
         }
+
+        $paramNewRelic = new ParamNewRelic();
+        $paramNewRelic->setApiUser($params['newrelic-api-user']);
+        $paramNewRelic->setApiKeyRec($params['newrelic-api-key-rec']);
+        $paramNewRelic->setApiKeyProd($params['newrelic-api-key-prod']);
+        $paramNewRelic->setAccountIdDev((int)$params['newrelic-account-id-dev']);
+        $paramNewRelic->setAccountIdRec((int)$params['newrelic-account-id-rec']);
+        $paramNewRelic->setAccountIdPreprod((int)$params['newrelic-account-id-pp']);
+        $paramNewRelic->setAccountIdProd((int)$params['newrelic-account-id-prod']);
 
         $paramConfig = new self();
         $paramConfig->setDatabaseHost($databaseHost);
@@ -308,6 +333,7 @@ class ParamConfig extends AbstractModel
         $paramConfig->setProjectsInGke($projectsInGke);
         $paramConfig->setExcludeProjects($excludeProjects);
         $paramConfig->setTokenE107($tokenE107);
+        $paramConfig->setParamNewRelic($paramNewRelic);
 
         return $paramConfig;
     }

@@ -4,12 +4,13 @@ declare(strict_types=1);
 namespace App\tests\model;
 
 use App\model\ParamConfig;
+use App\model\ParamNewRelic;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
 class ParamConfigTest extends TestCase
 {
-    public function testGettersAndSetters(): void
+    final public function testGettersAndSetters(): void
     {
         $paramConfig = new ParamConfig();
 
@@ -63,9 +64,15 @@ class ParamConfigTest extends TestCase
 
         $paramConfig->setTokenE107('my-token-e107');
         $this->assertEquals('my-token-e107', $paramConfig->getTokenE107());
+
+        $paramNewRelic = new ParamNewRelic();
+        $paramNewRelic->setApiUser('user');
+        $paramNewRelic->setApiKeyRec('key');
+        $paramConfig->setParamNewRelic($paramNewRelic);
+        $this->assertEquals($paramNewRelic, $paramConfig->getParamNewRelic());
     }
 
-    public function testParse(): void
+    final public function testParse(): void
     {
         $params = [
             'database_host' => 'db_host',
@@ -85,6 +92,13 @@ class ParamConfigTest extends TestCase
             'projects_in_gke' => 'proj1, proj2 ',
             'exclude_projects' => ' ex1 , ex2',
             'token_e107' => 'e107_token_val',
+            'newrelic-api-user' => 'nr_user',
+            'newrelic-api-key-rec' => 'nr_key_rec',
+            'newrelic-api-key-prod' => 'nr_key_prod',
+            'newrelic-account-id-dev' => '1',
+            'newrelic-account-id-rec' => '2',
+            'newrelic-account-id-pp' => '3',
+            'newrelic-account-id-prod' => '4',
         ];
 
         $paramConfig = ParamConfig::parse($params);
@@ -106,9 +120,16 @@ class ParamConfigTest extends TestCase
         $this->assertEquals(['proj1', 'proj2'], $paramConfig->getProjectsInGke());
         $this->assertEquals(['ex1', 'ex2'], $paramConfig->getExcludeProjects());
         $this->assertEquals('e107_token_val', $paramConfig->getTokenE107());
+        $this->assertEquals('nr_user', $paramConfig->getParamNewRelic()->getApiUser());
+        $this->assertEquals('nr_key_rec', $paramConfig->getParamNewRelic()->getApiKeyRec());
+        $this->assertEquals('nr_key_prod', $paramConfig->getParamNewRelic()->getApiKeyProd());
+        $this->assertEquals(1, $paramConfig->getParamNewRelic()->getAccountIdDev());
+        $this->assertEquals(2, $paramConfig->getParamNewRelic()->getAccountIdRec());
+        $this->assertEquals(3, $paramConfig->getParamNewRelic()->getAccountIdPreprod());
+        $this->assertEquals(4, $paramConfig->getParamNewRelic()->getAccountIdProd());
     }
 
-    public function testParseWithDefaults(): void
+    final public function testParseWithDefaults(): void
     {
         try {
             $paramConfig = ParamConfig::parse([]);
@@ -135,11 +156,15 @@ class ParamConfigTest extends TestCase
         }
     }
 
-    public function testJsonSerialize(): void
+    final public function testJsonSerialize(): void
     {
         $paramConfig = new ParamConfig();
         $paramConfig->setDatabaseHost('localhost');
         $paramConfig->setGitlabBusinessContractProjectId(42);
+        $paramNewRelic = new ParamNewRelic();
+        $paramNewRelic->setApiUser('user');
+        $paramNewRelic->setApiKeyRec('key');
+        $paramConfig->setParamNewRelic($paramNewRelic);
 
         $json = json_encode($paramConfig);
         $decoded = json_decode($json, true);
@@ -148,5 +173,8 @@ class ParamConfigTest extends TestCase
         $this->assertEquals('localhost', $decoded['databaseHost']);
         $this->assertArrayHasKey('gitlabBusinessContractProjectId', $decoded);
         $this->assertEquals(42, $decoded['gitlabBusinessContractProjectId']);
+        $this->assertArrayHasKey('paramNewRelic', $decoded);
+        //$this->assertEquals('user', $decoded['paramNewRelic']['apiUser']);
+        //$this->assertEquals('key', $decoded['paramNewRelic']['apiKeyRec']);
     }
 }

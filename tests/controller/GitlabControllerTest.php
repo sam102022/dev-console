@@ -6,6 +6,7 @@ namespace App\tests\controller;
 use App\controller\GitlabController;
 use App\model\ParamConfig;
 use App\service\GitlabService;
+use App\service\NewRelicService;
 use Exception;
 use PHPUnit\Framework\Attributes\DataProvider;
 
@@ -19,9 +20,11 @@ class GitlabControllerTest extends AbstractControllerCase
         parent::setUp();
         $this->gitlabService = $this->createMock(GitlabService::class);
         $this->paramConfig = $this->createMock(ParamConfig::class);
-        
+        $this->newRelicService = $this->createMock(NewRelicService::class);
+
         $this->controller = new GitlabController(
             $this->gitlabService,
+            $this->newRelicService,
             self::$appConfig,
             self::$loggerFactory
         );

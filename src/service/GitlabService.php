@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\service;
 
 use App\client\GitLabClient;
+use App\client\NewRelicClient;
 use App\config\AppConfig;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
@@ -21,6 +22,7 @@ use App\util\MonitoringUtils;
 use App\util\UtilsLog;
 use DateMalformedStringException;
 use GuzzleHttp\Exception\GuzzleException;
+use JsonException;
 use Monolog\Logger;
 
 class GitlabService
@@ -34,6 +36,7 @@ class GitlabService
         private readonly ChartParser       $chartParser,
         private readonly GitLabRepository  $gitLabRepository,
         private readonly ProjectRepository $projectRepository,
+        private readonly NewRelicClient    $newRelicService,
         private readonly AppConfig         $appConfig,
         LoggerFactory                      $loggerFactory
     )
@@ -57,26 +60,30 @@ class GitlabService
      *
      * @param string|null $pathGroup Le chemin du groupe GitLab à scanner (ex: 'core/dev/pdv').
      * @return GitlabProject[]
-     * @throws GuzzleException|TechnicalException
+     * @throws TechnicalException
      */
     public function getProjects(?string $pathGroup): array
     {
-        $gitLabProjectsEntities = $this->gitLabRepository->findAll();
-        if (empty($gitLabProjectsEntities)) {
-            $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "Le cache des projets est vide, récupération depuis l'API GitLab.");
-            $gitLabProjectsData = $this->client->getAllProjects($pathGroup);
-            $entities = [];
-            foreach ($gitLabProjectsData as $gitlabProject) {
-                $entity = GitlabProjectMapper::fromArray($gitlabProject);
-                $entities[] = $entity;
-            }
-
-            $this->gitLabRepository->updateAll($entities);
-            $gitLabProjectsEntities = $this->gitLabRepository->findAll() ?? [];
-        }
         $gitlabProjects = [];
-        foreach ($gitLabProjectsEntities as $gitLabProjectsEntity) {
-            $gitlabProjects[] = GitlabProjectMapper::toModel($gitLabProjectsEntity);
+        try {
+            $gitLabProjectsEntities = $this->gitLabRepository->findAll();
+            if (empty($gitLabProjectsEntities)) {
+                $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "Le cache des projets est vide, récupération depuis l'API GitLab.");
+                $gitLabProjectsData = $this->client->getAllProjects($pathGroup);
+                $entities = [];
+                foreach ($gitLabProjectsData as $gitlabProject) {
+                    $entity = GitlabProjectMapper::fromArray($gitlabProject);
+                    $entities[] = $entity;
+                }
+
+                $this->gitLabRepository->updateAll($entities);
+                $gitLabProjectsEntities = $this->gitLabRepository->findAll() ?? [];
+            }
+            foreach ($gitLabProjectsEntities as $gitLabProjectsEntity) {
+                $gitlabProjects[] = GitlabProjectMapper::toModel($gitLabProjectsEntity);
+            }
+        } catch (GuzzleException $e) {
+            throw new TechnicalException($e->getMessage());
         }
         return $gitlabProjects;
     }
@@ -84,6 +91,7 @@ class GitlabService
     /**
      * @param string $projectCode
      * @return Project|null
+     * @throws TechnicalException
      */
     public function getProjectByCode(string $projectCode): ?Project
     {
@@ -95,13 +103,20 @@ class GitlabService
             }
             return null;
         } catch (TechnicalException $e) {
-            $projectEntities = $this->initProjects();
-            $this->projectRepository->updateAll($projectEntities);
-            $projectEntity = array_find($projectEntities, static fn($result) => $result->getName() === $projectCode);
-            if ($projectEntity) {
-                return ProjectMapper::fromEntity($projectEntity);
+            // cache vide
+            try {
+                $projectEntities = $this->initProjects();
+                $this->projectRepository->updateAll($projectEntities);
+                $projectEntity = array_find($projectEntities, static fn($result) => $result->getName() === $projectCode);
+                if ($projectEntity) {
+                    return ProjectMapper::fromEntity($projectEntity);
+                }
+                return null;
+            } catch (TechnicalException $e) {
+                $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
+                    . "Erreur technique : " . $e->getMessage());
+                throw $e;
             }
-            return null;
         }
     }
 
@@ -109,7 +124,7 @@ class GitlabService
      * Scan les projets gitlab
      *
      * @return Project[]|null
-     * @throws GuzzleException|TechnicalException|DateMalformedStringException
+     * @throws TechnicalException
      */
     public function scan(): ?array
     {
@@ -163,7 +178,6 @@ class GitlabService
         $pathInfo = $this->extractPathInfo($gitLabProject);
         $deploymentInfo = $this->getDeploymentInfo($gitLabProject);
         $mavenInfo = $this->scanPomXml($gitLabProject);
-        //$mdmWorkloadVersion = $this->scanChartYaml($gitLabProject);
         $techno = $this->getTechno($gitLabProject);
         $subscriptionName = $this->getSubscriptionName($gitLabProject);
 
@@ -173,7 +187,7 @@ class GitlabService
             'name' => $projectName,
             'serviceName' => $deploymentInfo['deployName'],
             'sf' => $pathInfo['sf'],
-            'sfName' => $pathInfo['sfName'],
+            'domainName' => $pathInfo['domainName'],
             'subsf' => $pathInfo['subsf'],
             'cloudGCP' => $deploymentInfo['cloudGCP'],
             'techno' => $techno,
@@ -245,28 +259,13 @@ class GitlabService
         return $this->mavenParser->parsePomXml($pom);
     }
 
-    /**
-     * Scan un fichier chart.yaml d'un projet gitlab
-     *
-     * @param GitlabProject $gitLabProject Le projet gitlab à scanner
-     * @return array|null
-     */
-    private function scanChartYaml(GitlabProject $gitLabProject): ?string
-    {
-        $chartFile = $this->client->getFile($gitLabProject->getId(), 'chart/Chart.yaml', true, $gitLabProject->getDefaultBranch());
-        if (!$chartFile) {
-            return null;
-        }
-        return $this->chartParser->parseChartYaml($chartFile);
-    }
-
     private function extractPathInfo(GitlabProject $gitLabProject): array
     {
         $path = explode('/', $gitLabProject->getPathWithNamespace() ?? '');
         $namePath = explode('/', $gitLabProject->getNameWithNamespace() ?? '');
         return [
             'sf' => $path[2] ?? null,
-            'sfName' => $namePath[2] ?? null,
+            'domainName' => $namePath[2] ?? null,
             'subsf' => $path[3] ?? null,
         ];
     }
@@ -364,7 +363,7 @@ class GitlabService
 
     /**
      * @return ProjectEntity[]
-     * @throws GuzzleException|TechnicalException|DateMalformedStringException
+     * @throws TechnicalException
      */
     private function initProjects(): array
     {
@@ -403,5 +402,17 @@ class GitlabService
         }
 
         return $projectEntities;
+    }
+
+    /**
+     * @throws TechnicalException|JsonException
+     */
+    public function buildNewRelicUrl(Project $project, EnumEnvironment $env): ?string
+    {
+        $guid = $this->newRelicService->getEntityGuid($project->getName(), $env);
+        if ($guid !== null) {
+            return $this->newRelicService->generateEntityUrl($guid);
+        }
+        return null;
     }
 }

@@ -79,23 +79,33 @@ class FileService
      */
     public function read(string $filename): array
     {
-        //        $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-//            . "lecture du fichier $filename");
+        $pathFile = $this->getPath($filename);
+        if (!is_readable($pathFile)) {
+            return [];
+        }
+
+        $data = file_get_contents($pathFile);
+        if ($data === false) {
+            $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "Erreur lors de la lecture du fichier $pathFile");
+            throw new TechnicalException("Erreur lors de la lecture du fichier $pathFile");
+        }
+
+        if (empty(trim($data))) {
+            return [];
+        }
 
         try {
-            $pathFile = $this->getPath($filename);
-            $handle = fopen($pathFile, 'rb');
-            $data = fread($handle, filesize($pathFile));
-            fclose($handle);
-
             return json_decode($data, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
             $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                . "Erreur lors de la lecture du fichier $filename : " . $e->getMessage());
-            throw new TechnicalException("Erreur lors de la lecture du fichier $filename", 400, $e);
+                . "Erreur lors du décodage JSON du fichier $filename : " . $e->getMessage());
+            throw new TechnicalException("Erreur lors du décodage JSON du fichier $filename", 400, $e);
         }
     }
 
+    /**
+     * @throws TechnicalException
+     */
     public function save(array $responseJson, string $filename): void
     {
         $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
@@ -103,25 +113,21 @@ class FileService
 
         $pathFile = $this->getPath($filename);
 
-        if (!$fp = fopen($pathFile, 'ab+')) {
-            $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                . "Cannot open file ($filename)");
-            return;
-        }
-
-        if (is_writable($pathFile)) {
-            if (fwrite($fp, json_encode($responseJson)) === FALSE) {
+        try {
+            $jsonData = json_encode($responseJson, JSON_THROW_ON_ERROR); //  | JSON_PRETTY_PRINT
+            if (file_put_contents($pathFile, $jsonData) === false) {
                 $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                    . "Cannot write to file ($filename)");
-                return;
+                    . "Cannot write to file ($pathFile)");
+                throw new TechnicalException("Cannot write to file ($pathFile)");
             }
+
             $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                . "Success, wrote to file ($filename)");
+                . "Success, wrote to file ($pathFile)");
 
-            fclose($fp);
-
-        } else {
-            $this->logger->warning(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . 'The file $filename is not writable');
+        } catch (JsonException $e) {
+            $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
+                . "Error encoding JSON for file $filename: " . $e->getMessage());
+            throw new TechnicalException("Error encoding JSON for file $filename", 400, $e);
         }
     }
 

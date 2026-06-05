@@ -28,6 +28,7 @@ const ACTION_PURGE_CACHE = 'purge_cache';
 const ACTION_GITLAB_SCAN = 'scan';
 const ACTION_GITLAB_TREE = 'tree';
 const ACTION_GITLAB_FILE = 'file';
+const ACTION_NEW_RELIC_URL = 'get_new_relic_url';
 
 const ACTION_POSTMAN_WORKSPACES = 'getWorkspaces';
 const ACTION_POSTMAN_CREATE_WORKSPACE = 'createWorkspace';
@@ -36,6 +37,7 @@ const ACTION_POSTMAN_IMPORT_OPENAPI = 'importOpenApi';
 const ACTION_POSTMAN_GET_WORKSPACE_DETAILS = 'getWorkspaceDetails';
 
 const ACTION_MONITORING_GET_DATA = 'getMonitoringData';
+const ACTION_SAVE_COLUMNS_PREFS = 'saveColumnsPrefs';
 
 const THEMES_COLORS = [ //
     'dark' => [ //

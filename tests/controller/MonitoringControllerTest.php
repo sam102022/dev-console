@@ -9,6 +9,7 @@ use App\exception\TechnicalException;
 use App\model\EnumEnvironment;
 use App\service\GitlabService;
 use App\service\MonitoringService;
+use App\service\UserPreferencesService;
 use App\viewModel\IndexViewModelFactory;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
@@ -33,11 +34,13 @@ class MonitoringControllerTest extends AbstractControllerCase
         $this->gitlabService = $this->createMock(GitlabService::class);
         $this->monitoringService = $this->createMock(MonitoringService::class);
         $this->context = $this->createMock(IndexContext::class);
+        $this->userPreferencesService = $this->createMock(UserPreferencesService::class);
 
         $this->controller = new MonitoringController(
             $this->viewModelFactory,
             $this->gitlabService,
             $this->monitoringService,
+            $this->userPreferencesService,
             $this->context,
             $this->twigMocked,
             self::$loggerFactory

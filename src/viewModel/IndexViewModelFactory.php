@@ -49,26 +49,28 @@ class IndexViewModelFactory
         $themesColor = THEMES_COLORS;
 
         // Préparation des données pour la vue
-        $sfs = [];
+        $domains = [];
         $subsfs = [];
         $technos = [];
         $formattedResults = [];
 
+        /** @var Project $project */
         foreach ($this->results as $project) {
-            /**
-             * @var Project $project
-             */
-            $sfs[$project->getSf()] = $project->getSfName();
-            $subsfs[$project->getSubsf()] = $project->getSubsf();
+            if ($project->getSf()) {
+                $domains[$project->getSf()] = $project->getDomainName();
+            }
+            if ($project->getSubsf()) {
+                $subsfs[$project->getSubsf()] = $project->getSubsf();
+            }
             if ($project->getTechno()) {
                 $technos[$project->getTechno()] = $project->getTechno();
             }
-            
+
             // Formate chaque projet pour inclure les URLs directement
             $formattedResults[] = [
                 'name' => $project->getName(),
-                'sf' => $project->getSf(),
-                'sfName' => $project->getSfName(),
+                'domain' => $project->getSf(),
+                'domainName' => $project->getDomainName(),
                 'subsf' => $project->getSubsf(),
                 'cloudGCP' => $project->isCloudGCP(),
                 'springBoot' => $project->getSpringBoot(),
@@ -94,7 +96,7 @@ class IndexViewModelFactory
             'colorInverse' => $themesColor[$theme]['colorInverse'],
             'colorLink' => $themesColor[$theme]['colorLink'],
             'colorText' => $themesColor[$theme]['colorText'],
-            'sfs' => $sfs,
+            'domains' => $domains,
             'subsfs' => $subsfs,
             'technos' => $technos,
             'results' => $formattedResults, // Utilise les résultats formatés

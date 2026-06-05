@@ -19,7 +19,7 @@ class GitLabRepository
 
     public function __construct(LoggerFactory $loggerFactory)
     {
-        $this->fileService = new FileService("../data", $loggerFactory);
+        $this->fileService = new FileService("../" . PATH_DATA, $loggerFactory);
         $this->logger = $loggerFactory->get(__CLASS__);
     }
 

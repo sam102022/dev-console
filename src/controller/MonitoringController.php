@@ -9,9 +9,9 @@ use App\factory\LoggerFactory;
 use App\model\EnumEnvironment;
 use App\service\GitlabService;
 use App\service\MonitoringService;
+use App\service\UserPreferencesService;
 use App\util\UtilsLog;
 use App\viewModel\IndexViewModelFactory;
-use GuzzleHttp\Exception\GuzzleException;
 use Monolog\Logger;
 use Throwable;
 use Twig\Environment;
@@ -32,17 +32,19 @@ class MonitoringController
      * @param IndexViewModelFactory $viewModelFactory Usine pour créer le modèle de vue de public.
      * @param GitlabService $gitlabService Service gitlab.
      * @param MonitoringService $monitoringService Service monitoring.
+     * @param UserPreferencesService $userPreferencesService Service de préférences utilisateur.
      * @param IndexContext $context Le contexte de la session public.
      * @param Environment $twig L'environnement Twig pour le rendu des templates.
      * @param LoggerFactory $loggerFactory Usine pour créer le logger.
      */
     public function __construct(
-        private readonly IndexViewModelFactory $viewModelFactory,
-        private readonly GitlabService         $gitlabService,
-        private readonly MonitoringService     $monitoringService,
-        private readonly IndexContext          $context,
-        private readonly Environment           $twig,
-        LoggerFactory                          $loggerFactory
+        private readonly IndexViewModelFactory  $viewModelFactory,
+        private readonly GitlabService          $gitlabService,
+        private readonly MonitoringService      $monitoringService,
+        private readonly UserPreferencesService $userPreferencesService,
+        private readonly IndexContext           $context,
+        private readonly Environment            $twig,
+        LoggerFactory                           $loggerFactory,
     )
     {
         $this->logger = $loggerFactory->get(self::class);
@@ -52,7 +54,7 @@ class MonitoringController
      * Affiche la page pour gérer les collections postman.
      *
      * @param array $messages Un tableau de messages à afficher à l'utilisateur (notifications, erreurs, etc.).
-     * @throws GuzzleException|TechnicalException
+     * @throws TechnicalException
      */
     public function index(array $messages): void
     {
@@ -67,6 +69,8 @@ class MonitoringController
         try {
             $viewModel = $this->viewModelFactory->build($this->context, $messages);
             $viewModel['current_route'] = 'monitoring';
+            $viewModel['columns_prefs'] = $this->userPreferencesService->get('monitoring_columns', []);
+
             echo $this->twig->render(
                 'monitoring.html.twig',
                 $viewModel
@@ -96,6 +100,11 @@ class MonitoringController
                         'health' => $data['health'],
                         'urls' => $data['urls'],
                     ];
+                    break;
+                case ACTION_SAVE_COLUMNS_PREFS:
+                    $columns = $input['columns'] ?? [];
+                    $this->userPreferencesService->set('monitoring_columns', $columns);
+                    $response = ['success' => true];
                     break;
 
                 default:

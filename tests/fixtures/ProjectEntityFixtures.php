@@ -10,7 +10,7 @@ class ProjectEntityFixtures
     public static function getProjectAEntity(): ProjectEntity
     {
         return ProjectEntity::build('project-a', 'serviceName',
-            'sf', 'sfName', 'subsf', true,
+            'sf', 'domainName', 'subsf', true,
             '2.7.0', '17', 'java',
             'subscriptionName', 'http://url', false,
             [], [], [], [], null, []);

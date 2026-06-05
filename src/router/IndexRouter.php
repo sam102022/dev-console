@@ -65,6 +65,7 @@ final class IndexRouter
                 case ACTION_GITLAB_FILE:
                 case ACTION_GITLAB_SCAN:
                 case ACTION_GITLAB_TREE:
+                case ACTION_NEW_RELIC_URL:
                     echo $this->gitlabController->handleRequest($action);
                     break;
                 case ACTION_POSTMAN_WORKSPACES:

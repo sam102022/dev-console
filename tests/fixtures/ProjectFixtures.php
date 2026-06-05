@@ -9,7 +9,7 @@ class ProjectFixtures
 {
     public static function getProjectWithUrls(): Project
     {
-        return Project::build('New Project', 'service-name', 'sf', 'sfName', 'subsf', false,
+        return Project::build('New Project', 'service-name', 'sf', 'domainName', 'subsf', false,
             '2.7.18', '21',  'java', null, 'http://url/a', false,
             ['dev' => 'http://url/dev', 'rec' => 'http://url/rec', 'pp' => 'http://url/pp', 'prod' => 'http://url/prod'], [], [], [], null, []);
     }

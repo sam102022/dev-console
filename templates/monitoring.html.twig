@@ -34,6 +34,53 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">🩺 Monitoring &amp; 📰 Logs</h5>
         <div>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm" type="button" id="columns-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fa-solid fa-table-columns"></i> Colonnes
+                </button>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="columns-dropdown" id="columns-menu">
+                    <h6 class="dropdown-header">Afficher/Masquer les colonnes</h6>
+                    <div class="px-3 py-2">
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-domain" data-column="domain" checked>
+                            <label class="form-check-label" for="toggle-col-domain">Domaine</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-subsf" data-column="subsf" checked>
+                            <label class="form-check-label" for="toggle-col-subsf">SF</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-techno" data-column="techno" checked>
+                            <label class="form-check-label" for="toggle-col-techno">Techno</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-archived" data-column="archived" checked>
+                            <label class="form-check-label" for="toggle-col-archived">Archivé</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-gcp" data-column="gcp" checked>
+                            <label class="form-check-label" for="toggle-col-gcp">GCP</label>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-dev" data-column="dev" checked>
+                            <label class="form-check-label" for="toggle-col-dev">DEV</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-rec" data-column="rec" checked>
+                            <label class="form-check-label" for="toggle-col-rec">REC</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-pp" data-column="pp" checked>
+                            <label class="form-check-label" for="toggle-col-pp">PP</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-prod" data-column="prod" checked>
+                            <label class="form-check-label" for="toggle-col-prod">PROD</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -46,13 +93,13 @@
                             <input type="checkbox" id="check-all" title="Tout cocher/décocher">
                         </th>
                         <th style="width: 50px;">#</th>
-                        <th><a class="sortable-header" data-sort="sf">SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th><a class="sortable-header" data-sort="subsf">SUB SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                        <th data-column="domain"><a class="sortable-header" data-sort="domain">Domaine <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                        <th data-column="subsf"><a class="sortable-header" data-sort="subsf">SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
                         <th><a class="sortable-header" data-sort="name">Nom <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th><a class="sortable-header" data-sort="techno">Techno <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th><a class="sortable-header" data-sort="archived">Archivé <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th><a class="sortable-header" data-sort="gcp">GCP <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th class="text-center" style="width: 120px;">
+                        <th data-column="techno"><a class="sortable-header" data-sort="techno">Techno <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                        <th data-column="archived"><a class="sortable-header" data-sort="archived">Archivé <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                        <th data-column="gcp"><a class="sortable-header" data-sort="gcp">GCP <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                        <th class="text-center" style="width: 120px;" data-column="dev">
                             <div class="d-flex justify-content-center align-items-center">
                                 <span>DEV</span>
                                 <span class="ml-2" style="cursor: pointer;" data-toggle="collapse" data-target="#legend-row" aria-expanded="false" aria-controls="legend-row">
@@ -60,9 +107,9 @@
                                 </span>
                             </div>
                         </th>
-                        <th class="text-center" style="width: 120px;">REC</th>
-                        <th class="text-center" style="width: 120px;">PP</th>
-                        <th class="text-center" style="width: 120px;">PROD</th>
+                        <th class="text-center" style="width: 120px;" data-column="rec">REC</th>
+                        <th class="text-center" style="width: 120px;" data-column="pp">PP</th>
+                        <th class="text-center" style="width: 120px;" data-column="prod">PROD</th>
                         <th class="text-center" style="width: 80px;">Actions</th>
                     </tr>
                     <tr>
@@ -78,7 +125,8 @@
                                         <i class="fa-solid fa-comment-dots text-primary"></i> Pub/Sub |
                                         <i class="fa-solid fa-file-lines text-info"></i> Logs |
                                         <i class="fa-solid fa-code-branch text-danger"></i> Rundeck |
-                                        <i class="fa-solid fa-server text-secondary"></i> Déploiement
+                                        <i class="fa-solid fa-server text-secondary"></i> Déploiement |
+                                        <i class="fa-solid fa-chart-line text-info"></i> New Relic
                                     </small>
                                 </div>
                             </div>
@@ -87,20 +135,20 @@
                     <tr>
                         <th></th>
                         <th></th>
-                        <th>
+                        <th data-column="domain">
                             <div class="input-group input-group-sm">
-                                <select id="filter_sf" class="form-control custom-select filter-input">
+                                <select id="filter_domain" class="form-control custom-select filter-input">
                                     <option value="all">Tous</option>
-                                    {% for key, value in sfs %}
+                                    {% for key, value in domains %}
                                         <option value="{{ key }}">{{ value }}</option>
                                     {% endfor %}
                                 </select>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_sf').value='all'; document.getElementById('filter_sf').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_domain').value='all'; document.getElementById('filter_domain').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                             </div>
                         </th>
-                        <th>
+                        <th data-column="subsf">
                             <div class="input-group input-group-sm">
                                 <select id="filter_subsf" class="form-control custom-select filter-input">
                                     <option value="all">Tous</option>
@@ -121,7 +169,7 @@
                                 </div>
                             </div>
                         </th>
-                        <th>
+                        <th data-column="techno">
                             <div class="input-group input-group-sm">
                                 <select id="filter_techno" class="form-control custom-select filter-input">
                                     <option value="all">Toutes</option>
@@ -136,7 +184,7 @@
                                 </div>
                             </div>
                         </th>
-                        <th>
+                        <th data-column="archived">
                             <div class="input-group input-group-sm">
                                 <select id="filter_archived" class="form-control custom-select filter-input">
                                     <option value="all">Tous</option>
@@ -148,7 +196,7 @@
                                 </div>
                             </div>
                         </th>
-                        <th>
+                        <th data-column="gcp">
                             <div class="input-group input-group-sm">
                                 <select id="filter_gcp" class="form-control custom-select filter-input">
                                     <option value="all">Tous</option>
@@ -160,7 +208,13 @@
                                 </div>
                             </div>
                         </th>
-                        <th colspan="4">
+                        <th data-column="dev">
+                        </th>
+                        <th data-column="rec">
+                        </th>
+                        <th data-column="pp">
+                        </th>
+                        <th data-column="prod">
                         </th>
                         <th>
                             <button class="btn btn-outline-light btn-sm mr-2" type="button" id="btn-reset-filters" title="Réinitialiser les filtres"><i class="fa-solid fa-rotate-left"></i></button>
@@ -178,8 +232,8 @@
                                 <input type="checkbox" class="row-checkbox">
                             </td>
                             <td class="col-index text-muted font-weight-bold"></td>
-                            <td class="col-sf" data-value="{{ r.sf }}">{{ r.sf }}</td>
-                            <td class="col-subsf" data-value="{{ r.subsf }}">{{ r.subsf }}</td>
+                            <td class="col-domain" data-column="domain" data-value="{{ r.domain }}">{{ r.domain }}</td>
+                            <td class="col-subsf" data-column="subsf" data-value="{{ r.subsf }}">{{ r.subsf }}</td>
                             <td class="col-name">
                                 {% set projectName = r.name|length > 35
                                     ? r.name|slice(0, 35) ~ '...'
@@ -196,20 +250,20 @@
                                     {{ projectName }}
                                 {% endif %}
                             </td>
-                            <td class="col-techno" data-value="{{ r.techno|default('') }}">
+                            <td class="col-techno" data-column="techno" data-value="{{ r.techno|default('') }}">
                                 {% if r.techno is defined and r.techno %}
                                     {{ r.techno }}
                                 {% endif %}
                             </td>
-                            <td class="col-archived" data-value="{% if r.archived %}oui{% else %}non{% endif %}">
+                            <td class="col-archived" data-column="archived" data-value="{% if r.archived %}oui{% else %}non{% endif %}">
                                 {% if r.archived %}<i class="fa-solid fa-box-archive text-danger mr-1" title="Projet archivé"></i>{% endif %}
                             </td>
-                            <td class="col-gcp" data-value="{% if r.cloudGCP == 1 %}oui{% else %}non{% endif %}">
+                            <td class="col-gcp" data-column="gcp" data-value="{% if r.cloudGCP == 1 %}oui{% else %}non{% endif %}">
                                 {% if r.cloudGCP == 1 %}<i class="fa-brands fa-google text-primary"></i>{% else %}-{% endif %}
                             </td>
 
                             {% for env in ['dev', 'rec', 'pp', 'prod'] %}
-                            <td class="col-{{ env }} text-left" data-env="{{ env }}"
+                            <td class="col-{{ env }} text-left" data-column="{{ env }}" data-env="{{ env }}"
                                 data-url-health="{% if isEligibleForHealth %}{{ r.urlHealthCheck[env] | default('') }}{% endif %}"
                                 data-url-logs="{{ r.urlLogs[env] | default('') }}">
 
@@ -244,6 +298,12 @@
                                 {% if r.urlsDeploymentGcp[env] is defined and r.urlsDeploymentGcp[env] != '' %}
                                 <a href="{{ r.urlsDeploymentGcp[env] }}" class="url-link ml-2" target="_blank" title="Voir le déploiement de {{ env }}">
                                     <i class="fa-solid fa-server text-secondary"></i>
+                                </a>
+                                {% endif %}
+
+                                {% if r.techno == 'java' and (env == 'rec' or env == 'prod') %}
+                                <a href="#" class="new-relic-link ml-2" data-project="{{ r.name }}" data-env="{{ env }}" title="Voir sur New Relic ({{ env }})">
+                                    <i class="fa-solid fa-chart-line text-info"></i>
                                 </a>
                                 {% endif %}
                             </td>
@@ -289,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function() {
     $('[data-toggle="tooltip"]').tooltip();
 
     // Éléments DOM (Filtres)
-    const filterSf = document.getElementById('filter_sf');
+    const filterDomain = document.getElementById('filter_domain');
     const filterSubsf = document.getElementById('filter_subsf');
     const filterProjectName = document.getElementById('filter_project_name');
     const filterTechno = document.getElementById('filter_techno');
@@ -316,6 +376,54 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentSortDirection = 'asc'; // 'asc' ou 'desc'
 
     getVisibleRows = () => displayedRows;
+
+    // --- LOGIQUE DE GESTION DES COLONNES ---
+    const columnToggles = document.querySelectorAll('.column-toggle');
+    const table = document.getElementById('projects-table');
+    const columnsPrefs = {{ columns_prefs|json_encode|raw }};
+
+    function setColumnVisibility(column, visible) {
+        const cells = table.querySelectorAll(`[data-column="${column}"]`);
+        cells.forEach(cell => {
+            cell.style.display = visible ? '' : 'none';
+        });
+    }
+
+    async function saveColumnPrefs() {
+        const prefs = {};
+        columnToggles.forEach(toggle => {
+            prefs[toggle.dataset.column] = toggle.checked;
+        });
+
+        try {
+            await fetch('?action=saveColumnsPrefs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ columns: prefs })
+            });
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde des préférences de colonnes:', error);
+        }
+    }
+
+    columnToggles.forEach(toggle => {
+        const column = toggle.dataset.column;
+        if (columnsPrefs[column] !== undefined) {
+            toggle.checked = columnsPrefs[column];
+        }
+        setColumnVisibility(column, toggle.checked);
+
+        toggle.addEventListener('change', function() {
+            setColumnVisibility(column, this.checked);
+            saveColumnPrefs();
+        });
+    });
+
+    // Empêcher le menu de se fermer lors d'un clic
+    document.getElementById('columns-menu').addEventListener('click', function (e) {
+        e.stopPropagation();
+    });
+
 
     // --- LOGIQUE DE TRI ---
     const sortHeaders = document.querySelectorAll('.sortable-header');
@@ -373,7 +481,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getColumnValue(row, column) {
         switch(column) {
-            case 'sf': return row.querySelector('.col-sf').getAttribute('data-value');
+            case 'domain': return row.querySelector('.col-domain').getAttribute('data-value');
             case 'subsf': return row.querySelector('.col-subsf').getAttribute('data-value');
             case 'name': return row.querySelector('.col-name').textContent.trim();
             case 'techno': return row.querySelector('.col-techno').getAttribute('data-value');
@@ -385,7 +493,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     function applyFilters() {
-        const valSf = filterSf.value.toLowerCase();
+        const valDomain = filterDomain.value.toLowerCase();
         const valSubsf = filterSubsf.value.toLowerCase();
         const valName = filterProjectName.value.toLowerCase();
         const valTechno = filterTechno.value.toLowerCase();
@@ -397,21 +505,21 @@ document.addEventListener('DOMContentLoaded', function() {
         rows.forEach(row => {
             row.style.display = 'none';
 
-            const sf = row.querySelector('.col-sf').getAttribute('data-value').toLowerCase();
+            const domain = row.querySelector('.col-domain').getAttribute('data-value').toLowerCase();
             const subsf = row.querySelector('.col-subsf').getAttribute('data-value').toLowerCase();
             const name = row.querySelector('.col-name').textContent.toLowerCase();
             const techno = row.querySelector('.col-techno').getAttribute('data-value').toLowerCase();
             const archived = row.querySelector('.col-archived').getAttribute('data-value').toLowerCase();
             const gcp = row.querySelector('.col-gcp').getAttribute('data-value').toLowerCase();
 
-            const matchSf = (valSf === 'all' || sf === valSf);
+            const matchDomain = (valDomain === 'all' || domain === valDomain);
             const matchSubsf = (valSubsf === 'all' || subsf === valSubsf);
             const matchName = (valName === '' || name.includes(valName));
             const matchTechno = (valTechno === 'all' || techno === valTechno);
             const matchArchived = (valArchived === 'all' || archived === valArchived);
             const matchGcp = (valGcp === 'all' || gcp === valGcp);
 
-            if (matchSf && matchSubsf && matchName && matchTechno && matchArchived && matchGcp) {
+            if (matchDomain && matchSubsf && matchName && matchTechno && matchArchived && matchGcp) {
                 filteredRows.push(row);
             }
         });
@@ -503,7 +611,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (btnResetFilters) {
         btnResetFilters.addEventListener('click', function() {
-            filterSf.value = 'all';
+            filterDomain.value = 'all';
             filterSubsf.value = 'all';
             filterProjectName.value = '';
             filterTechno.value = 'all';
@@ -687,5 +795,44 @@ function resetPendingBadges(rows, environments) {
         });
     });
 }
+
+// --- LOGIQUE NEW RELIC ---
+document.querySelectorAll('.new-relic-link').forEach(link => {
+    link.addEventListener('click', async function(e) {
+    console.log("click");
+        e.preventDefault();
+        const project = this.getAttribute('data-project');
+        const env = this.getAttribute('data-env');
+        const icon = this.querySelector('i');
+
+        console.log("icon:", icon);
+
+        // Afficher un spinner
+        if (icon) {
+            icon.className = 'fa-solid fa-spinner fa-spin';
+        }
+
+        console.log("project:", project, "env:", env);
+
+        try {
+            const response = await fetch(`?action=get_new_relic_url&project=${project}&env=${env}`);
+            const data = await response.json();
+
+            if (data.url) {
+                window.open(data.url, '_blank');
+            } else {
+                alert('Erreur: Impossible de récupérer l\'URL New Relic.');
+            }
+        } catch (error) {
+            console.error('Erreur lors de la récupération de l\'URL New Relic:', error);
+            alert('Une erreur est survenue.');
+        } finally {
+            // Rétablir l'icône initiale
+            if (icon) {
+                icon.className = 'fa-solid fa-chart-line text-info';
+            }
+        }
+    });
+});
 </script>
 {% endblock body %}

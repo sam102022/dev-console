@@ -8,7 +8,7 @@ class ProjectEntity
     private string $name;
     public ?string $serviceName = null;
     private string $sf;
-    private string $sfName;
+    private string $domainName;
     private string $subsf;
     private bool $cloudGCP;
     private ?string $springBootVersion;
@@ -43,9 +43,9 @@ class ProjectEntity
         return $this->sf;
     }
 
-    public function getSfName(): string
+    public function getDomainName(): string
     {
-        return $this->sfName;
+        return $this->domainName;
     }
 
     public function getSubsf(): string
@@ -146,9 +146,9 @@ class ProjectEntity
         $this->sf = $sf;
     }
 
-    public function setSfName(string $sfName): void
+    public function setDomainName(string $domainName): void
     {
-        $this->sfName = $sfName;
+        $this->domainName = $domainName;
     }
 
     public function setSubsf(string $subsf): void
@@ -236,7 +236,7 @@ class ProjectEntity
         string  $name,
         ?string $serviceName,
         string  $sf,
-        string  $sfName,
+        string  $domainName,
         string  $subsf,
         bool    $cloudGCP,
         ?string $springBootVersion,
@@ -258,7 +258,7 @@ class ProjectEntity
         $project->setName($name);
         $project->setServiceName($serviceName);
         $project->setSf($sf);
-        $project->setSfName($sfName);
+        $project->setDomainName($domainName);
         $project->setSubsf($subsf);
         $project->setCloudGCP($cloudGCP);
         $project->setSpringBootVersion($springBootVersion);

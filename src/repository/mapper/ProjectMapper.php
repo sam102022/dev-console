@@ -14,7 +14,7 @@ class ProjectMapper
         $projectEntity->setName($data['name']);
         $projectEntity->setServiceName($data['serviceName']);
         $projectEntity->setSf($data['sf'] ?? '');
-        $projectEntity->setSfName($data['sfName'] ?? '');
+        $projectEntity->setDomainName($data['domainName'] ?? '');
         $projectEntity->setSubsf($data['subsf'] ?? '');
         $projectEntity->setCloudGCP($data['cloudGCP'] ?? false);
         $projectEntity->setSpringBootVersion($data['springBoot'] ?? null);
@@ -40,7 +40,7 @@ class ProjectMapper
         $project->setName($data['name']);
         $project->setServiceName($data['serviceName']);
         $project->setSf($data['sf'] ?? '');
-        $project->setSfName($data['sfName'] ?? '');
+        $project->setDomainName($data['domainName'] ?? '');
         $project->setSubsf($data['subsf'] ?? '');
         $project->setCloudGCP($data['cloudGCP'] ?? false);
         $project->setSpringBoot($data['springBoot'] ?? null);
@@ -66,7 +66,7 @@ class ProjectMapper
         $project->setName($entity->getName());
         $project->setServiceName($entity->getServiceName());
         $project->setSf($entity->getSf());
-        $project->setSfName($entity->getSfName());
+        $project->setDomainName($entity->getDomainName());
         $project->setSubsf($entity->getSubsf());
         $project->setCloudGCP($entity->isCloudGCP());
         $project->setSpringBoot($entity->getSpringBootVersion());
@@ -92,7 +92,7 @@ class ProjectMapper
             $project->getName(),
             $project->getServiceName(),
             $project->getSf() ?? '',
-            $project->getSfName() ?? '',
+            $project->getDomainName() ?? '',
             $project->getSubsf() ?? '',
             $project->isCloudGCP(),
             $project->getSpringBoot(),
@@ -117,7 +117,7 @@ class ProjectMapper
             'name' => $projectEntity->getName(),
             'serviceName' => $projectEntity->getName(),
             'sf' => $projectEntity->getSf(),
-            'sfName' => $projectEntity->getSfName(),
+            'domainName' => $projectEntity->getDomainName(),
             'subsf' => $projectEntity->getSubsf(),
             'cloudGCP' => $projectEntity->isCloudGCP(),
             'springBoot' => $projectEntity->getSpringBootVersion(),
