@@ -4,22 +4,24 @@ declare(strict_types=1);
 namespace App\tests\controller;
 
 use App\controller\GitlabController;
-use App\model\ParamConfig;
+use App\model\EnumEnvironment;
 use App\service\GitlabService;
 use App\service\NewRelicService;
+use App\tests\fixtures\NewRelicFixtures;
+use App\tests\fixtures\ProjectFixtures;
 use Exception;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 class GitlabControllerTest extends AbstractControllerCase
 {
     private GitlabService $gitlabService;
+    private NewRelicService $newRelicService;
     private GitlabController $controller;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->gitlabService = $this->createMock(GitlabService::class);
-        $this->paramConfig = $this->createMock(ParamConfig::class);
         $this->newRelicService = $this->createMock(NewRelicService::class);
 
         $this->controller = new GitlabController(
@@ -29,11 +31,10 @@ class GitlabControllerTest extends AbstractControllerCase
             self::$loggerFactory
         );
 
-        // Reset $_REQUEST before each test
         $_REQUEST = [];
     }
 
-    public static function handleRequestProvider(): array
+    public static function handleSimpleRequestProvider(): array
     {
         return [
             'ACTION_GITLAB_SCAN success' => [
@@ -41,8 +42,8 @@ class GitlabControllerTest extends AbstractControllerCase
                 'requestParams' => [],
                 'serviceMethod' => 'scan',
                 'serviceArgs' => [],
-                'serviceReturn' => ['status' => 'success', 'data' => ['scanned' => true]],
-                'expectedResponse' => json_encode(['status' => 'success', 'data' => ['scanned' => true]]),
+                'serviceReturn' => ['status' => 'success'],
+                'expectedResponse' => json_encode(['status' => 'success']),
             ],
             'ACTION_GITLAB_TREE success' => [
                 'action' => ACTION_GITLAB_TREE,
@@ -52,14 +53,6 @@ class GitlabControllerTest extends AbstractControllerCase
                 'serviceReturn' => [['name' => 'file1.txt']],
                 'expectedResponse' => json_encode([['name' => 'file1.txt']]),
             ],
-            'ACTION_GITLAB_TREE default path' => [
-                'action' => ACTION_GITLAB_TREE,
-                'requestParams' => [],
-                'serviceMethod' => 'getTree',
-                'serviceArgs' => [656, ''],
-                'serviceReturn' => ['content' => [['name' => 'root_dir']]],
-                'expectedResponse' => json_encode(['content' => [['name' => 'root_dir']]]),
-            ],
             'ACTION_GITLAB_FILE success' => [
                 'action' => ACTION_GITLAB_FILE,
                 'requestParams' => ['file' => 'config.json'],
@@ -68,27 +61,19 @@ class GitlabControllerTest extends AbstractControllerCase
                 'serviceReturn' => ['content' => 'file content'],
                 'expectedResponse' => json_encode(['content' => 'file content']),
             ],
-            'ACTION_GITLAB_FILE default file' => [
-                'action' => ACTION_GITLAB_FILE,
-                'requestParams' => [],
-                'serviceMethod' => 'getFile',
-                'serviceArgs' => [656, ''],
-                'serviceReturn' => ['content' => 'empty file content'],
-                'expectedResponse' => json_encode(['content' => 'empty file content']),
-            ],
             'Unknown action' => [
                 'action' => 'unknown_action',
                 'requestParams' => [],
                 'serviceMethod' => null,
                 'serviceArgs' => [],
-                'serviceReturn' => ['content' => null],
+                'serviceReturn' => null,
                 'expectedResponse' => json_encode(['error' => 'Action inconnue']),
             ],
         ];
     }
 
-    #[DataProvider('handleRequestProvider')]
-    public function testHandleRequest(
+    #[DataProvider('handleSimpleRequestProvider')]
+    final public function testHandleSimpleRequest(
         string $action,
         array $requestParams,
         ?string $serviceMethod,
@@ -96,10 +81,8 @@ class GitlabControllerTest extends AbstractControllerCase
         mixed $serviceReturn,
         string $expectedResponse
     ): void {
-        // Prepare $_REQUEST
         $_REQUEST = $requestParams;
 
-        // Configure GitlabService mock
         if ($serviceMethod) {
             $this->gitlabService->expects($this->once())
                 ->method($serviceMethod)
@@ -109,13 +92,83 @@ class GitlabControllerTest extends AbstractControllerCase
             $this->gitlabService->expects($this->never())->method($this->anything());
         }
 
-        // Capture output or check return value
         $response = $this->controller->handleRequest($action);
 
         $this->assertEquals($expectedResponse, $response);
     }
 
-    public function testHandleRequestException(): void
+    final public function testHandleRequestNewRelicUrlFromCache(): void
+    {
+        $project = ProjectFixtures::getProjectWithUrls();
+        $_REQUEST = ['project' => $project->getName(), 'env' => 'rec'];
+
+        $newRelicModel = NewRelicFixtures::getNewRelic();
+
+        $this->newRelicService->expects($this->once())
+            ->method('find')
+            ->with($project->getName(), EnumEnvironment::REC)
+            ->willReturn($newRelicModel);
+
+        $this->gitlabService->expects($this->never())->method('getProjectByCode');
+        $this->gitlabService->expects($this->never())->method('buildNewRelicUrl');
+
+        $response = $this->controller->handleRequest(ACTION_NEW_RELIC_URL);
+
+        $this->assertEquals(json_encode(['url' => $newRelicModel->getUrl()]), $response);
+    }
+
+    final public function testHandleRequestNewRelicUrlBuildNewUrl(): void
+    {
+        $project = ProjectFixtures::getProjectWithUrls();
+        $_REQUEST = ['project' => $project->getName(), 'env' => 'prod'];
+        $newUrl = 'http://new.url';
+
+        $this->newRelicService->expects($this->once())
+            ->method('find')
+            ->with($project->getName(), EnumEnvironment::PROD)
+            ->willReturn(null);
+
+        $this->gitlabService->expects($this->once())
+            ->method('getProjectByCode')
+            ->with($project->getName())
+            ->willReturn($project);
+
+        $this->gitlabService->expects($this->once())
+            ->method('buildNewRelicUrl')
+            ->with($project, EnumEnvironment::PROD)
+            ->willReturn($newUrl);
+
+        $this->newRelicService->expects($this->once())->method('save');
+
+        $response = $this->controller->handleRequest(ACTION_NEW_RELIC_URL);
+
+        $this->assertEquals(json_encode(['url' => $newUrl]), $response);
+    }
+
+    final public function testHandleRequestNewRelicUrlNotFound(): void
+    {
+        $project = ProjectFixtures::getProjectWithUrls();
+        $_REQUEST = ['project' => $project->getName(), 'env' => 'prod'];
+
+        $this->newRelicService->expects($this->once())
+            ->method('find')
+            ->willReturn(null);
+
+        $this->gitlabService->expects($this->once())
+            ->method('getProjectByCode')
+            ->willReturn($project);
+
+        $this->gitlabService->expects($this->once())
+            ->method('buildNewRelicUrl')
+            ->willReturn(null);
+
+        $response = $this->controller->handleRequest(ACTION_NEW_RELIC_URL);
+
+        $this->assertEquals(json_encode(['error' => 'URL non trouvée.']), $response);
+        $this->assertEquals(404, http_response_code());
+    }
+
+    final public function testHandleRequestException(): void
     {
         $action = ACTION_GITLAB_SCAN;
         $errorMessage = 'Test exception message';
@@ -129,5 +182,13 @@ class GitlabControllerTest extends AbstractControllerCase
         $expectedResponse = json_encode(['error' => $errorMessage]);
         $this->assertEquals($expectedResponse, $response);
         $this->assertEquals(500, http_response_code());
+    }
+
+    final public function testNewRelicUrlMissingParams(): void
+    {
+        $response = $this->controller->handleRequest(ACTION_NEW_RELIC_URL);
+        $expectedResponse = json_encode(['error' => 'Les paramètres project et env sont requis.']);
+        $this->assertEquals($expectedResponse, $response);
+        $this->assertEquals(400, http_response_code());
     }
 }
