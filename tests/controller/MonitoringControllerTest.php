@@ -95,8 +95,7 @@ class MonitoringControllerTest extends AbstractControllerCase
                 'request' => ['project' => 'my-project', 'env' => 'dev'],
                 'serviceReturn' => $return1,
                 'expectedResponse' => json_encode(['success' => true,
-                    'health' => ['status' => 'UP', 'httpCode' => 200, 'error' => null],
-                    'urls' => null]),
+                    'health' => ['status' => 'UP', 'httpCode' => 200, 'error' => null]]),
             ],
             'check one failure' => [
                 'action' => ACTION_MONITORING_GET_DATA,
@@ -105,8 +104,7 @@ class MonitoringControllerTest extends AbstractControllerCase
                     'health' => ['status' => 'DOWN', 'httpCode' => 500, 'error' => 'Server Error'],
                 ],
                 'expectedResponse' => json_encode(['success' => true,
-                    'health' => ['status' => 'DOWN', 'httpCode' => 500, 'error' => 'Server Error'],
-                    'urls' => null]),
+                    'health' => ['status' => 'DOWN', 'httpCode' => 500, 'error' => 'Server Error']]),
             ],
             'unknown action' => [
                 'action' => 'unknown_action',
