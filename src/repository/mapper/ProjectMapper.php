@@ -25,6 +25,7 @@ class ProjectMapper
         $projectEntity->setWebUrl($data['webUrl'] ?? '');
         $projectEntity->setArchived($data['archived'] ?? false);
         $projectEntity->setUrlHealthCheck($data['urlHealthCheck'] ?? []);
+        $projectEntity->setUrlActuatorInfo($data['urlActuatorInfo'] ?? []);
         $projectEntity->setUrlLogs($data['urlLogs'] ?? []);
         $projectEntity->setUrlFronts($data['urlFronts'] ?? []);
         $projectEntity->setUrlPubsubs($data['urlPubsubs'] ?? []);
@@ -51,6 +52,7 @@ class ProjectMapper
         $project->setWebUrl($data['webUrl'] ?? '');
         $project->setArchived($data['archived'] ?? false);
         $project->setUrlHealthCheck($data['urlHealthCheck'] ?? []);
+        $project->setUrlActuatorInfo($data['urlActuatorInfo'] ?? []);
         $project->setUrlLogs($data['urlLogs'] ?? []);
         $project->setUrlFronts($data['urlFronts'] ?? []);
         $project->setUrlPubsubs($data['urlPubsubs'] ?? []);
@@ -77,6 +79,7 @@ class ProjectMapper
         $project->setWebUrl($entity->getWebUrl());
         $project->setArchived($entity->isArchived());
         $project->setUrlHealthCheck($entity->getUrlHealthCheck());
+        $project->setUrlActuatorInfo($entity->getUrlActuatorInfo());
         $project->setUrlLogs($entity->getUrlLogs());
         $project->setUrlFronts($entity->getUrlFronts());
         $project->setUrlPubsubs($entity->getUrlPubsubs());
@@ -102,6 +105,7 @@ class ProjectMapper
             $project->getWebUrl(),
             $project->isArchived(),
             $project->getUrlHealthCheck(),
+            $project->getUrlActuatorInfo(),
             $project->getUrlLogs(),
             $project->getUrlFronts(),
             $project->getUrlPubsubs(),
@@ -115,7 +119,7 @@ class ProjectMapper
     {
         return [
             'name' => $projectEntity->getName(),
-            'serviceName' => $projectEntity->getName(),
+            'serviceName' => $projectEntity->getServiceName(),
             'domain' => $projectEntity->getDomain(),
             'domainName' => $projectEntity->getDomainName(),
             'sf' => $projectEntity->getSf(),
@@ -128,6 +132,7 @@ class ProjectMapper
             'webUrl' => $projectEntity->getWebUrl(),
             'archived' => $projectEntity->isArchived(),
             'urlHealthCheck' => $projectEntity->getUrlHealthCheck(),
+            'urlActuatorInfo' => $projectEntity->getUrlActuatorInfo(),
             'urlLogs' => $projectEntity->getUrlLogs(),
             'urlFronts' => $projectEntity->getUrlFronts(),
             'urlPubsubs' => $projectEntity->getUrlPubsubs(),

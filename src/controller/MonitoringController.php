@@ -97,8 +97,7 @@ class MonitoringController
                     $data = $this->monitoringService->getMonitoringData($project, $env);
                     $response = [
                         'success' => true,
-                        'health' => $data['health'],
-                        'urls' => $data['urls'],
+                        ...$data,
                     ];
                     break;
                 case ACTION_SAVE_COLUMNS_PREFS:

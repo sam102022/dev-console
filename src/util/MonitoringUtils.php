@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\util;
 
+use App\model\EnumActuatorEndpoint;
 use App\model\EnumEnvironment;
 use App\model\Project;
 use DateMalformedStringException;
@@ -146,7 +147,34 @@ class MonitoringUtils
      * @param array $projectsInGke Liste des projets déployés sur GKE.
      * @return string L'URL construite du Health Check.
      */
-    public static function buildUrlHealthCheck(Project $project, ?EnumEnvironment $env, array $projectsInGke): string
+    public static function buildUrlActuatorHealth(Project $project, ?EnumEnvironment $env, array $projectsInGke): string
+    {
+        return self::buildUrlActuator($project, $env, $projectsInGke, EnumActuatorEndpoint::HEALTH);
+    }
+
+    /**
+     * Construit l'URL du point de terminaison Health Check d'un projet pour un environnement donné.
+     *
+     * @param Project $project L'objet projet contenant les informations du service.
+     * @param EnumEnvironment|null $env L'environnement ciblé.
+     * @param array $projectsInGke Liste des projets déployés sur GKE.
+     * @return string L'URL construite du Health Check.
+     */
+    public static function buildUrlActuatorInfo(Project $project, ?EnumEnvironment $env, array $projectsInGke): string
+    {
+        return self::buildUrlActuator($project, $env, $projectsInGke, EnumActuatorEndpoint::INFO);
+    }
+
+    /**
+     * Construit l'URL du point de terminaison Health Check d'un projet pour un environnement donné.
+     *
+     * @param Project $project L'objet projet contenant les informations du service.
+     * @param EnumEnvironment|null $env L'environnement ciblé.
+     * @param array $projectsInGke Liste des projets déployés sur GKE.
+     * @param EnumActuatorEndpoint $actuatorEndpoint Actuator endpoint
+     * @return string L'URL construite du Health Check.
+     */
+    public static function buildUrlActuator(Project $project, ?EnumEnvironment $env, array $projectsInGke, EnumActuatorEndpoint $actuatorEndpoint): string
     {
         $projectName = $project->getname();
         $cloudGCP = $project->isCloudGCP();
@@ -164,13 +192,13 @@ class MonitoringUtils
             }
         }
 
-        $uriHealth = '';
+        $uriActuator = '';
         if (str_starts_with($projectName, 'api')) {
-            $uriHealth .= '/v1';
+            $uriActuator .= '/v1';
         }
-        $uriHealth .= '/actuator/health';
+        $uriActuator .= '/actuator/' . $actuatorEndpoint->value;
 
-        $urlHealthCheck = "https://management-$projectName.$domain$uriHealth";
+        $urlHealthCheck = "https://management-$projectName.$domain$uriActuator";
 
         return sprintf($urlHealthCheck, $envLocal);
     }

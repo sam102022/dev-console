@@ -80,6 +80,7 @@ class IndexViewModelFactory
                 'webUrl' => $project->getWebUrl(),
                 'archived' => $project->isArchived(),
                 'urlHealthCheck' => $project->getUrlHealthCheck(),
+                'urlActuatorInfo' => $project->getUrlActuatorInfo(),
                 'urlLogs' => $project->getUrlLogs(),
                 'urlFronts' => $project->getUrlFronts(),
                 'urlPubsubs' => $project->getUrlPubsubs(),

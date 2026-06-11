@@ -13,7 +13,7 @@ class ProjectEntityFixtures
             'domain', 'domainName', 'sf', true,
             '2.7.0', '17', 'java',
             'subscriptionName', 'http://url', false,
-            [], [], [], [], null, []);
+            [], [], [], [], [], null, [], [], []);
     }
 
     public static function getProjectBEntity(): ProjectEntity
@@ -22,6 +22,6 @@ class ProjectEntityFixtures
             'e', ' e ', 'f', false,
             null, null, '', null,
             'http://url/b', false,
-            [], [], [], [], null, []);
+            [], [], [], [], [], null, [], [], []);
     }
 }

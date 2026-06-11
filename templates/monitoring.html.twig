@@ -121,6 +121,7 @@
                                         <i class="fa-solid fa-box-archive text-danger"></i> Projet archivé |
                                         <i class="fa-brands fa-google text-primary"></i> Projet sur GCP |
                                         <i class="fa-solid fa-hourglass"></i> Health Check |
+                                        <i class="fa-solid fa-tag"></i> Version |
                                         <i class="fa-solid fa-desktop text-success"></i> Front |
                                         <i class="fa-solid fa-comment-dots text-primary"></i> Pub/Sub |
                                         <i class="fa-solid fa-file-lines text-info"></i> Logs |
@@ -225,6 +226,7 @@
                 </thead>
                 <tbody id="projects-tbody">
                     {% for r in results %}
+                        {% set isEligibleForActuatorInfo = r.name starts with 'api' or r.name starts with 'flow' and r.techno == 'java' %}
                         {% set isEligibleForHealth = r.name starts with 'api' or r.name starts with 'flow' and r.techno == 'java' %}
                         {% set isEligibleForLogs = r.techno is defined and r.techno != '' and r.techno != 'php' %}
                         <tr class="project-row" data-project-name="{{ r.name }}">
@@ -264,11 +266,15 @@
 
                             {% for env in ['dev', 'rec', 'pp', 'prod'] %}
                             <td class="col-{{ env }} text-left" data-column="{{ env }}" data-env="{{ env }}"
+                                data-url-actuator-info="{% if isEligibleForActuatorInfo %}{{ r.urlActuatorInfo[env] | default('') }}{% endif %}"
                                 data-url-health="{% if isEligibleForHealth %}{{ r.urlHealthCheck[env] | default('') }}{% endif %}"
                                 data-url-logs="{{ r.urlLogs[env] | default('') }}">
 
                                 {% if isEligibleForHealth %}
                                     <span class="health-badge badge badge-secondary"><i class="fa-solid fa-hourglass"></i></span>
+                                {% endif %}
+                                {% if isEligibleForActuatorInfo %}
+                                    <span class="version-badge badge badge-secondary ml-1"><i class="fa-solid fa-tag"></i></span>
                                 {% endif %}
 
                                 {% if (r.techno == 'react' or r.techno == 'nuxt' or r.techno == 'php') and r.urlFronts[env] is defined and r.urlFronts[env] != '' %}
@@ -672,12 +678,19 @@ async function checkHealth(mode, specificRow = null) {
             const cell = row.querySelector(`.col-${env}`);
             if(cell) {
                 const urlHealthCheck = cell.getAttribute('data-url-health');
+                const urlActuatorInfo = cell.getAttribute('data-url-actuator-info');
 
-                // Ne met en chargement que si on a une URL de health check
                 if (urlHealthCheck && urlHealthCheck !== '') {
                     const badge = cell.querySelector('.health-badge');
                     if (badge) {
                         badge.className = 'health-badge badge badge-warning';
+                        badge.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+                    }
+                }
+                if (urlActuatorInfo && urlActuatorInfo !== '') {
+                    const badge = cell.querySelector('.version-badge');
+                    if (badge) {
+                        badge.className = 'version-badge badge badge-warning';
                         badge.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
                     }
                 }
@@ -727,12 +740,13 @@ async function checkEnvironment(row, projectName, env, signal) {
     if(!cell) return;
 
     const urlHealthCheck = cell.getAttribute('data-url-health');
-    const badge = cell.querySelector('.health-badge');
+    const urlActuatorInfo = cell.getAttribute('data-url-actuator-info');
+    const healthBadge = cell.querySelector('.health-badge');
+    const versionBadge = cell.querySelector('.version-badge');
 
-    if (!urlHealthCheck || urlHealthCheck === '') {
-        if (badge) {
-            updateBadge(badge, 'N/A', 'secondary', '#');
-        }
+    if ((!urlHealthCheck || urlHealthCheck === '') && (!urlActuatorInfo || urlActuatorInfo === '')) {
+        if (healthBadge) updateBadge(healthBadge, 'N/A', 'secondary', '#');
+        if (versionBadge) updateVersionBadge(versionBadge, 'N/A', 'secondary', '#');
         return;
     }
 
@@ -742,21 +756,27 @@ async function checkEnvironment(row, projectName, env, signal) {
         const data = await response.json();
 
         if (data.success) {
-            // Mise à jour du statut Health
-            if (data.health.status === 'UP') {
-                updateBadge(badge, '<i class="fa-solid fa-check"></i>', 'success', urlHealthCheck);
-            } else {
-                updateBadge(badge, '<i class="fa-regular fa-thumbs-down"></i>', 'danger', urlHealthCheck);
+            if (healthBadge) {
+                if (data.health.status === 'UP') {
+                    updateBadge(healthBadge, '<i class="fa-solid fa-check"></i>', 'success', data.urls.healthCheckUrl);
+                } else {
+                    updateBadge(healthBadge, '<i class="fa-regular fa-thumbs-down"></i>', 'danger', data.urls.healthCheckUrl);
+                }
+            }
+            if (versionBadge) {
+                updateVersionBadge(versionBadge, data.actuatorInfo.version, 'info', data.urls.actuatorInfoUrl);
             }
         } else {
-            updateBadge(badge, 'ERR', 'danger', urlHealthCheck);
+            if (healthBadge) updateBadge(healthBadge, 'ERR', 'danger', urlHealthCheck);
+            if (versionBadge) updateVersionBadge(versionBadge, 'ERR', 'danger', urlActuatorInfo);
         }
 
     } catch (error) {
         if (error.name === 'AbortError') {
             throw error;
         } else {
-            updateBadge(badge, 'ERR', 'danger', urlHealthCheck);
+            if (healthBadge) updateBadge(healthBadge, 'ERR', 'danger', urlHealthCheck);
+            if (versionBadge) updateVersionBadge(versionBadge, 'ERR', 'danger', urlActuatorInfo);
         }
     }
 }
@@ -768,15 +788,23 @@ function updateBadge(badge, text, type, url) {
     }
 }
 
+function updateVersionBadge(badge, text, type, url) {
+    if (badge) {
+        badge.className = `version-badge badge badge-${type}`;
+        badge.innerHTML = `<a href="${url}" target="_blank" class="text-white text-decoration-none" title="${url}">${text}</a>`;
+    }
+}
+
 function updateRowBadgesError(row, environments) {
     environments.forEach(env => {
         const cell = row.querySelector(`.col-${env}`);
         if(cell){
             const urlHealthCheck = cell.getAttribute('data-url-health');
-            const badge = cell.querySelector('.health-badge');
-            if (badge) {
-                updateBadge(badge, 'N/A', 'secondary', urlHealthCheck || '#');
-            }
+            const urlActuatorInfo = cell.getAttribute('data-url-actuator-info');
+            const healthBadge = cell.querySelector('.health-badge');
+            const versionBadge = cell.querySelector('.version-badge');
+            if (healthBadge) updateBadge(healthBadge, 'N/A', 'secondary', urlHealthCheck || '#');
+            if (versionBadge) updateVersionBadge(versionBadge, 'N/A', 'secondary', urlActuatorInfo || '#');
         }
     });
 }
@@ -786,10 +814,15 @@ function resetPendingBadges(rows, environments) {
         environments.forEach(env => {
             const cell = row.querySelector(`.col-${env}`);
             if(cell) {
-                const badge = cell.querySelector('.health-badge');
-                if (badge && badge.innerHTML.includes('spinner-border')) {
-                    badge.className = 'health-badge badge badge-secondary';
-                    badge.innerHTML = '<i class="fa-solid fa-ban"></i>';
+                const healthBadge = cell.querySelector('.health-badge');
+                const versionBadge = cell.querySelector('.version-badge');
+                if (healthBadge && healthBadge.innerHTML.includes('spinner-border')) {
+                    healthBadge.className = 'health-badge badge badge-secondary';
+                    healthBadge.innerHTML = '<i class="fa-solid fa-ban"></i>';
+                }
+                if (versionBadge && versionBadge.innerHTML.includes('spinner-border')) {
+                    versionBadge.className = 'version-badge badge badge-secondary';
+                    versionBadge.innerHTML = '<i class="fa-solid fa-ban"></i>';
                 }
             }
         });

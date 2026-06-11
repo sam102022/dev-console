@@ -19,6 +19,7 @@ class ProjectEntity
     private string $webUrl;
     private bool $archived;
     private array $urlHealthCheck = [];
+    private array $urlActuatorInfo = [];
     private array $urlLogs = [];
     private array $urlFronts = [];
     private array $urlPubsubs = [];
@@ -99,6 +100,11 @@ class ProjectEntity
     public function getUrlHealthCheck(): array
     {
         return $this->urlHealthCheck;
+    }
+
+    public function getUrlActuatorInfo(): array
+    {
+        return $this->urlActuatorInfo;
     }
 
     public function getUrlLogs(): array
@@ -207,6 +213,11 @@ class ProjectEntity
         $this->urlHealthCheck = $urlHealthCheck;
     }
 
+    public function setUrlActuatorInfo(array $urlActuatorInfo): void
+    {
+        $this->urlActuatorInfo = $urlActuatorInfo;
+    }
+
     public function setUrlLogs(array $urlLogs): void
     {
         $this->urlLogs = $urlLogs;
@@ -246,6 +257,7 @@ class ProjectEntity
         string  $webUrl,
         bool    $archived,
         array   $urlHealthCheck = [],
+        array   $urlActuatorInfo = [],
         array   $urlLogs = [],
         array   $urlFronts = [],
         array   $urlPubsubs = [],
@@ -267,6 +279,7 @@ class ProjectEntity
         $project->setSubscriptionName($subscriptionName);
         $project->setMdmWorkloadVersion($mdmWorkloadVersion);
         $project->setUrlHealthCheck($urlHealthCheck);
+        $project->setUrlActuatorInfo($urlActuatorInfo);
         $project->setUrlLogs($urlLogs);
         $project->setUrlFronts($urlFronts);
         $project->setUrlPubsubs($urlPubsubs);

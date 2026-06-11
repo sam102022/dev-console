@@ -196,6 +196,7 @@ class GitlabService
             'archived' => $gitLabProject->isArchived(),
             'mdmWorkloadVersion' => $deploymentInfo['mdmWorkloadVersion'],
             'urlHealthCheck' => [],
+            'urlActuatorInfo' => [],
             'urlLogs' => [],
             'urlFronts' => [],
             'urlPubsubs' => [],
@@ -206,6 +207,7 @@ class GitlabService
         $project = ProjectMapper::projectFromArray($data);
 
         $urlsHealth = [];
+        $urlsActuatorInfo = [];
         $urlsLogs = [];
         $urlsFronts = [];
         $urlsPubsubs = [];
@@ -213,9 +215,15 @@ class GitlabService
         $urlsDeploymentGcp = [];
         foreach (EnumEnvironment::cases() as $env) {
             if ($techno === 'java') {
-                $urlsHealth[$env->value] = MonitoringUtils::buildUrlHealthCheck($project, $env, $this->excludeProjects);
+                if (str_starts_with($projectName, 'api') || str_starts_with($projectName, 'flow')) {
+                    $urlsHealth[$env->value] = MonitoringUtils::buildUrlActuatorHealth($project, $env, $this->excludeProjects);
+                    $urlsActuatorInfo[$env->value] = MonitoringUtils::buildUrlActuatorInfo($project, $env, $this->excludeProjects);
+                }
                 if (str_starts_with($projectName, 'flow')) {
                     $urlsPubsubs[$env->value] = MonitoringUtils::buildPubSubUrl($project, $env);
+                }
+                if (str_starts_with($projectName, 'batch')) {
+                    $urlsRundeck[$env->value] = MonitoringUtils::buildRundeckUrl($project, $env);
                 }
             }
             if ($techno === 'java' || $techno === 'react' || $techno === 'nuxt') {
@@ -227,14 +235,12 @@ class GitlabService
             if ($techno === 'php' && str_starts_with($projectName, 'zend')) {
                 $urlsFronts[$env->value] = MonitoringUtils::buildFrontPhpUrl($project, $env);
             }
-            if ($techno === 'java' && str_starts_with($projectName, 'batch')) {
-                $urlsRundeck[$env->value] = MonitoringUtils::buildRundeckUrl($project, $env);
-            }
             if ($project->isCloudGCP()) {
                 $urlsDeploymentGcp[$env->value] = MonitoringUtils::buildDeploymentGcpUrl($project, $env);
             }
         }
         $project->setUrlHealthCheck($urlsHealth);
+        $project->setUrlActuatorInfo($urlsActuatorInfo);
         $project->setUrlLogs($urlsLogs);
         $project->setUrlFronts($urlsFronts);
         $project->setUrlPubsubs($urlsPubsubs);

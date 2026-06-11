@@ -161,7 +161,7 @@ class MonitoringControllerTest extends AbstractControllerCase
     }
 
     /**
-     * @throws GuzzleException|TechnicalException
+     * @throws TechnicalException
      */
     #[DataProvider('renderExceptionProvider')]
     final public function testRenderCatchesExceptions(Throwable $exception): void

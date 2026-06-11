@@ -61,7 +61,7 @@ YAML,
     }
 
     #[DataProvider('parseServiceNameProvider')]
-    public function testParseServiceName(?string $yamlContent, ?string $expectedName): void
+    final public function testParseServiceName(?string $yamlContent, ?string $expectedName): void
     {
         $actualName = MonitoringUtils::parseServiceName($yamlContent);
         $this->assertEquals($expectedName, $actualName);
@@ -94,7 +94,7 @@ YAML,
     }
 
     #[DataProvider('parseSubscriptionNameProvider')]
-    public function testParseSubscriptionName(?string $yamlContent, ?string $expectedName): void
+    final public function testParseSubscriptionName(?string $yamlContent, ?string $expectedName): void
     {
         $this->assertEquals($expectedName, MonitoringUtils::parseSubscriptionName($yamlContent));
     }
@@ -126,7 +126,7 @@ YAML,
     }
 
     #[DataProvider('parseVariableInValuesFileProvider')]
-    public function testParseVariableInValuesFile(string $yamlContent, string $variableName, ?string $expectedValue): void
+    final public function testParseVariableInValuesFile(string $yamlContent, string $variableName, ?string $expectedValue): void
     {
         $this->assertEquals($expectedValue, MonitoringUtils::parseVariableInValuesFile($yamlContent, $variableName));
     }
@@ -166,12 +166,12 @@ YAML,
     }
 
     #[DataProvider('parsePackageProvider')]
-    public function testParsePackage(?string $packageContent, ?string $expected): void
+    final public function testParsePackage(?string $packageContent, ?string $expected): void
     {
         $this->assertEquals($expected, MonitoringUtils::parsePackage($packageContent));
     }
 
-    public static function buildUrlProvider(): array
+    public static function buildUrlActuatorHealthProvider(): array
     {
         return [
             'Cloud GCP project' => [
@@ -207,10 +207,54 @@ YAML,
         ];
     }
 
-    #[DataProvider('buildUrlProvider')]
-    public function testBuildUrlHealthCheck(Project $project, EnumEnvironment $env, array $projectsInGke, string $expectedUrl): void
+    #[DataProvider('buildUrlActuatorHealthProvider')]
+    final public function testBuildUrlHealthCheck(Project $project, EnumEnvironment $env, array $projectsInGke, string $expectedUrl): void
     {
-        $url = MonitoringUtils::buildUrlHealthCheck($project, $env, $projectsInGke);
+        $url = MonitoringUtils::buildUrlActuatorHealth($project, $env, $projectsInGke);
+
+        $this->assertEquals($expectedUrl, $url);
+    }
+
+    public static function buildUrlActuatorInfoProvider(): array
+    {
+        return [
+            'Cloud GCP project' => [
+                ProjectFixtures::getMonitoringProject('my-project', true),
+                EnumEnvironment::DEV,
+                [], // projectsInGke (doesn't matter if cloudGCP is true)
+                'https://management-my-project.dev.mdm-int.net/actuator/info'
+            ],
+            'Rancher non-prod' => [
+                ProjectFixtures::getMonitoringProject('my-project', false),
+                EnumEnvironment::REC,
+                [],
+                'https://management-my-project.app-rec.xm/actuator/info'
+            ],
+            'Rancher prod, migrated to GKE' => [
+                ProjectFixtures::getMonitoringProject('migrated-project', false),
+                EnumEnvironment::PROD,
+                ['migrated-project'],
+                'https://management-migrated-project.prod.mdm-int.net/actuator/info'
+            ],
+            'Rancher prod, not migrated' => [
+                ProjectFixtures::getMonitoringProject('my-project', false),
+                EnumEnvironment::PROD,
+                [],
+                'https://management-my-project.app.xm/actuator/info'
+            ],
+            'API project' => [
+                ProjectFixtures::getMonitoringProject('api-my-project', true),
+                EnumEnvironment::DEV,
+                [],
+                'https://management-api-my-project.dev.mdm-int.net/v1/actuator/info'
+            ],
+        ];
+    }
+
+    #[DataProvider('buildUrlActuatorInfoProvider')]
+    final public function testBuildUrlActuatorInfo(Project $project, EnumEnvironment $env, array $projectsInGke, string $expectedUrl): void
+    {
+        $url = MonitoringUtils::buildUrlActuatorInfo($project, $env, $projectsInGke);
 
         $this->assertEquals($expectedUrl, $url);
     }
@@ -237,7 +281,7 @@ YAML,
     }
 
     #[DataProvider('buildPubSubUrlProvider')]
-    public function testBuildPubSubUrl(Project $project, EnumEnvironment $env, string $expectedUrl): void
+    final public function testBuildPubSubUrl(Project $project, EnumEnvironment $env, string $expectedUrl): void
     {
         $this->assertEquals($expectedUrl, MonitoringUtils::buildPubSubUrl($project, $env));
     }
@@ -264,7 +308,7 @@ YAML,
     }
 
     #[DataProvider('buildKibanaLogUrlProvider')]
-    public function testBuildKibanaLogUrl(Project $project, ?EnumEnvironment $env, string $expectedUrl): void
+    final public function testBuildKibanaLogUrl(Project $project, ?EnumEnvironment $env, string $expectedUrl): void
     {
         $this->assertEquals($expectedUrl, MonitoringUtils::buildKibanaLogUrl($project, $env));
     }
@@ -286,12 +330,12 @@ YAML,
     }
 
     #[DataProvider('buildGCPLogUrlProvider')]
-    public function testBuildGCPLogUrl(Project $project, ?EnumEnvironment $env, string $expectedRegex): void
+    final public function testBuildGCPLogUrl(Project $project, ?EnumEnvironment $env, string $expectedRegex): void
     {
         $this->assertMatchesRegularExpression($expectedRegex, MonitoringUtils::buildGCPLogUrl($project, $env));
     }
 
-    public function testBuildLogUrl(): void
+    final public function testBuildLogUrl(): void
     {
         $projectGcp = ProjectFixtures::getMonitoringProject('my-project', true);
         $projectRancher = ProjectFixtures::getMonitoringProject('my-project', false);
@@ -343,7 +387,7 @@ YAML,
     }
 
     #[DataProvider('buildFrontReactUrlProvider')]
-    public function testBuildFrontReactUrl(Project $project, EnumEnvironment $env, string $token, string $expectedUrl): void
+    final public function testBuildFrontReactUrl(Project $project, EnumEnvironment $env, string $token, string $expectedUrl): void
     {
         $this->assertEquals($expectedUrl, MonitoringUtils::buildFrontReactUrl($project, $env, $token));
     }
@@ -375,7 +419,7 @@ YAML,
     }
 
     #[DataProvider('buildFrontPhpUrlProvider')]
-    public function testBuildFrontPhpUrl(Project $project, EnumEnvironment $env, string $expectedUrl): void
+    final public function testBuildFrontPhpUrl(Project $project, EnumEnvironment $env, string $expectedUrl): void
     {
         $this->assertEquals($expectedUrl, MonitoringUtils::buildFrontPhpUrl($project, $env));
     }
@@ -397,7 +441,7 @@ YAML,
     }
 
     #[DataProvider('buildRundeckUrlProvider')]
-    public function testBuildRundeckUrl(Project $project, EnumEnvironment $env, string $expectedUrl): void
+    final public function testBuildRundeckUrl(Project $project, EnumEnvironment $env, string $expectedUrl): void
     {
         $this->assertEquals($expectedUrl, MonitoringUtils::buildRundeckUrl($project, $env));
     }

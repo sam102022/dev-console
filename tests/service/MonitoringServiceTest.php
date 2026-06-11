@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\tests\service;
 
 use App\exception\FunctionalException;
+use App\exception\TechnicalException;
 use App\model\EnumEnvironment;
 use App\service\GitlabService;
 use App\service\MonitoringService;
@@ -26,7 +27,7 @@ class MonitoringServiceTest extends AbstractServiceCase
         parent::setUp();
         $this->gitlabService = $this->createMock(GitlabService::class);
         $this->client = $this->createMock(ClientInterface::class);
-        
+
         $this->service = new MonitoringService(
             $this->gitlabService,
             $this->client,
@@ -43,7 +44,7 @@ class MonitoringServiceTest extends AbstractServiceCase
     /**
      * @throws FunctionalException
      */
-    final public  function testCheckOneReturnsEmptyWhenProjectNotFound(): void
+    final public function testCheckOneReturnsEmptyWhenProjectNotFound(): void
     {
         $this->gitlabService->method('getProjectByCode')->with('not-found')->willReturn(null);
         $this->expectException(FunctionalException::class);
@@ -54,43 +55,53 @@ class MonitoringServiceTest extends AbstractServiceCase
     {
         return [
             'status UP' => [
+                new Response(200, [], json_encode(['build' => ['version' => '1.0.0']])),
                 new Response(200, [], json_encode(['status' => 'UP'])),
-                ['health' => ['status' => 'UP', 'httpCode' => 200, 'error' => null],
-                    'urls' => ['healthCheckUrl' => 'http://url/dev', 'logsUrl' => '']]
+                ['actuatorInfo' => ['version' => '1.0.0', 'httpCode' => 200, 'error' => null],
+                    'health' => ['status' => 'UP', 'httpCode' => 200, 'error' => null],
+                    'urls' => ['healthCheckUrl' => 'http://url/dev', 'logsUrl' => '', 'actuatorInfoUrl' => 'http://url/dev']]
             ],
             'status DOWN' => [
+                new Response(200, [], json_encode(['build' => ['version' => '']])),
                 new Response(200, [], json_encode(['status' => 'DOWN'])),
-                ['health' => ['status' => 'DOWN', 'httpCode' => 200, 'error' => null],
-                    'urls' => ['healthCheckUrl' => 'http://url/dev', 'logsUrl' => '']]
+                ['actuatorInfo' => ['version' => '', 'httpCode' => 200, 'error' => null],
+                    'health' => ['status' => 'DOWN', 'httpCode' => 200, 'error' => null],
+                    'urls' => ['healthCheckUrl' => 'http://url/dev', 'logsUrl' => '', 'actuatorInfoUrl' => 'http://url/dev']]
             ],
             'invalid JSON' => [
                 new Response(200, [], 'invalid-json'),
-                ['health' => ['status' => 'DOWN', 'httpCode' => 200, 'error' => 'JSON invalide'],
-                    'urls' => ['healthCheckUrl' => 'http://url/dev', 'logsUrl' => '']]
+                new Response(200, [], 'invalid-json'),
+                ['actuatorInfo' => ['version' => 'N/A', 'httpCode' => 200, 'error' => 'JSON invalide'],
+                    'health' => ['status' => 'DOWN', 'httpCode' => 200, 'error' => 'JSON invalide'],
+                    'urls' => ['healthCheckUrl' => 'http://url/dev', 'logsUrl' => '', 'actuatorInfoUrl' => 'http://url/dev']]
             ],
             'Guzzle exception' => [
                 new RequestException('Error Communicating with Server', new Request('GET', 'test')),
-                ['health' => ['status' => 'DOWN', 'httpCode' => 0, 'error' => 'Error Communicating with Server'],
-                    'urls' => ['healthCheckUrl' => 'http://url/dev', 'logsUrl' => '']]
+                new RequestException('Error Communicating with Server', new Request('GET', 'test')),
+                ['actuatorInfo' => ['version' => 'N/A', 'httpCode' => 0, 'error' => 'Error Communicating with Server'],
+                    'health' => ['status' => 'DOWN', 'httpCode' => 0, 'error' => 'Error Communicating with Server'],
+                    'urls' => ['healthCheckUrl' => 'http://url/dev', 'logsUrl' => '', 'actuatorInfoUrl' => 'http://url/dev']]
             ],
             'empty URL' => [
                 null,
-                ['health' => ['status' => 'DOWN', 'httpCode' => 0, 'error' => null],
-                    'urls' => ['healthCheckUrl' => 'http://url/dev', 'logsUrl' => '']],
+                null,
+                ['actuatorInfo' => ['version' => 'N/A', 'httpCode' => 0, 'error' => null],
+                    'health' => ['status' => 'DOWN', 'httpCode' => 0, 'error' => null],
+                    'urls' => ['healthCheckUrl' => 'http://url/dev', 'logsUrl' => '', 'actuatorInfoUrl' => 'http://url/dev']],
             ]
         ];
     }
 
     /**
-     * @throws FunctionalException
+     * @throws FunctionalException|TechnicalException
      */
     #[DataProvider('callAndCheckProvider')]
-    final public function testCheckHealth(?object $response, array $expected): void
+    final public function testCheckHealth(?object $response1, ?object $response2, array $expected): void
     {
-        if ($response instanceof Exception) {
-            $this->client->method('request')->willThrowException($response);
-        } elseif ($response instanceof Response) {
-            $this->client->method('request')->willReturn($response);
+        if ($response1 instanceof Exception) {
+            $this->client->method('request')->willThrowException($response1);
+        } elseif ($response1 instanceof Response) {
+            $this->client->method('request')->willReturnOnConsecutiveCalls($response1, $response2);
         }
 
         $project = ProjectFixtures::getProjectWithUrls();
