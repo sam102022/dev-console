@@ -25,7 +25,7 @@ class NewRelicRepositoryTest extends AbstractRepositoryCase
         $loggerFactoryMock = $this->createMock(LoggerFactory::class);
         $loggerFactoryMock->method('get')->willReturn($this->createMock(Logger::class));
 
-        $this->repository = new NewRelicRepository($loggerFactoryMock);
+        $this->repository = new NewRelicRepository(self::$appConfig, $loggerFactoryMock);
 
         // Inject the mocked FileService
         $reflection = new ReflectionClass($this->repository);
