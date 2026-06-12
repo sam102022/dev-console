@@ -3,23 +3,24 @@ declare(strict_types=1);
 
 namespace App\repository;
 
+use App\config\AppConfig;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\repository\mapper\GitlabProjectMapper;
 use App\repository\model\GitlabProjectEntity;
-use App\service\FileService;
+use App\service\RepositoryService;
 use Monolog\Logger;
 
 class GitLabRepository
 {
     public const string FILE_GITLAB_PROJECTS = 'gitlabProjects.json';
 
-    private FileService $fileService;
+    private RepositoryService $repositoryService;
     private Logger $logger;
 
-    public function __construct(LoggerFactory $loggerFactory)
+    public function __construct(AppConfig $appConfig, LoggerFactory $loggerFactory)
     {
-        $this->fileService = new FileService("../" . PATH_DATA, $loggerFactory);
+        $this->repositoryService = new RepositoryService($appConfig->getPathData(), $loggerFactory);
         $this->logger = $loggerFactory->get(__CLASS__);
     }
 
@@ -29,9 +30,9 @@ class GitLabRepository
      */
     public function findAll(): ?array
     {
-        if ($this->fileService->isFileExists(self::FILE_GITLAB_PROJECTS)) {
+        if ($this->repositoryService->isFileExists(self::FILE_GITLAB_PROJECTS)) {
             $this->logger->debug("Lecture du cache des projets GitLab.");
-            $data = $this->fileService->read(self::FILE_GITLAB_PROJECTS);
+            $data = $this->repositoryService->read(self::FILE_GITLAB_PROJECTS);
 
             $entities = [];
             foreach ($data as $projectGitLab) {
@@ -46,6 +47,7 @@ class GitLabRepository
     /**
      * @param GitlabProjectEntity[] $projects
      * @return void
+     * @throws TechnicalException
      */
     public function updateAll(array $projects): void
     {
@@ -55,12 +57,12 @@ class GitLabRepository
         }
 
         $this->logger->info("Sauvegarde du cache des projets GitLab.");
-        $this->fileService->save($data, self::FILE_GITLAB_PROJECTS);
+        $this->repositoryService->save($data, self::FILE_GITLAB_PROJECTS);
     }
 
     public function purgeAll(): void
     {
         $this->logger->info("Purge de tous les caches GitLab.");
-        $this->fileService->delete(self::FILE_GITLAB_PROJECTS);
+        $this->repositoryService->delete(self::FILE_GITLAB_PROJECTS);
     }
 }

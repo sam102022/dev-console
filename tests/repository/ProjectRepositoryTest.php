@@ -8,35 +8,35 @@ use App\factory\LoggerFactory;
 use App\repository\mapper\ProjectMapper;
 use App\repository\model\ProjectEntity;
 use App\repository\ProjectRepository;
-use App\service\FileService;
+use App\service\RepositoryService;
 use Monolog\Logger;
-use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
-class ProjectRepositoryTest extends TestCase
+class ProjectRepositoryTest extends AbstractRepositoryCase
 {
-    private FileService $fileService;
+    private RepositoryService $repositoryServiceMock;
     private ProjectRepository $repository;
 
     protected function setUp(): void
     {
-        $this->fileService = $this->createMock(FileService::class);
+        parent::setUp();
+        $this->repositoryServiceMock = $this->createMock(RepositoryService::class);
 
         $loggerFactory = $this->createMock(LoggerFactory::class);
         $loggerFactory->method('get')->willReturn($this->createMock(Logger::class));
 
-        $this->repository = new ProjectRepository($loggerFactory);
+        $this->repository = new ProjectRepository(self::$appConfig, $loggerFactory);
 
         // Inject the mocked FileService
         $reflection = new ReflectionClass($this->repository);
-        $property = $reflection->getProperty('fileService');
+        $property = $reflection->getProperty('repositoryService');
         $property->setAccessible(true);
-        $property->setValue($this->repository, $this->fileService);
+        $property->setValue($this->repository, $this->repositoryServiceMock);
     }
 
     final public function testFindAllThrowsExceptionWhenCacheIsEmpty(): void
     {
-        $this->fileService->method('isFileExists')->willReturn(false);
+        $this->repositoryServiceMock->method('isFileExists')->willReturn(false);
         $this->expectException(TechnicalException::class);
         $this->repository->findAll();
     }
@@ -50,8 +50,8 @@ class ProjectRepositoryTest extends TestCase
             ['name' => 'project-a', 'serviceName' => null, 'domain' => 'sf-a', 'domainName' => 'SF A', 'sf' => 'sub-a', 'java' => '11', 'archived' => false, 'urlsRundeck' => [], 'deploymentGcpUrl' => []],
             ['name' => 'project-b', 'serviceName' => null, 'domain' => 'sf-b', 'domainName' => 'SF B', 'sf' => 'sub-b', 'java' => '17', 'archived' => true, 'urlsRundeck' => [], 'deploymentGcpUrl' => []]
         ];
-        $this->fileService->method('isFileExists')->willReturn(true);
-        $this->fileService->method('read')->willReturn($projectsData);
+        $this->repositoryServiceMock->method('isFileExists')->willReturn(true);
+        $this->repositoryServiceMock->method('read')->willReturn($projectsData);
 
         $result = $this->repository->findAll();
 
@@ -65,7 +65,7 @@ class ProjectRepositoryTest extends TestCase
 
     final public function testFindByCodeThrowsExceptionWhenCacheIsEmpty(): void
     {
-        $this->fileService->method('isFileExists')->willReturn(false);
+        $this->repositoryServiceMock->method('isFileExists')->willReturn(false);
         $this->expectException(TechnicalException::class);
         $this->repository->findByCode('any-code');
     }
@@ -79,8 +79,8 @@ class ProjectRepositoryTest extends TestCase
             ['name' => 'project-a', 'serviceName' => null, 'domain' => 'sf-a', 'domainName' => 'SF A', 'sf' => 'sub-a', 'urlsRundeck' => [], 'deploymentGcpUrl' => []],
             ['name' => 'project-b', 'serviceName' => null, 'domain' => 'sf-b', 'domainName' => 'SF B', 'sf' => 'sub-b', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]
         ];
-        $this->fileService->method('isFileExists')->willReturn(true);
-        $this->fileService->method('read')->willReturn($projectsData);
+        $this->repositoryServiceMock->method('isFileExists')->willReturn(true);
+        $this->repositoryServiceMock->method('read')->willReturn($projectsData);
 
         $result = $this->repository->findByCode('project-b');
 
@@ -96,8 +96,8 @@ class ProjectRepositoryTest extends TestCase
     {
         $projectsData = [['name' => 'project-a', 'serviceName' => null, 'domain' => 'sf-a', 'domainName' => 'SF A', 'sf' => 'sub-a', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]];
 
-        $this->fileService->method('isFileExists')->willReturn(true);
-        $this->fileService->method('read')->willReturn($projectsData);
+        $this->repositoryServiceMock->method('isFileExists')->willReturn(true);
+        $this->repositoryServiceMock->method('read')->willReturn($projectsData);
 
         $result = $this->repository->findByCode('project-c');
         $this->assertNull($result);
@@ -109,7 +109,7 @@ class ProjectRepositoryTest extends TestCase
         $projectEntity2 = ProjectMapper::projectEntityFromArray(['name' => 'p2', 'domain' => 's', 'domainName' => 'sn', 'sf' => 'ss', 'urlsRundeck' => [], 'deploymentGcpUrl' => []]);
         $projectEntities = [$projectEntity1, $projectEntity2];
 
-        $this->fileService->expects($this->once())
+        $this->repositoryServiceMock->expects($this->once())
             ->method('save');
 
         $this->repository->updateAll($projectEntities);
@@ -117,7 +117,7 @@ class ProjectRepositoryTest extends TestCase
 
     final public function testPurgeAll(): void
     {
-        $this->fileService->expects($this->once())
+        $this->repositoryServiceMock->expects($this->once())
             ->method('delete')
             ->with(ProjectRepository::FILE_JAVA_PROJECTS);
 

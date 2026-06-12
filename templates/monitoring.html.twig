@@ -750,9 +750,14 @@ async function checkEnvironment(row, projectName, env, signal) {
         return;
     }
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const combinedSignal = anySignal([signal, controller.signal]);
+
     try {
         const actionUrl = `?action=getMonitoringData&project=${encodeURIComponent(projectName)}&env=${encodeURIComponent(env)}`;
-        const response = await fetch(actionUrl, { signal });
+        const response = await fetch(actionUrl, { signal: combinedSignal });
+        clearTimeout(timeoutId);
         const data = await response.json();
 
         if (data.success) {
@@ -772,13 +777,31 @@ async function checkEnvironment(row, projectName, env, signal) {
         }
 
     } catch (error) {
+        clearTimeout(timeoutId);
         if (error.name === 'AbortError') {
-            throw error;
+            if (controller.signal.aborted) { // Timeout
+                if (healthBadge) updateBadge(healthBadge, 'T/O', 'warning', urlHealthCheck);
+                if (versionBadge) updateVersionBadge(versionBadge, 'T/O', 'warning', urlActuatorInfo);
+            } else { // User aborted
+                throw error;
+            }
         } else {
             if (healthBadge) updateBadge(healthBadge, 'ERR', 'danger', urlHealthCheck);
             if (versionBadge) updateVersionBadge(versionBadge, 'ERR', 'danger', urlActuatorInfo);
         }
     }
+}
+
+function anySignal(signals) {
+    const controller = new AbortController();
+    for (const signal of signals) {
+        if (signal.aborted) {
+            controller.abort();
+            return controller.signal;
+        }
+        signal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
+    return controller.signal;
 }
 
 function updateBadge(badge, text, type, url) {
@@ -832,7 +855,6 @@ function resetPendingBadges(rows, environments) {
 // --- LOGIQUE NEW RELIC ---
 document.querySelectorAll('.new-relic-link').forEach(link => {
     link.addEventListener('click', async function(e) {
-    console.log("click");
         e.preventDefault();
         const project = this.getAttribute('data-project');
         const env = this.getAttribute('data-env');
@@ -844,8 +866,6 @@ document.querySelectorAll('.new-relic-link').forEach(link => {
         if (icon) {
             icon.className = 'fa-solid fa-spinner fa-spin';
         }
-
-        console.log("project:", project, "env:", env);
 
         try {
             const response = await fetch(`?action=get_new_relic_url&project=${project}&env=${env}`);

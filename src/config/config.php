@@ -5,8 +5,9 @@ const ENVIRONMENT_PROD = 'prod';
 const ENVIRONMENT_TEST = 'test';
 // Chemins
 const PATH_DATA = 'data';
-const PATH_CACHE = 'cache';
-const PATH_TEMPLATES = 'templates';
+const PATH_CACHE = 'var/cache';
+const PATH_CACHE_FILE = PATH_CACHE . '/file';
+const PATH_CACHE_USER = PATH_CACHE . '/user';
 const PATH_IMAGES = 'public/images';
 
 const THEME_DEFAULT = 'dark';

@@ -7,6 +7,7 @@ require_once 'config/config.php';
 
 use App\context\LocaleContext;
 use App\exception\TechnicalException;
+use App\router\ConsoleRouter;
 use App\router\IndexRouter;
 
 /**
@@ -37,6 +38,25 @@ final class Kernel
     }
 
     /**
+     * Amorce le conteneur de dépendances pour le contexte de la console.
+     */
+    public function bootConsole(): ContainerConsole
+    {
+        return new ContainerConsole(new LocaleContext($this->getLocale(), $this->getLang()));
+    }
+
+    /**
+     * Gère les commandes exécutées en console.
+     *
+     * @param array $argv Les arguments passés à la commande.
+     */
+    public function handleConsole(array $argv): void
+    {
+        $router = $this->buildConsoleRouter();
+        $router->dispatch($argv);
+    }
+
+    /**
      * Gère les requêtes web AJAX.
      * Initialise le routeur Ajax et déclenche la distribution de la requête.
      * @throws TechnicalException
@@ -45,6 +65,14 @@ final class Kernel
     {
         $router = $this->buildIndexRouter();
         $router->dispatch();
+    }
+
+    /**
+     * Construit le routeur pour la console.
+     */
+    private function buildConsoleRouter(): ConsoleRouter
+    {
+        return $this->bootConsole()->get(ConsoleRouter::class);
     }
 
     /**

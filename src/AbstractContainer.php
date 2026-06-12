@@ -10,12 +10,6 @@ use App\config\AppConfig;
 use App\context\LocaleContext;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
-use App\parser\ChartParser;
-use App\parser\MavenParser;
-use App\repository\GitLabRepository;
-use App\repository\ProjectRepository;
-use App\service\GitlabService;
-use App\service\NewRelicService;
 use App\service\Translator;
 use App\util\UtilsLog;
 use App\view\TwigFactory;
@@ -168,17 +162,6 @@ abstract class AbstractContainer
         $this->set(NewRelicClient::class, fn($c) => new NewRelicClient(
             new Client(),
             $c->get(AppConfig::class)->getParamConfig()->getParamNewRelic(),
-            $c->get(LoggerFactory::class)
-        ));
-
-        $this->set(GitlabService::class, fn($c) => new GitlabService(
-            $c->get(GitLabClient::class),
-            $c->get(MavenParser::class),
-            $c->get(ChartParser::class),
-            $c->get(GitLabRepository::class),
-            $c->get(ProjectRepository::class),
-            $c->get(NewRelicClient::class),
-            $c->get(AppConfig::class),
             $c->get(LoggerFactory::class)
         ));
     }

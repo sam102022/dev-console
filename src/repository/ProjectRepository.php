@@ -3,11 +3,12 @@ declare(strict_types=1);
 
 namespace App\repository;
 
+use App\config\AppConfig;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\repository\mapper\ProjectMapper;
 use App\repository\model\ProjectEntity;
-use App\service\FileService;
+use App\service\RepositoryService;
 use App\util\UtilsLog;
 use Monolog\Logger;
 
@@ -15,12 +16,12 @@ class ProjectRepository
 {
     public const string FILE_JAVA_PROJECTS = 'javaProjects.json';
 
-    private FileService $fileService;
+    private RepositoryService $repositoryService;
     private Logger $logger;
 
-    public function __construct(LoggerFactory $loggerFactory)
+    public function __construct(AppConfig $appConfig, LoggerFactory $loggerFactory)
     {
-        $this->fileService = new FileService("../" . PATH_DATA, $loggerFactory);
+        $this->repositoryService = new RepositoryService($appConfig->getPathData(), $loggerFactory);
         $this->logger = $loggerFactory->get(__CLASS__);
     }
 
@@ -30,9 +31,9 @@ class ProjectRepository
      */
     public function findAll(): array
     {
-        if ($this->fileService->isFileExists(self::FILE_JAVA_PROJECTS)) {
+        if ($this->repositoryService->isFileExists(self::FILE_JAVA_PROJECTS)) {
             $this->logger->debug("Lecture du cache des projets Java.");
-            $projectsData = $this->fileService->read(self::FILE_JAVA_PROJECTS);
+            $projectsData = $this->repositoryService->read(self::FILE_JAVA_PROJECTS);
 
             $projects = [];
             foreach ($projectsData as $data) {
@@ -69,12 +70,12 @@ class ProjectRepository
         foreach ($projectEntities as $projectEntity) {
             $data[] = ProjectMapper::toArray($projectEntity);
         }
-        $this->fileService->save($data, self::FILE_JAVA_PROJECTS);
+        $this->repositoryService->save($data, self::FILE_JAVA_PROJECTS);
     }
 
     public function purgeAll(): void
     {
         $this->logger->info("Purge du cache projects.");
-        $this->fileService->delete(self::FILE_JAVA_PROJECTS);
+        $this->repositoryService->delete(self::FILE_JAVA_PROJECTS);
     }
 }

@@ -8,20 +8,20 @@ use App\factory\LoggerFactory;
 use App\model\EnumEnvironment;
 use App\repository\model\NewRelicEntity;
 use App\repository\NewRelicRepository;
-use App\service\FileService;
+use App\service\RepositoryService;
 use Monolog\Logger;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
-class NewRelicRepositoryTest extends TestCase
+class NewRelicRepositoryTest extends AbstractRepositoryCase
 {
-    private FileService $fileServiceMock;
+    private RepositoryService $repositoryServiceMock;
     private NewRelicRepository $repository;
 
     protected function setUp(): void
     {
-        $this->fileServiceMock = $this->createMock(FileService::class);
+        parent::setUp();
+        $this->repositoryServiceMock = $this->createMock(RepositoryService::class);
         $loggerFactoryMock = $this->createMock(LoggerFactory::class);
         $loggerFactoryMock->method('get')->willReturn($this->createMock(Logger::class));
 
@@ -29,9 +29,9 @@ class NewRelicRepositoryTest extends TestCase
 
         // Inject the mocked FileService
         $reflection = new ReflectionClass($this->repository);
-        $property = $reflection->getProperty('fileService');
+        $property = $reflection->getProperty('repositoryService');
         $property->setAccessible(true);
-        $property->setValue($this->repository, $this->fileServiceMock);
+        $property->setValue($this->repository, $this->repositoryServiceMock);
     }
 
     /**
@@ -40,7 +40,7 @@ class NewRelicRepositoryTest extends TestCase
     final public function testFindReturnsNullWhenCacheFileDoesNotExist(): void
     {
         // Arrange
-        $this->fileServiceMock->method('isFileExists')->willReturn(false);
+        $this->repositoryServiceMock->method('isFileExists')->willReturn(false);
 
         // Act
         $result = $this->repository->find('any-project', EnumEnvironment::PROD);
@@ -56,8 +56,8 @@ class NewRelicRepositoryTest extends TestCase
     final public function testFind(array $cache, string $project, EnumEnvironment $env, ?string $expectedUrl): void
     {
         // Arrange
-        $this->fileServiceMock->method('isFileExists')->willReturn(true);
-        $this->fileServiceMock->method('read')->willReturn($cache);
+        $this->repositoryServiceMock->method('isFileExists')->willReturn(true);
+        $this->repositoryServiceMock->method('read')->willReturn($cache);
 
         // Act
         $result = $this->repository->find($project, $env);
@@ -96,8 +96,8 @@ class NewRelicRepositoryTest extends TestCase
         $entity->setEnvironment(EnumEnvironment::PROD);
         $entity->setUrl('http://new.url');
 
-        $this->fileServiceMock->method('isFileExists')->willReturn(false);
-        $this->fileServiceMock->method('read')->willReturn([]);
+        $this->repositoryServiceMock->method('isFileExists')->willReturn(false);
+        $this->repositoryServiceMock->method('read')->willReturn([]);
 
         $expectedCache = [
             'project-a' => [
@@ -105,7 +105,7 @@ class NewRelicRepositoryTest extends TestCase
             ],
         ];
 
-        $this->fileServiceMock->expects($this->once())
+        $this->repositoryServiceMock->expects($this->once())
             ->method('save')
             ->with($expectedCache, 'new_relic_urls.json');
 
@@ -130,8 +130,8 @@ class NewRelicRepositoryTest extends TestCase
             ],
         ];
 
-        $this->fileServiceMock->method('isFileExists')->willReturn(true);
-        $this->fileServiceMock->method('read')->willReturn($initialCache);
+        $this->repositoryServiceMock->method('isFileExists')->willReturn(true);
+        $this->repositoryServiceMock->method('read')->willReturn($initialCache);
 
         $expectedCache = [
             'project-a' => [
@@ -140,7 +140,7 @@ class NewRelicRepositoryTest extends TestCase
             ],
         ];
 
-        $this->fileServiceMock->expects($this->once())
+        $this->repositoryServiceMock->expects($this->once())
             ->method('save')
             ->with($expectedCache, 'new_relic_urls.json');
 
@@ -166,8 +166,8 @@ class NewRelicRepositoryTest extends TestCase
             ],
         ];
 
-        $this->fileServiceMock->method('isFileExists')->willReturn(true);
-        $this->fileServiceMock->method('read')->willReturn($initialCache);
+        $this->repositoryServiceMock->method('isFileExists')->willReturn(true);
+        $this->repositoryServiceMock->method('read')->willReturn($initialCache);
 
         $expectedCache = [
             'project-a' => [
@@ -176,7 +176,7 @@ class NewRelicRepositoryTest extends TestCase
             ],
         ];
 
-        $this->fileServiceMock->expects($this->once())
+        $this->repositoryServiceMock->expects($this->once())
             ->method('save')
             ->with($expectedCache, 'new_relic_urls.json');
 

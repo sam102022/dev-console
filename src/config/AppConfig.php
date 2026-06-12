@@ -15,7 +15,10 @@ use App\model\ParamConfig;
 class AppConfig
 {
     private ParamConfig $paramConfig;
+    private string $pathCacheFile;
+    private string $pathCacheUser;
     private string $pathImages;
+    private string $pathData;
 
     /**
      * Constructeur de la classe AppConfig.
@@ -26,17 +29,20 @@ class AppConfig
      * @throws TechnicalException
      */
     public function __construct(
-        public string $env,
-        public string $pathTemplates,
+        public string  $env,
+        public string  $pathTemplates,
         private string $defaultLocale = 'fr'
-    ) {
+    )
+    {
         $params = EnvLoader::load($env, dirname(__DIR__, 2));
         $this->paramConfig = ParamConfig::parse($params);
 
         $pathResolver = new PathResolver();
+        $this->pathCacheFile = $pathResolver->resolve(PATH_CACHE_FILE);
+        $this->pathCacheUser = $pathResolver->resolve(PATH_CACHE_USER);
         $this->pathImages = $pathResolver->resolve(PATH_IMAGES);
+        $this->pathData = $pathResolver->resolve(PATH_DATA);
         $pathResolver->resolve(PATH_LOGS);
-        $pathResolver->resolve(PATH_DATA);
     }
 
     /**
@@ -93,5 +99,25 @@ class AppConfig
     public function getPort(): int
     {
         return $this->paramConfig->getPortLocal();
+    }
+
+    public function getPathCacheFile(): string
+    {
+        return $this->pathCacheFile;
+    }
+
+    public function getPathCacheUser(): string
+    {
+        return $this->pathCacheUser;
+    }
+
+    public function getPathImages(): string
+    {
+        return $this->pathImages;
+    }
+
+    public function getPathData(): string
+    {
+        return $this->pathData;
     }
 }

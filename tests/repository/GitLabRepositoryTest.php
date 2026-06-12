@@ -6,31 +6,31 @@ namespace App\tests\repository;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\repository\GitLabRepository;
-use App\service\FileService;
+use App\service\RepositoryService;
 use App\tests\fixtures\GitlabProjectEntityFixtures;
 use Monolog\Logger;
-use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
-class GitLabRepositoryTest extends TestCase
+class GitLabRepositoryTest extends AbstractRepositoryCase
 {
-    private FileService $fileService;
+    private RepositoryService $repositoryServiceMock;
     private GitLabRepository $repository;
 
     protected function setUp(): void
     {
-        $this->fileService = $this->createMock(FileService::class);
+        parent::setUp();
+        $this->repositoryServiceMock = $this->createMock(RepositoryService::class);
 
         $loggerFactory = $this->createMock(LoggerFactory::class);
         $loggerFactory->method('get')->willReturn($this->createMock(Logger::class));
 
-        $this->repository = new GitLabRepository($loggerFactory);
+        $this->repository = new GitLabRepository(self::$appConfig, $loggerFactory);
 
         // Inject the mocked FileService
         $reflection = new ReflectionClass($this->repository);
-        $property = $reflection->getProperty('fileService');
+        $property = $reflection->getProperty('repositoryService');
         $property->setAccessible(true);
-        $property->setValue($this->repository, $this->fileService);
+        $property->setValue($this->repository, $this->repositoryServiceMock);
     }
 
     /**
@@ -40,8 +40,8 @@ class GitLabRepositoryTest extends TestCase
     {
         $projects = [['id' => 1, 'description' => 'New Project', 'name' => 'Project From Cache', 'name_with_namespace' => 'name-with-namespace', 'path' => 'path', 'path_with_namespace' => 'path-with-namespace', 'created_at' => '2023-01-01', 'default_branch' => 'main', 'web_url' => 'http://url', 'archived' => false]];
         $expectedProjects = [GitlabProjectEntityFixtures::getGitlabProjectEntityFromCache()];
-        $this->fileService->method('isFileExists')->with(GitLabRepository::FILE_GITLAB_PROJECTS)->willReturn(true);
-        $this->fileService->method('read')->with(GitLabRepository::FILE_GITLAB_PROJECTS)->willReturn($projects);
+        $this->repositoryServiceMock->method('isFileExists')->with(GitLabRepository::FILE_GITLAB_PROJECTS)->willReturn(true);
+        $this->repositoryServiceMock->method('read')->with(GitLabRepository::FILE_GITLAB_PROJECTS)->willReturn($projects);
 
         $result = $this->repository->findAll();
 
@@ -53,8 +53,8 @@ class GitLabRepositoryTest extends TestCase
      */
     public function testGetProjectsWhenCacheDoesNotExist(): void
     {
-        $this->fileService->method('isFileExists')->with(GitLabRepository::FILE_GITLAB_PROJECTS)->willReturn(false);
-        $this->fileService->expects($this->never())->method('read');
+        $this->repositoryServiceMock->method('isFileExists')->with(GitLabRepository::FILE_GITLAB_PROJECTS)->willReturn(false);
+        $this->repositoryServiceMock->expects($this->never())->method('read');
 
         $result = $this->repository->findAll();
 
@@ -65,7 +65,7 @@ class GitLabRepositoryTest extends TestCase
     {
         $expectedProjects = [GitlabProjectEntityFixtures::getGitlabProjectData()];
         $projects = [GitlabProjectEntityFixtures::getGitlabProjectEntity()];
-        $this->fileService->expects($this->once())
+        $this->repositoryServiceMock->expects($this->once())
             ->method('save')
             ->with($expectedProjects, GitLabRepository::FILE_GITLAB_PROJECTS);
 
@@ -74,7 +74,7 @@ class GitLabRepositoryTest extends TestCase
 
     public function testPurgeAll(): void
     {
-        $this->fileService->expects($this->once())
+        $this->repositoryServiceMock->expects($this->once())
             ->method('delete')
             ->with($this->logicalOr(GitLabRepository::FILE_GITLAB_PROJECTS));
 
