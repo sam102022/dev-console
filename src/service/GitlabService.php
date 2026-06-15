@@ -34,6 +34,7 @@ class GitlabService
         private readonly GitLabClient      $client,
         private readonly MavenParser       $mavenParser,
         private readonly ChartParser       $chartParser,
+        private readonly RundeckService    $rundeckService,
         private readonly GitLabRepository  $gitLabRepository,
         private readonly ProjectRepository $projectRepository,
         private readonly NewRelicClient    $newRelicService,
@@ -172,6 +173,7 @@ class GitlabService
      * @param GitlabProject $gitLabProject Le projet gitlab à scanner
      * @return Project|null
      * @throws DateMalformedStringException
+     * @throws TechnicalException
      */
     private function buildProject(GitlabProject $gitLabProject): ?Project
     {
@@ -223,7 +225,8 @@ class GitlabService
                     $urlsPubsubs[$env->value] = MonitoringUtils::buildPubSubUrl($project, $env);
                 }
                 if (str_starts_with($projectName, 'batch')) {
-                    $urlsRundeck[$env->value] = MonitoringUtils::buildRundeckUrl($project, $env);
+                    $rundeckProject = $this->rundeckService->findByProjectName($projectName, $env);
+                    $urlsRundeck[$env->value] = MonitoringUtils::buildRundeckUrl($project, $env, $rundeckProject);
                 }
             }
             if ($techno === 'java' || $techno === 'react' || $techno === 'nuxt') {

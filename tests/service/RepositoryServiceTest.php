@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 
 use App\exception\TechnicalException;
-use App\service\FileService;
 use App\service\RepositoryService;
 use App\tests\service\AbstractServiceCase;
 use org\bovigo\vfs\vfsStream;

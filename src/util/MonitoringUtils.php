@@ -6,6 +6,7 @@ namespace App\util;
 use App\model\EnumActuatorEndpoint;
 use App\model\EnumEnvironment;
 use App\model\Project;
+use App\model\RundeckProject;
 use DateMalformedStringException;
 use DateTime;
 use DateTimeZone;
@@ -386,10 +387,13 @@ class MonitoringUtils
      * @param EnumEnvironment $env L'environnement ciblé.
      * @return string L'URL du rundeck.
      */
-    public static function buildRundeckUrl(Project $project, EnumEnvironment $env): string
+    public static function buildRundeckUrl(Project $project, EnumEnvironment $env, ?RundeckProject $rundeckProject): string
     {
+        if($rundeckProject !== null){
+            $pattern = 'https://rundeck-%s.siege.xm/project/%s/job/show/%s';
+            return sprintf($pattern, $env->value, $project->getSf(), $rundeckProject->getToken());
+        }
         $pattern = 'https://rundeck-%s.siege.xm/project/%s/jobs';
-
         return sprintf($pattern, $env->value, $project->getSf());
     }
 
