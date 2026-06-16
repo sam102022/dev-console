@@ -5,6 +5,7 @@ namespace App\tests\util;
 
 use App\model\EnumEnvironment;
 use App\model\Project;
+use App\parser\PackageJsonParser;
 use App\tests\fixtures\ProjectFixtures;
 use App\util\MonitoringUtils;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -12,92 +13,6 @@ use PHPUnit\Framework\TestCase;
 
 class MonitoringUtilsTest extends TestCase
 {
-    public static function parseServiceNameProvider(): array
-    {
-        return [
-            'valid deploy.yaml' => [
-                'yamlContent' => <<<YAML
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: api-click-and-collect-v1
-  labels:
-    app: my-app
-YAML,
-                'expectedName' => 'api-click-and-collect-v1'
-            ],
-            'deploy.yaml with different spacing' => [
-                'yamlContent' => <<<YAML
-metadata:
-    name:   my-custom-service-name
-spec:
-    replicas: 1
-YAML,
-                'expectedName' => 'my-custom-service-name'
-            ],
-            'missing name in metadata' => [
-                'yamlContent' => <<<YAML
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: my-app
-YAML,
-                'expectedName' => null
-            ],
-            'empty content' => [
-                'yamlContent' => '',
-                'expectedName' => null
-            ],
-            'null content' => [
-                'yamlContent' => null,
-                'expectedName' => null
-            ],
-            'invalid yaml format but matching regex' => [
-                'yamlContent' => 'metadata: name: invalid-yaml-but-matches',
-                'expectedName' => 'invalid-yaml-but-matches'
-            ]
-        ];
-    }
-
-    #[DataProvider('parseServiceNameProvider')]
-    final public function testParseServiceName(?string $yamlContent, ?string $expectedName): void
-    {
-        $actualName = MonitoringUtils::parseServiceName($yamlContent);
-        $this->assertEquals($expectedName, $actualName);
-    }
-
-    public static function parseSubscriptionNameProvider(): array
-    {
-        return [
-            'valid subscription name' => [
-                'yamlContent' => 'mdm.core.subscriber.subscription.name: test-subscription',
-                'expectedName' => 'test-subscription'
-            ],
-            'valid subscription name with spaces' => [
-                'yamlContent' => 'mdm.core.subscriber.subscription.name:    test-subscription  ',
-                'expectedName' => 'test-subscription'
-            ],
-            'no subscription name' => [
-                'yamlContent' => 'mdm.core.subscriber.something.else: test-subscription',
-                'expectedName' => null
-            ],
-            'empty content' => [
-                'yamlContent' => '',
-                'expectedName' => null
-            ],
-            'null content' => [
-                'yamlContent' => null,
-                'expectedName' => null
-            ]
-        ];
-    }
-
-    #[DataProvider('parseSubscriptionNameProvider')]
-    final public function testParseSubscriptionName(?string $yamlContent, ?string $expectedName): void
-    {
-        $this->assertEquals($expectedName, MonitoringUtils::parseSubscriptionName($yamlContent));
-    }
 
     public static function parseVariableInValuesFileProvider(): array
     {
@@ -131,46 +46,6 @@ YAML,
         $this->assertEquals($expectedValue, MonitoringUtils::parseVariableInValuesFile($yamlContent, $variableName));
     }
 
-    public static function parsePackageProvider(): array
-    {
-        return [
-            'with nuxt dependency' => [
-                'packageContent' => '{"dependencies": {"nuxt": "^2.15.0"}}',
-                'expected' => 'nuxt'
-            ],
-            'with react dependency' => [
-                'packageContent' => '{"dependencies": {"react": "^17.0.0"}}',
-                'expected' => 'react'
-            ],
-            'with both, nuxt first' => [
-                'packageContent' => '{"dependencies": {"nuxt": "2.0", "react": "17.0"}}',
-                'expected' => 'nuxt'
-            ],
-            'with both, react first' => [
-                'packageContent' => '{"dependencies": {"react": "17.0", "nuxt": "2.0"}}',
-                'expected' => 'nuxt' // nuxt is checked first in the function
-            ],
-            'no relevant dependencies' => [
-                'packageContent' => '{"dependencies": {"vue": "^3.0.0"}}',
-                'expected' => null
-            ],
-            'empty content' => [
-                'packageContent' => '',
-                'expected' => null
-            ],
-            'null content' => [
-                'packageContent' => null,
-                'expected' => null
-            ]
-        ];
-    }
-
-    #[DataProvider('parsePackageProvider')]
-    final public function testParsePackage(?string $packageContent, ?string $expected): void
-    {
-        $this->assertEquals($expected, MonitoringUtils::parsePackage($packageContent));
-    }
-
     public static function buildUrlActuatorHealthProvider(): array
     {
         return [
@@ -184,7 +59,7 @@ YAML,
                 ProjectFixtures::getMonitoringProject('my-project', false),
                 EnumEnvironment::REC,
                 [],
-                'https://management-my-project.app-rec.xm/actuator/health'
+                'https://management-my-project.domain.app-rec.xm/actuator/health'
             ],
             'Rancher prod, migrated to GKE' => [
                 ProjectFixtures::getMonitoringProject('migrated-project', false),
@@ -196,7 +71,7 @@ YAML,
                 ProjectFixtures::getMonitoringProject('my-project', false),
                 EnumEnvironment::PROD,
                 [],
-                'https://management-my-project.app.xm/actuator/health'
+                'https://management-my-project.domain.app.xm/actuator/health'
             ],
             'API project' => [
                 ProjectFixtures::getMonitoringProject('api-my-project', true),
@@ -228,7 +103,7 @@ YAML,
                 ProjectFixtures::getMonitoringProject('my-project', false),
                 EnumEnvironment::REC,
                 [],
-                'https://management-my-project.app-rec.xm/actuator/info'
+                'https://management-my-project.domain.app-rec.xm/actuator/info'
             ],
             'Rancher prod, migrated to GKE' => [
                 ProjectFixtures::getMonitoringProject('migrated-project', false),
@@ -240,7 +115,7 @@ YAML,
                 ProjectFixtures::getMonitoringProject('my-project', false),
                 EnumEnvironment::PROD,
                 [],
-                'https://management-my-project.app.xm/actuator/info'
+                'https://management-my-project.domain.app.xm/actuator/info'
             ],
             'API project' => [
                 ProjectFixtures::getMonitoringProject('api-my-project', true),
@@ -443,6 +318,6 @@ YAML,
     #[DataProvider('buildRundeckUrlProvider')]
     final public function testBuildRundeckUrl(Project $project, EnumEnvironment $env, string $expectedUrl): void
     {
-        $this->assertEquals($expectedUrl, MonitoringUtils::buildRundeckUrl($project, $env));
+        $this->assertEquals($expectedUrl, MonitoringUtils::buildRundeckUrl($project, $env, null));
     }
 }

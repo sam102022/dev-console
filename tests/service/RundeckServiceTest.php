@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\tests\service;
 
 use App\exception\TechnicalException;
+use App\model\EnumEnvironment;
 use App\repository\RundeckRepository;
 use App\service\RundeckService;
 use App\tests\fixtures\RundeckProjectEntityFixtures;
@@ -69,7 +70,7 @@ class RundeckServiceTest extends AbstractServiceCase
 
         $this->rundeckRepository->method('findAll')->willReturn([$projectEntity1, $projectEntity2]);
 
-        $result = $this->service->findByProjectName('batch_click_and_collect_reports');
+        $result = $this->service->findByProjectName('batch_click_and_collect_reports', EnumEnvironment::DEV);
         $this->assertEquals($expectedProject, $result);
     }
 
@@ -81,7 +82,7 @@ class RundeckServiceTest extends AbstractServiceCase
         $projectEntity = RundeckProjectEntityFixtures::getRundeckProjectEntity();
         $this->rundeckRepository->method('findAll')->willReturn([$projectEntity]);
 
-        $result = $this->service->findByProjectName('non_existent_project');
+        $result = $this->service->findByProjectName('non_existent_project', EnumEnvironment::DEV);
         $this->assertNull($result);
     }
 }

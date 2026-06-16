@@ -12,7 +12,9 @@ use App\model\EnumEnvironment;
 use App\model\GitlabProject;
 use App\model\Project;
 use App\parser\ChartParser;
+use App\parser\ConfigYamlParser;
 use App\parser\MavenParser;
+use App\parser\PackageJsonParser;
 use App\repository\GitLabRepository;
 use App\repository\mapper\GitlabProjectMapper;
 use App\repository\mapper\ProjectMapper;
@@ -291,7 +293,7 @@ class GitlabService
             // Récupère le nom du service à partir du fichier deploy.yml pour construire l'url kibana
             $deployYamlContent = $this->client->getFile($gitLabProject->getId(), 'deploy/conf/dev/deploy.yml', true, $gitLabProject->getDefaultBranch());
             if ($deployYamlContent) {
-                $deployName = MonitoringUtils::parseServiceName($deployYamlContent);
+                $deployName = ConfigYamlParser::parseServiceName($deployYamlContent);
             }
         }
 
@@ -326,7 +328,7 @@ class GitlabService
         );
 
         return $packageFile
-            ? (MonitoringUtils::parsePackage($packageFile) ?? '')
+            ? (PackageJsonParser::parsePackage($packageFile) ?? '')
             : '';
     }
 
@@ -349,7 +351,7 @@ class GitlabService
         }
 
         if ($yamlContent) {
-            $subscriptionName = MonitoringUtils::parseSubscriptionName($yamlContent);
+            $subscriptionName = ConfigYamlParser::parseSubscriptionName($yamlContent);
 
             if ($subscriptionName && preg_match('/^\$\{(.+)}$/', $subscriptionName, $matches)) {
                 $variableName = $matches[1];

@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace App\parser;
 
-use Symfony\Component\Yaml\Yaml;
-
 class ChartParser
 {
     /**
@@ -19,7 +17,7 @@ class ChartParser
             return null;
         }
 
-        $chart = $this->parse($content);
+        $chart = YamlParser::parse($content);
         $dependencies = $chart['dependencies'] ?? [];
 
         foreach ($dependencies as $dependency) {
@@ -29,19 +27,5 @@ class ChartParser
         }
 
         return null;
-    }
-
-    /**
-     * Récupère le contenu d'un fichier .yaml
-     *
-     * @param string $content Le contenu d'un fichier yaml.
-     * @return array|null
-     */
-    private function parse(string $content): ?array
-    {
-        if (empty($content)) {
-            return null;
-        }
-        return Yaml::parse($content);
     }
 }

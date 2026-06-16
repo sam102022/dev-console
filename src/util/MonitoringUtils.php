@@ -21,43 +21,9 @@ class MonitoringUtils
     private const string PATTERN_DOMAIN_CLOUD_GCP = '%s.mdm-int.net';
     private const string PATTERN_DOMAIN_RANCHER = 'app%s.xm';
 
-    // URL Kibana de base (à adapter avec la vraie URL de votre entreprise)
+    // URL Kibana de base
     private const string KIBANA_URL_BASE = 'http://kibana.gestionlogs.app%s.xm';
     private const string ZEND_URL_PATTERN = 'https://intranet%s.siege.xm/portail/public/%s/index';
-
-    /**
-     * Analyse le contenu d'un fichier deploy.yml pour extraire le nom du service.
-     *
-     * @param string|null $deployYamlContent Le contenu du fichier deploy.yml.
-     * @return string|null Le nom du service extrait, ou null s'il n'a pas pu être trouvé.
-     */
-    public static function parseServiceName(?string $deployYamlContent): ?string
-    {
-        if ($deployYamlContent && preg_match('/metadata:\s*name:\s*([^\s]+)/s', $deployYamlContent, $matches)
-            && $matches[1] !== '$CI_PROJECT_NAME') {
-            return $matches[1];
-        }
-        return null;
-    }
-
-    /**
-     * Analyse le contenu d'un fichier application.yml pour extraire le nom de la souscription Pub/Sub.
-     *
-     * @param string|null $yamlContent Le contenu du fichier YAML.
-     * @return string|null Le nom de la souscription, ou null s'il n'a pas pu être trouvé.
-     */
-    public static function parseSubscriptionName(?string $yamlContent): ?string
-    {
-        if (!$yamlContent) {
-            return null;
-        }
-
-        if (preg_match('/subscription\.name:\s*([^\s]+)/', $yamlContent, $matches)) {
-            return trim($matches[1]);
-        }
-
-        return null;
-    }
 
     /**
      * Extrait la valeur d'une variable spécifique dans un fichier values.yaml.
@@ -75,69 +41,6 @@ class MonitoringUtils
         }
 
         return null;
-    }
-
-    /**
-     * Analyse le contenu d'un fichier package.json pour déterminer la technologie frontend (React ou Nuxt).
-     *
-     * @param string|null $packageContent Le contenu du fichier package.json.
-     * @return string|null La technologie ('react' ou 'nuxt'), ou null si elle n'est pas identifiée.
-     */
-    public static function parsePackage(?string $packageContent): ?string
-    {
-        if (!$packageContent) {
-            return null;
-        }
-
-        $data = json_decode($packageContent, true);
-
-        if (!is_array($data)) {
-            return null;
-        }
-
-        $dependencies = array_merge(
-            $data['dependencies'] ?? [],
-            $data['devDependencies'] ?? []
-        );
-
-        $scripts = $data['scripts'] ?? [];
-
-        // Nuxt
-        if (isset($dependencies['nuxt']) || self::hasNuxtScript($scripts) || self::hasNuxtScope($dependencies)) {
-            return 'nuxt';
-        }
-
-        // React
-        if (isset($dependencies['react']) || isset($dependencies['react-dom'])
-            || (isset($scripts['start']) && str_starts_with($scripts['start'], 'node server.js'))
-            || (isset($scripts['test:ci']) && str_starts_with($scripts['test:ci'], 'react-scripts'))
-        ) {
-            return 'react';
-        }
-
-        return null;
-    }
-
-    /**
-     * Vérifie si le mot "nuxt" est présent dans les scripts NPM.
-     *
-     * @param array $scripts Liste des scripts du package.json.
-     * @return bool True si un script contient 'nuxt', sinon false.
-     */
-    private static function hasNuxtScript(array $scripts): bool
-    {
-        return array_any($scripts, static fn($script) => str_contains($script, 'nuxt'));
-    }
-
-    /**
-     * Vérifie si une dépendance du scope "@nuxt/" est présente.
-     *
-     * @param array $dependencies Liste des dépendances du package.json.
-     * @return bool True si une dépendance commence par '@nuxt/', sinon false.
-     */
-    private static function hasNuxtScope(array $dependencies): bool
-    {
-        return array_any(array_keys($dependencies), static fn($packageName) => str_starts_with($packageName, '@nuxt/'));
     }
 
     /**
@@ -189,6 +92,7 @@ class MonitoringUtils
             if ($env->value === EnumEnvironment::PROD->value && in_array($projectName, $projectsInGke, true)) {
                 $domain = self::PATTERN_DOMAIN_CLOUD_GCP;
             } else {
+                $domain = $project->getDomain() . "." . $domain;
                 $envLocal = $env->value === EnumEnvironment::PROD->value ? '' : '-' . $env->value;
             }
         }
@@ -389,7 +293,7 @@ class MonitoringUtils
      */
     public static function buildRundeckUrl(Project $project, EnumEnvironment $env, ?RundeckProject $rundeckProject): string
     {
-        if($rundeckProject !== null){
+        if ($rundeckProject !== null) {
             $pattern = 'https://rundeck-%s.siege.xm/project/%s/job/show/%s';
             return sprintf($pattern, $env->value, $project->getSf(), $rundeckProject->getToken());
         }

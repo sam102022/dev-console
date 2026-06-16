@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace App\parser;
 
-use SimpleXMLElement;
-
 class MavenParser
 {
     /**
@@ -20,7 +18,7 @@ class MavenParser
             'java' => null
         ];
 
-        $xmlObj = $this->parse($xml);
+        $xmlObj = XmlParser::parse($xml);
 
         if (!$xmlObj) {
             return $data;
@@ -38,16 +36,5 @@ class MavenParser
         }
 
         return $data;
-    }
-
-    /**
-     * Récupère le contenu d'un fichier.
-     *
-     * @param string $xml Le contenu d'un fichier xml.
-     * @return false|SimpleXMLElement
-     */
-    private function parse(string $xml): false|SimpleXMLElement
-    {
-        return simplexml_load_string($xml);
     }
 }

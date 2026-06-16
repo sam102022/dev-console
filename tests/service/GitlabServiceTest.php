@@ -13,6 +13,7 @@ use App\repository\mapper\ProjectMapper;
 use App\repository\ProjectRepository;
 use App\service\GitlabService;
 use App\service\NewRelicService;
+use App\service\RundeckService;
 use App\tests\fixtures\GitlabProjectEntityFixtures;
 use App\tests\fixtures\GitlabProjectFixtures;
 use App\tests\fixtures\ProjectEntityFixtures;
@@ -24,6 +25,7 @@ class GitlabServiceTest extends AbstractServiceCase
     private GitLabClient $client;
     private MavenParser $mavenParser;
     private ChartParser $chartParser;
+    private RundeckService $rundeckService;
     private GitLabRepository $gitLabRepository;
     private ProjectRepository $projectRepository;
     private NewRelicClient $newRelicClient;
@@ -36,6 +38,7 @@ class GitlabServiceTest extends AbstractServiceCase
         $this->client = $this->createMock(GitLabClient::class);
         $this->mavenParser = $this->createMock(MavenParser::class);
         $this->chartParser = $this->createMock(ChartParser::class);
+        $this->rundeckService = $this->createMock(RundeckService::class);
         $this->gitLabRepository = $this->createMock(GitLabRepository::class);
         $this->projectRepository = $this->createMock(ProjectRepository::class);
         $this->newRelicClient = $this->createMock(NewRelicClient::class);
@@ -44,6 +47,7 @@ class GitlabServiceTest extends AbstractServiceCase
             $this->client,
             $this->mavenParser,
             $this->chartParser,
+            $this->rundeckService,
             $this->gitLabRepository,
             $this->projectRepository,
             $this->newRelicClient,
