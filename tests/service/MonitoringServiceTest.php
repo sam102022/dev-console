@@ -55,15 +55,15 @@ class MonitoringServiceTest extends AbstractServiceCase
     {
         return [
             'status UP' => [
-                new Response(200, [], json_encode(['build' => ['version' => '1.0.0']])),
                 new Response(200, [], json_encode(['status' => 'UP'])),
+                new Response(200, [], json_encode(['build' => ['version' => '1.0.0']])),
                 ['actuatorInfo' => ['version' => '1.0.0', 'httpCode' => 200, 'error' => null],
                     'health' => ['status' => 'UP', 'httpCode' => 200, 'error' => null],
                     'urls' => ['healthCheckUrl' => 'http://url/dev', 'logsUrl' => '', 'actuatorInfoUrl' => 'http://url/dev']]
             ],
             'status DOWN' => [
-                new Response(200, [], json_encode(['build' => ['version' => '']])),
                 new Response(200, [], json_encode(['status' => 'DOWN'])),
+                new Response(200, [], json_encode(['build' => ['version' => '']])),
                 ['actuatorInfo' => ['version' => '', 'httpCode' => 200, 'error' => null],
                     'health' => ['status' => 'DOWN', 'httpCode' => 200, 'error' => null],
                     'urls' => ['healthCheckUrl' => 'http://url/dev', 'logsUrl' => '', 'actuatorInfoUrl' => 'http://url/dev']]
