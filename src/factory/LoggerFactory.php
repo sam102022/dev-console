@@ -22,7 +22,7 @@ class LoggerFactory
      * @param RotatingFileHandler $handler Le gestionnaire de logs (handler) partagé par tous les loggers.
      */
     public function __construct(
-        private RotatingFileHandler $handler
+        private readonly RotatingFileHandler $handler
     ) {}
 
     /**

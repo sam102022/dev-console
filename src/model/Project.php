@@ -1,0 +1,362 @@
+<?php
+declare(strict_types=1);
+
+namespace App\model;
+
+class Project extends AbstractModel
+{
+    public string $name;
+    public ?string $serviceName = null;
+    public ?string $domain;
+    public ?string $domainName;
+    public ?string $sf;
+    public bool $cloudGCP;
+    public ?string $springBoot;
+    public ?string $java;
+    public ?string $techno = null;
+    public ?string $subscriptionName = null;
+    public ?string $mdmWorkloadVersion = null;
+    private string $webUrl;
+    private bool $archived;
+    public array $urlHealthCheck = [];
+    public array $urlActuatorInfo = [];
+    public array $urlLogs = [];
+    public array $urlFronts = [];
+    public array $urlPubsubs = [];
+    public array $urlsRundeck = [];
+    public array $urlsDeploymentGcp = [];
+
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @param string $name
+     * @return Project
+     */
+    public function setName(string $name): self
+    {
+        $this->name = $name;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getServiceName(): ?string
+    {
+        return $this->serviceName;
+    }
+
+    /**
+     * @param string|null $serviceName
+     * @return Project
+     */
+    public function setServiceName(?string $serviceName): self
+    {
+        $this->serviceName = $serviceName;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDomain(): ?string
+    {
+        return $this->domain;
+    }
+
+    /**
+     * @param string|null $domain
+     * @return Project
+     */
+    public function setDomain(?string $domain): self
+    {
+        $this->domain = $domain;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDomainName(): ?string
+    {
+        return $this->domainName;
+    }
+
+    /**
+     * @param string|null $domainName
+     * @return Project
+     */
+    public function setDomainName(?string $domainName): self
+    {
+        $this->domainName = $domainName;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getSf(): ?string
+    {
+        return $this->sf;
+    }
+
+    /**
+     * @param string|null $sf
+     * @return Project
+     */
+    public function setSf(?string $sf): self
+    {
+        $this->sf = $sf;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isCloudGCP(): bool
+    {
+        return $this->cloudGCP;
+    }
+
+    /**
+     * @param bool $cloudGCP
+     * @return Project
+     */
+    public function setCloudGCP(bool $cloudGCP): self
+    {
+        $this->cloudGCP = $cloudGCP;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getSpringBoot(): ?string
+    {
+        return $this->springBoot;
+    }
+
+    /**
+     * @param string|null $springBoot
+     * @return Project
+     */
+    public function setSpringBoot(?string $springBoot): self
+    {
+        $this->springBoot = $springBoot;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getJava(): ?string
+    {
+        return $this->java;
+    }
+
+    /**
+     * @param string|null $java
+     * @return Project
+     */
+    public function setJava(?string $java): self
+    {
+        $this->java = $java;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getTechno(): ?string
+    {
+        return $this->techno;
+    }
+
+    /**
+     * @param string|null $techno
+     * @return Project
+     */
+    public function setTechno(?string $techno): self
+    {
+        $this->techno = $techno;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getSubscriptionName(): ?string
+    {
+        return $this->subscriptionName;
+    }
+
+    /**
+     * @param string|null $subscriptionName
+     * @return Project
+     */
+    public function setSubscriptionName(?string $subscriptionName): self
+    {
+        $this->subscriptionName = $subscriptionName;
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getMdmWorkloadVersion(): ?string
+    {
+        return $this->mdmWorkloadVersion;
+    }
+
+    /**
+     * @param string|null $mdmWorkloadVersion
+     * @return Project
+     */
+    public function setMdmWorkloadVersion(?string $mdmWorkloadVersion): self
+    {
+        $this->mdmWorkloadVersion = $mdmWorkloadVersion;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getWebUrl(): string
+    {
+        return $this->webUrl;
+    }
+
+    /**
+     * @param string $webUrl
+     * @return Project
+     */
+    public function setWebUrl(string $webUrl): self
+    {
+        $this->webUrl = $webUrl;
+        return $this;
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->archived;
+    }
+
+    public function setArchived(bool $archived): self
+    {
+        $this->archived = $archived;
+        return $this;
+    }
+
+    public function getUrlHealthCheck(): array
+    {
+        return $this->urlHealthCheck;
+    }
+
+    public function setUrlHealthCheck(array $urlHealthCheck): self
+    {
+        $this->urlHealthCheck = $urlHealthCheck;
+        return $this;
+    }
+
+    public function getUrlActuatorInfo(): array
+    {
+        return $this->urlActuatorInfo;
+    }
+
+    public function setUrlActuatorInfo(array $urlActuatorInfo): self
+    {
+        $this->urlActuatorInfo = $urlActuatorInfo;
+        return $this;
+    }
+
+    public function getUrlLogs(): array
+    {
+        return $this->urlLogs;
+    }
+
+    public function setUrlLogs(array $urlLogs): self
+    {
+        $this->urlLogs = $urlLogs;
+        return $this;
+    }
+
+    public function getUrlFronts(): array
+    {
+        return $this->urlFronts;
+    }
+
+    public function setUrlFronts(array $urlFronts): self
+    {
+        $this->urlFronts = $urlFronts;
+        return $this;
+    }
+
+    public function getUrlPubsubs(): array
+    {
+        return $this->urlPubsubs;
+    }
+
+    public function setUrlPubsubs(array $urlPubsubs): self
+    {
+        $this->urlPubsubs = $urlPubsubs;
+        return $this;
+    }
+
+    public function getUrlsRundeck(): array
+    {
+        return $this->urlsRundeck;
+    }
+
+    public function setUrlsRundeck(array $urlsRundeck): self
+    {
+        $this->urlsRundeck = $urlsRundeck;
+        return $this;
+    }
+
+    public function getUrlsDeploymentGcp(): array
+    {
+        return $this->urlsDeploymentGcp;
+    }
+
+    public function setUrlsDeploymentGcp(array $urlsDeploymentGcp): self
+    {
+        $this->urlsDeploymentGcp = $urlsDeploymentGcp;
+        return $this;
+    }
+
+    public static function build(string  $name, ?string $serviceName, ?string $domain, ?string $domainName, ?string $sf, bool $cloudGCP,
+                                 ?string $springBoot, ?string $java, ?string $techno, ?string $subscriptionName, string $webUrl,
+                                 bool    $archived, array $urlHealthCheck, array $urlActuatorInfo, array $urlLogs, array $urlFronts, array $urlPubsubs,
+                                 ?string $mdmWorkloadVersion = null, array $urlsRundeck = [], array $urlsDeploymentGcp = []): self
+    {
+        $project = new self();
+        $project->setName($name);
+        $project->setServiceName($serviceName);
+        $project->setDomain($domain);
+        $project->setDomainName($domainName);
+        $project->setSf($sf);
+        $project->setCloudGCP($cloudGCP);
+        $project->setSpringBoot($springBoot);
+        $project->setJava($java);
+        $project->setTechno($techno);
+        $project->setSubscriptionName($subscriptionName);
+        $project->setMdmWorkloadVersion($mdmWorkloadVersion);
+        $project->setWebUrl($webUrl);
+        $project->setArchived($archived);
+        $project->setUrlHealthCheck($urlHealthCheck);
+        $project->setUrlActuatorInfo($urlActuatorInfo);
+        $project->setUrlLogs($urlLogs);
+        $project->setUrlFronts($urlFronts);
+        $project->setUrlPubsubs($urlPubsubs);
+        $project->setUrlsRundeck($urlsRundeck);
+        $project->setUrlsDeploymentGcp($urlsDeploymentGcp);
+        return $project;
+    }
+
+}

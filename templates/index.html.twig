@@ -34,28 +34,29 @@
             <thead class="thead-dark">
                 <tr>
                     <th>#</th>
+                    <th><a class="sortable-header" data-sort="domain">Domaine <i class="fa-solid fa-sort sort-icon"></i></a></th>
                     <th><a class="sortable-header" data-sort="sf">SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                    <th><a class="sortable-header" data-sort="subsf">sub SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
                     <th><a class="sortable-header" data-sort="name">Projet <i class="fa-solid fa-sort sort-icon"></i></a></th>
                     <th><a class="sortable-header" data-sort="gcp">GCP <i class="fa-solid fa-sort sort-icon"></i></a></th>
                     <th><a class="sortable-header" data-sort="sb">Spring Boot <i class="fa-solid fa-sort sort-icon"></i></a></th>
                     <th><a class="sortable-header" data-sort="java">Java <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                    <th><a class="sortable-header" data-sort="mdm">MDM Workload <i class="fa-solid fa-sort sort-icon"></i></a></th>
                     <th><a class="sortable-header" data-sort="status">Status <i class="fa-solid fa-sort sort-icon"></i></a></th>
                 </tr>
                 <tr>
                     <th></th>
                     <th>
-                        <select id="filter_sf" class="form-control filter-input">
+                        <select id="filter_domain" class="form-control filter-input">
                             <option value="all">Tous</option>
-{% for key, value in sfs %}
+{% for key, value in domains %}
                             <option value="{{ key }}">{{ value }}</option>
 {% endfor %}
                         </select>
                     </th>
                     <th>
-                        <select id="filter_subsf" class="form-control filter-input">
+                        <select id="filter_sf" class="form-control filter-input">
                             <option value="all">Tous</option>
-{% for key, value in subsfs %}
+{% for key, value in sfs %}
                             <option value="{{ key }}">{{ value }}</option>
 {% endfor %}
                         </select>
@@ -85,6 +86,9 @@
                         </select>
                     </th>
                     <th>
+                        <input id="filter_mdm_version" class="form-control filter-input" value="" placeholder="Filtrer..." />
+                    </th>
+                    <th>
                         <select id="filter_status" class="form-control filter-input">
                             <option value="all">Tous</option>
                             <option value="OK">OK</option>
@@ -98,11 +102,22 @@
                 {% for r in results %}
                     <tr class="project-row">
                         <td class="col-index text-muted font-weight-bold"></td>
+                        <td class="col-domain" data-value="{{ r.domain }}">{{ r.domain }}</td>
                         <td class="col-sf" data-value="{{ r.sf }}">{{ r.sf }}</td>
-                        <td class="col-subsf" data-value="{{ r.subsf }}">{{ r.subsf }}</td>
-                        <td class="col-name">{{ r.name }}</td>
+                        <td class="col-name">
+                            {% if r.webUrl is defined and r.webUrl != '' %}
+                                <a href="{{ r.webUrl }}"
+                                   class="url-link text-decoration-none"
+                                   target="_blank"
+                                   title="Voir le projet Gitlab{% if r.archived %} archivé{% endif %} {{ r.name }}">
+                                    <i class="fa-brands fa-gitlab text-warning"></i> {{ r.name }}
+                                </a>
+                            {% else %}
+                                {{ r.name }}
+                            {% endif %}
+                        </td>
                         <td class="col-gcp" data-value="{% if r.cloudGCP == 1 %}oui{% else %}non{% endif %}">
-                            {% if r.cloudGCP == 1 %}Oui{% else %}Non{% endif %}
+                            {% if r.cloudGCP == 1 %}<i class="fa-brands fa-google text-primary"></i>{% else %}-{% endif %}
                         </td>
 
                         <td class="col-sb">
@@ -114,6 +129,12 @@
                         <td class="col-java" data-value="{{ r.java|default('N/A') }}">
                             <span class="badge badge-secondary">
                                 {{ r.java|default('N/A') }}
+                            </span>
+                        </td>
+
+                        <td class="col-mdm">
+                            <span class="badge badge-info">
+                                {{ r.mdmWorkloadVersion|default('N/A') }}
                             </span>
                         </td>
 
@@ -161,12 +182,13 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Éléments DOM (Filtres)
+    const filterDomain = document.getElementById('filter_domain');
     const filterSf = document.getElementById('filter_sf');
-    const filterSubsf = document.getElementById('filter_subsf');
     const filterProjectName = document.getElementById('filter_project_name');
     const filterGcp = document.getElementById('filter_gcp');
     const filterSbVersion = document.getElementById('filter_springboot_version');
     const filterJavaVersion = document.getElementById('filter_java_version');
+    const filterMdmVersion = document.getElementById('filter_mdm_version');
     const filterStatus = document.getElementById('filter_status');
     const tbody = document.getElementById('projects-tbody');
     let rows = Array.from(document.querySelectorAll('.project-row')); // Convertir en vrai tableau
@@ -239,12 +261,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getColumnValue(row, column) {
         switch(column) {
+            case 'domain': return row.querySelector('.col-domain').getAttribute('data-value');
             case 'sf': return row.querySelector('.col-sf').getAttribute('data-value');
-            case 'subsf': return row.querySelector('.col-subsf').getAttribute('data-value');
             case 'name': return row.querySelector('.col-name').textContent.trim();
             case 'gcp': return row.querySelector('.col-gcp').getAttribute('data-value');
             case 'sb': return row.querySelector('.col-sb').textContent.trim();
             case 'java': return row.querySelector('.col-java').getAttribute('data-value');
+            case 'mdm': return row.querySelector('.col-mdm').textContent.trim();
             case 'status': return row.querySelector('.status-label').textContent.trim();
             default: return '';
         }
@@ -253,12 +276,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- LOGIQUE DE FILTRAGE ---
     function applyFilters() {
+        const valDomain = filterDomain.value.toLowerCase();
         const valSf = filterSf.value.toLowerCase();
-        const valSubsf = filterSubsf.value.toLowerCase();
         const valName = filterProjectName.value.toLowerCase();
         const valGcp = filterGcp.value.toLowerCase();
         const valSb = filterSbVersion.value.toLowerCase();
         const valJava = filterJavaVersion.value.toLowerCase();
+        const valMdm = filterMdmVersion.value.toLowerCase();
         const valStatus = filterStatus.value.toLowerCase();
 
         // Vider le tableau des lignes filtrées
@@ -268,23 +292,25 @@ document.addEventListener('DOMContentLoaded', function() {
         rows.forEach(row => {
             row.style.display = 'none';
 
+            const domain = row.querySelector('.col-domain').getAttribute('data-value').toLowerCase();
             const sf = row.querySelector('.col-sf').getAttribute('data-value').toLowerCase();
-            const subsf = row.querySelector('.col-subsf').getAttribute('data-value').toLowerCase();
             const name = row.querySelector('.col-name').textContent.toLowerCase();
             const gcp = row.querySelector('.col-gcp').getAttribute('data-value').toLowerCase();
             const sb = row.querySelector('.col-sb').textContent.toLowerCase();
             const java = row.querySelector('.col-java').getAttribute('data-value').toLowerCase();
+            const mdm = row.querySelector('.col-mdm').textContent.toLowerCase();
             const status = row.querySelector('.status-label').textContent.trim().toLowerCase();
 
+            const matchDomain = (valDomain === 'all' || domain === valDomain);
             const matchSf = (valSf === 'all' || sf === valSf);
-            const matchSubsf = (valSubsf === 'all' || subsf === valSubsf);
             const matchName = (valName === '' || name.includes(valName));
             const matchGcp = (valGcp === 'all' || gcp === valGcp);
             const matchSb = (valSb === '' || sb.includes(valSb));
             const matchJava = (valJava === 'all' || java === valJava);
+            const matchMdm = (valMdm === '' || mdm.includes(valMdm));
             const matchStatus = (valStatus === 'all' || status === valStatus);
 
-            if (matchSf && matchSubsf && matchName && matchGcp && matchSb && matchJava && matchStatus) {
+            if (matchDomain && matchSf && matchName && matchGcp && matchSb && matchJava && matchMdm && matchStatus) {
                 filteredRows.push(row);
             }
         });

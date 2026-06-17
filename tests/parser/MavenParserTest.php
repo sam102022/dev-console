@@ -112,7 +112,7 @@ XML,
     public function testParse(string $xml, array $expected): void
     {
         // Suppress warnings for simplexml_load_string if invalid xml is tested
-        $actual = @$this->parser->parse($xml);
+        $actual = @$this->parser->parsePomXml($xml);
         $this->assertEquals($expected, $actual);
     }
 }

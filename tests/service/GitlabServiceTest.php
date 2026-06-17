@@ -4,126 +4,171 @@ declare(strict_types=1);
 namespace App\tests\service;
 
 use App\client\GitLabClient;
-use App\config\AppConfig;
-use App\factory\LoggerFactory;
-use App\model\ParamConfig;
-use App\parser\GradleParser;
+use App\client\NewRelicClient;
+use App\exception\TechnicalException;
+use App\parser\ChartParser;
 use App\parser\MavenParser;
-use App\service\FileService;
+use App\repository\GitLabRepository;
+use App\repository\mapper\ProjectMapper;
+use App\repository\ProjectRepository;
 use App\service\GitlabService;
-use PHPUnit\Framework\TestCase;
+use App\service\NewRelicService;
+use App\service\RundeckService;
+use App\tests\fixtures\GitlabProjectEntityFixtures;
+use App\tests\fixtures\GitlabProjectFixtures;
+use App\tests\fixtures\ProjectEntityFixtures;
+use DateMalformedStringException;
+use GuzzleHttp\Exception\GuzzleException;
 
 class GitlabServiceTest extends AbstractServiceCase
 {
     private GitLabClient $client;
     private MavenParser $mavenParser;
-    private GradleParser $gradleParser;
-    private FileService $fileService;
+    private ChartParser $chartParser;
+    private RundeckService $rundeckService;
+    private GitLabRepository $gitLabRepository;
+    private ProjectRepository $projectRepository;
+    private NewRelicClient $newRelicClient;
     private GitlabService $service;
 
-    protected function setUp(): void
+    final protected function setUp(): void
     {
+        parent::setUp();
+
         $this->client = $this->createMock(GitLabClient::class);
         $this->mavenParser = $this->createMock(MavenParser::class);
-        $this->gradleParser = $this->createMock(GradleParser::class);
-        $this->fileService = $this->createMock(FileService::class);
-
-        $paramConfig = $this->createMock(ParamConfig::class);
-        $paramConfig->method('getExcludeProjects')->willReturn(['excluded-project']);
-        $paramConfig->method('getGitlabPathGroupDefault')->willReturn('default/group');
+        $this->chartParser = $this->createMock(ChartParser::class);
+        $this->rundeckService = $this->createMock(RundeckService::class);
+        $this->gitLabRepository = $this->createMock(GitLabRepository::class);
+        $this->projectRepository = $this->createMock(ProjectRepository::class);
+        $this->newRelicClient = $this->createMock(NewRelicClient::class);
 
         $this->service = new GitlabService(
             $this->client,
             $this->mavenParser,
-            $this->gradleParser,
-            $this->fileService,
+            $this->chartParser,
+            $this->rundeckService,
+            $this->gitLabRepository,
+            $this->projectRepository,
+            $this->newRelicClient,
             self::$appConfig,
             self::$loggerFactory
         );
     }
 
-    public function testPurgeCache(): void
+    final public function testPurgeCache(): void
     {
-        $this->fileService->expects($this->exactly(2))
-            ->method('delete')
-            ->with($this->logicalOr('gitlabProjects.json', 'javaProjects.json'));
-
+        $this->gitLabRepository->expects($this->once())->method('purgeAll');
+        $this->projectRepository->expects($this->once())->method('purgeAll');
         $this->service->purgeCache();
     }
 
-    public function testGetProjectsFromApiWhenCacheIsEmpty(): void
+    final public function testGetProjectsFromApiWhenCacheIsEmpty(): void
     {
-        $this->fileService->method('isFileExists')->with('gitlabProjects.json')->willReturn(false);
-        
-        $projects = [['id' => 1, 'name' => 'Project 1']];
+        $projects = [['id' => 1, 'description' => 'New Project', 'name' => 'New Project', 'name_with_namespace' => 'name-with-namespace', 'path' => 'path', 'path_with_namespace' => 'path-with-namespace', 'created_at' => '2023-01-01', 'default_branch' => 'main', 'web_url' => 'http://url']];
+        $gitlabProjects = [];
+        $expectedProjects = [];
+
+        $this->gitLabRepository->method('findAll')->willReturn(null)->willReturn($gitlabProjects);
         $this->client->expects($this->once())->method('getAllProjects')->with('group/path')->willReturn($projects);
-        $this->fileService->expects($this->once())->method('save')->with($projects, 'gitlabProjects.json');
+        $this->gitLabRepository->expects($this->once())->method('updateAll');
 
         $result = $this->service->getProjects('group/path');
-        $this->assertEquals($projects, $result);
+        $this->assertEquals($expectedProjects, $result);
     }
 
-    public function testGetProjectsFromCache(): void
+    /**
+     * @throws TechnicalException
+     */
+    final public function testGetProjectsFromApiWhenCacheIsNotEmpty(): void
     {
-        $this->fileService->method('isFileExists')->with('gitlabProjects.json')->willReturn(true);
-        
-        $projects = [['id' => 1, 'name' => 'Project 1 from cache']];
-        $this->fileService->expects($this->once())->method('read')->with('gitlabProjects.json')->willReturn($projects);
+        $projects = [['id' => 1, 'description' => 'New Project', 'name' => 'New Project', 'name_with_namespace' => 'name-with-namespace', 'path' => 'path', 'path_with_namespace' => 'path-with-namespace', 'created_at' => '2023-01-01', 'default_branch' => 'main', 'web_url' => 'http://url']];
+        $gitlabProjects = [GitlabProjectEntityFixtures::getGitlabProjectEntityA()];
+        $expectedProjects = [GitlabProjectFixtures::getGitlabProjectA()];
+        $chartContent = "dependencies:\n  - name: mdm-workload\n    version: 1.5.0";
+
+        $this->gitLabRepository->method('findAll')->willReturn(null)->willReturn($gitlabProjects);
+        $this->client->expects($this->never())->method('getAllProjects')->with('group/path')->willReturn($projects);
+        $this->chartParser->expects($this->never())->method('parseChartYaml')->with($chartContent)->willReturn('1.5.0');
+        $this->gitLabRepository->expects($this->never())->method('updateAll');
+
+        $result = $this->service->getProjects('group/path');
+        $this->assertEquals($expectedProjects, $result);
+    }
+
+    final public function testGetProjectsFromCache(): void
+    {
+        $projectEntities = [GitlabProjectEntityFixtures::getGitlabProjectEntityA()];
+        $expectedProjects = [GitlabProjectFixtures::getGitlabProjectA()];
+
+        $this->gitLabRepository->method('findAll')->willReturn($projectEntities);
         $this->client->expects($this->never())->method('getAllProjects');
 
         $result = $this->service->getProjects('group/path');
-        $this->assertEquals($projects, $result);
+        $this->assertEquals($expectedProjects, $result);
     }
 
-    public function testScanFromApiWhenCacheIsEmpty(): void
+    final public function testScanFromApiWhenCacheIsEmpty(): void
     {
-        $this->fileService->method('isFileExists')->willReturn(false);
+        $this->projectRepository->method('findAll')->willThrowException(new TechnicalException("Le cache des projets Java est vide"));
 
-        $projects = [
-            ['id' => 1, 'name' => 'project-a', 'path_with_namespace' => 'a/b/c/d', 'name_with_namespace' => 'a / b / c / d'],
-            ['id' => 2, 'name' => 'project-b', 'path_with_namespace' => 'a/b/e/f', 'name_with_namespace' => 'a / b / e / f'],
-            ['id' => 3, 'name' => 'excluded-project', 'path_with_namespace' => 'a/b/g/h', 'name_with_namespace' => 'a / b / g / h'],
+        $projectEntities = [
+            GitlabProjectEntityFixtures::getGitlabProjectEntityA(),
+            GitlabProjectEntityFixtures::getGitlabProjectEntityB(),
+            GitlabProjectEntityFixtures::getGitlabProjectEntityExcluded(),
         ];
-        $this->client->method('getAllProjects')->willReturn($projects);
+
+        $this->gitLabRepository->method('findAll')->willReturn($projectEntities);
 
         $this->client->method('getFile')
             ->willReturnMap([
                 [1, 'pom.xml', true, 'main', '<pom1/>'],
-                [1, 'chart/values.yaml', true, 'main', 'content'], // cloudGCP = true
+                [1, 'chart/Chart.yaml', true, 'main', 'content'],
                 [2, 'pom.xml', true, 'main', '<pom2/>'],
-                [2, 'chart/values.yaml', true, 'main', null], // cloudGCP = false
+                [2, 'chart/Chart.yaml', true, 'main', null],
             ]);
 
-        $this->mavenParser->method('parse')
+        $this->mavenParser->method('parsePomXml')
             ->willReturnMap([
                 ['<pom1/>', ['springBoot' => '2.0', 'java' => '11']],
                 ['<pom2/>', ['springBoot' => '1.5', 'java' => '8']],
             ]);
 
-        $this->fileService->method('save');
+        $this->projectRepository->expects($this->once())->method('updateAll');
 
         $results = $this->service->scan();
 
-        $this->assertCount(2, $results);
-        $this->assertEquals('project-b', $results[1]['name']);
-        $this->assertEquals('project-a', $results[0]['name']); // Sorted by subsf, then name
-        $this->assertTrue($results[0]['cloudGCP']);
-        $this->assertFalse($results[1]['cloudGCP']);
-        $this->assertEquals('8', $results[1]['java']);
+        $this->assertCount(3, $results);
+        $this->assertEquals('project-a', $results[0]->getName());
+        $this->assertEquals('project-b', $results[1]->getName());
+        $this->assertTrue($results[0]->isCloudGCP());
+        $this->assertFalse($results[1]->isCloudGCP());
+        $this->assertEquals('11', $results[0]->getJava());
+        $this->assertEquals('8', $results[1]->getJava());
     }
 
-    public function testScanFromCache(): void
+    /**
+     * @throws GuzzleException
+     * @throws TechnicalException|DateMalformedStringException
+     */
+    final public function testScanFromCache(): void
     {
-        $this->fileService->method('isFileExists')->with('javaProjects.json')->willReturn(true);
-        $cachedData = [['name' => 'cached-project']];
-        $this->fileService->expects($this->once())->method('read')->with('javaProjects.json')->willReturn($cachedData);
+        $projectEntities = [];
+        $projectEntity = ProjectEntityFixtures::getProjectAEntity();
+        $project = ProjectMapper::fromEntity($projectEntity);
+        $projectEntities[] = $projectEntity;
+
+        $this->projectRepository->method('findAll')->willReturn($projectEntities);
         $this->client->expects($this->never())->method('getAllProjects');
 
         $results = $this->service->scan();
-        $this->assertEquals($cachedData, $results);
+        $this->assertEquals([$project], $results);
     }
 
-    public function testGetTree(): void
+    /**
+     * @throws GuzzleException
+     */
+    final public function testGetTree(): void
     {
         $expected = [['type' => 'tree', 'name' => 'src']];
         $this->client->expects($this->once())->method('listRepositoryTree')->with(123, 'src')->willReturn($expected);
@@ -131,7 +176,7 @@ class GitlabServiceTest extends AbstractServiceCase
         $this->assertEquals($expected, $result);
     }
 
-    public function testGetFile(): void
+    final public function testGetFile(): void
     {
         $expectedContent = 'file content';
         $this->client->expects($this->once())->method('getFile')->with(123, 'pom.xml', true, 'master')->willReturn($expectedContent);
@@ -139,22 +184,44 @@ class GitlabServiceTest extends AbstractServiceCase
         $this->assertEquals(['content' => $expectedContent], $result);
     }
 
-    public function testGetProjectByCode(): void
+    final public function testGetProjectByCodeFound(): void
     {
-        $scanResults = [
-            ['name' => 'project-a', 'data' => '...'],
-            ['name' => 'project-b', 'data' => '...'],
-        ];
-        // This is tricky because scan() calls getProjects which might be cached.
-        // We can mock the internal call to scan() but that's testing implementation.
-        // Let's just mock the file read from scan().
-        $this->fileService->method('isFileExists')->with('javaProjects.json')->willReturn(true);
-        $this->fileService->method('read')->with('javaProjects.json')->willReturn($scanResults);
+        $projectEntity = ProjectEntityFixtures::getProjectBEntity();
+        $expectedProject = ProjectMapper::fromEntity($projectEntity);
+
+        $this->projectRepository->method('findByCode')->with('project-b')->willReturn($projectEntity);
 
         $result = $this->service->getProjectByCode('project-b');
-        $this->assertEquals($scanResults[1], $result);
+        $this->assertEquals($expectedProject, $result);
+    }
 
-        $resultNotFound = $this->service->getProjectByCode('project-c');
-        $this->assertNull($resultNotFound);
+    final public function testGetProjectByCodeNotFound(): void
+    {
+        $this->projectRepository->method('findByCode')->with('project-c')
+            ->willReturn(null);
+
+        $result = $this->service->getProjectByCode('project-c');
+        $this->assertNull($result);
+    }
+
+    final public function testGetProjectByCodeInitializesCache(): void
+    {
+        $this->projectRepository->method('findByCode')->willThrowException(new TechnicalException('Cache is empty'));
+
+        $projectEntities = [
+            GitlabProjectEntityFixtures::getGitlabProjectEntityA(),
+            GitlabProjectEntityFixtures::getGitlabProjectEntityB(),
+        ];
+        $this->gitLabRepository->method('findAll')->willReturn($projectEntities);
+
+        $this->client->method('getFile')->willReturn(null);
+
+        $projectEntity = ProjectEntityFixtures::getProjectBEntity();
+        $expectedProject = ProjectMapper::fromEntity($projectEntity);
+
+        $this->projectRepository->expects($this->once())->method('updateAll');
+
+        $result = $this->service->getProjectByCode('project-b');
+        $this->assertEquals($expectedProject, $result);
     }
 }

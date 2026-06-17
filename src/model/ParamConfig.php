@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\model;
 
+use InvalidArgumentException;
+
 /**
  * Classe ParamConfig
  *
@@ -11,20 +13,8 @@ namespace App\model;
  */
 class ParamConfig extends AbstractModel
 {
-    /** @var string L'hôte de la base de données. */
-    private string $databaseHost;
-
-    /** @var int Le port de la base de données. */
-    private int $databasePort;
-
-    /** @var string Le nom de la base de données. */
-    private string $databaseName;
-
-    /** @var string Le nom d'utilisateur pour la base de données. */
-    private string $databaseUser;
-
-    /** @var string Le mot de passe pour la base de données. */
-    private string $databasePassword;
+    /** @var ParamRepository Les paramètres de base de données. */
+    private ParamRepository $paramRepository;
 
     /** @var string L'URL du serveur. */
     private string $urlServer;
@@ -38,54 +28,22 @@ class ParamConfig extends AbstractModel
     /** @var string La langue par défaut. */
     private string $language = 'fr';
 
-    /** @var string L'URL du serveur gitlab. */
-    private string $gitlabUrl;
+    /** @var ParamGitLab Les paramètres GitLab. */
+    private ParamGitLab $paramGitLab;
 
-    /** @var string L'URL du serveur gitlab. */
-    private string $gitlabToken;
+    /** @var ParamPostman Les paramètres Postman. */
+    private ParamPostman $paramPostman;
 
-    /** @var int L'ID du projet de contrat commercial GitLab. */
-    private int $gitlabBusinessContractProjectId;
+    /** @var string Le token e107. */
+    private string $tokenE107;
 
-    /** @var string Le chemin par défaut du groupe GitLab. */
-    private string $gitlabPathGroupDefault;
-
-    /** @var string L'API Key de Postman. */
-    private string $postmanApiKey;
-
-    /** @var string L'URL de l'API Postman. */
-    private string $postmanApiUrl;
-
-    /** @var array Les projets migrés sur GKE séparés par une virgule. */
-    private array $projectsInGke;
-
-    /** @var array Les projets à exclure séparés par une virgule. */
-    private array $excludeProjects;
+    /** @var ParamNewRelic Les paramètres New Relic. */
+    private ParamNewRelic $paramNewRelic;
 
 
-    public function getDatabaseHost(): string
+    public function getParamRepository(): ParamRepository
     {
-        return $this->databaseHost;
-    }
-
-    public function getDatabasePort(): int
-    {
-        return $this->databasePort;
-    }
-
-    public function getDatabaseName(): string
-    {
-        return $this->databaseName;
-    }
-
-    public function getDatabaseUser(): string
-    {
-        return $this->databaseUser;
-    }
-
-    public function getDatabasePassword(): string
-    {
-        return $this->databasePassword;
+        return $this->paramRepository;
     }
 
     public function getUrlServer(): string
@@ -103,75 +61,29 @@ class ParamConfig extends AbstractModel
         return $this->portLocal;
     }
 
-    /**
-     * @return string
-     */
-    public function getGitlabUrl(): string
+    public function getParamGitLab(): ParamGitLab
     {
-        return $this->gitlabUrl;
+        return $this->paramGitLab;
     }
 
-    /**
-     * @return string
-     */
-    public function getGitlabToken(): string
+    public function getParamPostman(): ParamPostman
     {
-        return $this->gitlabToken;
+        return $this->paramPostman;
     }
 
-    public function getGitlabBusinessContractProjectId(): int
+    public function getTokenE107(): string
     {
-        return $this->gitlabBusinessContractProjectId;
+        return $this->tokenE107;
     }
 
-    public function getGitlabPathGroupDefault(): string
+    public function getParamNewRelic(): ParamNewRelic
     {
-        return $this->gitlabPathGroupDefault;
+        return $this->paramNewRelic;
     }
 
-    public function getPostmanApiUrl(): string
+    public function setParamRepository(ParamRepository $paramRepository): void
     {
-        return $this->postmanApiUrl;
-    }
-
-    public function getPostmanApiKey(): string
-    {
-        return $this->postmanApiKey;
-    }
-
-    public function getProjectsInGke(): array
-    {
-        return $this->projectsInGke;
-    }
-
-    public function getExcludeProjects(): array
-    {
-        return $this->excludeProjects;
-    }
-
-    public function setDatabaseHost(string $databaseHost): void
-    {
-        $this->databaseHost = $databaseHost;
-    }
-
-    public function setDatabasePort(int $databasePort): void
-    {
-        $this->databasePort = $databasePort;
-    }
-
-    public function setDatabaseName(string $databaseName): void
-    {
-        $this->databaseName = $databaseName;
-    }
-
-    public function setDatabaseUser(string $databaseUser): void
-    {
-        $this->databaseUser = $databaseUser;
-    }
-
-    public function setDatabasePassword(string $databasePassword): void
-    {
-        $this->databasePassword = $databasePassword;
+        $this->paramRepository = $paramRepository;
     }
 
     public function setUrlServer(string $urlServer): void
@@ -189,50 +101,24 @@ class ParamConfig extends AbstractModel
         $this->portLocal = $portLocal;
     }
 
-    /**
-     * @param string $gitlabUrl
-     */
-    public function setGitlabUrl(string $gitlabUrl): void
+    public function setParamGitLab(ParamGitLab $paramGitLab): void
     {
-        $this->gitlabUrl = $gitlabUrl;
+        $this->paramGitLab = $paramGitLab;
     }
 
-    /**
-     * @param string $gitlabToken
-     */
-    public function setGitlabToken(string $gitlabToken): void
+    public function setParamPostman(ParamPostman $paramPostman): void
     {
-        $this->gitlabToken = $gitlabToken;
+        $this->paramPostman = $paramPostman;
     }
 
-    public function setGitlabBusinessContractProjectId(int $gitlabBusinessContractProjectId): void
+    public function setTokenE107(string $tokenE107): void
     {
-        $this->gitlabBusinessContractProjectId = $gitlabBusinessContractProjectId;
+        $this->tokenE107 = $tokenE107;
     }
 
-    public function setGitlabPathGroupDefault(string $gitlabPathGroupDefault): void
+    public function setParamNewRelic(ParamNewRelic $paramNewRelic): void
     {
-        $this->gitlabPathGroupDefault = $gitlabPathGroupDefault;
-    }
-
-    public function setPostmanApiKey(string $postmanApiKey): void
-    {
-        $this->postmanApiKey = $postmanApiKey;
-    }
-
-    public function setPostmanApiUrl(string $postmanApiUrl): void
-    {
-        $this->postmanApiUrl = $postmanApiUrl;
-    }
-
-    public function setProjectsInGke(array $projectsInGke): void
-    {
-        $this->projectsInGke = $projectsInGke;
-    }
-
-    public function setExcludeProjects(array $excludeProjects): void
-    {
-        $this->excludeProjects = $excludeProjects;
+        $this->paramNewRelic = $paramNewRelic;
     }
 
     /**
@@ -243,48 +129,32 @@ class ParamConfig extends AbstractModel
      */
     public static function parse(array $params): self
     {
+        if (empty($params)) {
+            throw new InvalidArgumentException("Le tableau de paramètres est vide.");
+        }
+        if (!isset($params['base_url'], $params['host'], $params['port'])) {
+            throw new InvalidArgumentException("Certains paramètres requis sont manquants.");
+        }
+        $paramRepository = ParamRepository::parse($params);
+        $paramGitLab = ParamGitLab::parse($params);
+        $paramPostman = ParamPostman::parse($params);
+        $paramNewRelic = ParamNewRelic::parse($params);
+
         $urlServer = $params['base_url'] ?? '';
         $ipLocal = $params['host'] ?? 'localhost';
-        $portLocal = (int) ($params['port'] ?? 80);
-        $databaseHost = $params['database_host'] ?? 'localhost';
-        $databasePort = (int) ($params['database_port'] ?? 3306);
-        $databaseUser = $params['database_user'] ?? '';
-        $databasePassword = $params['database_password'] ?? '';
-        $databaseName = $params['database_name'] ?? '';
-        $gitlabUrl = $params['gitlab_url'] ?? '';
-        $gitlabToken = $params['gitlab_token'] ?? '';
-        $gitlabBusinessContractProjectId = (int) ($params['gitlab_business_contract_project_id'] ?? 0);
-        $gitlabPathGroupDefault = $params['gitlab_path_group_default'] ?? '';
-        $postmanApiKey = $params['postman_api_key'] ?? '';
-        $postmanApiUrl = $params['postman_api_url'] ?? '';
-        
-        $projectsInGke = [];
-        if (!empty($params['projects_in_gke'])) {
-            $projectsInGke = array_map('trim', explode(',', $params['projects_in_gke']));
-        }
-        
-        $excludeProjects = [];
-        if (!empty($params['exclude_projects'])) {
-            $excludeProjects = array_map('trim', explode(',', $params['exclude_projects']));
-        }
+        $portLocal = (int)($params['port'] ?? 80);
+
+        $tokenE107 = $params['token_e107'] ?? '';
 
         $paramConfig = new self();
-        $paramConfig->setDatabaseHost($databaseHost);
-        $paramConfig->setDatabaseName($databaseName);
-        $paramConfig->setDatabasePassword($databasePassword);
-        $paramConfig->setDatabasePort($databasePort);
-        $paramConfig->setDatabaseUser($databaseUser);
+        $paramConfig->setParamRepository($paramRepository);
+        $paramConfig->setParamGitLab($paramGitLab);
+        $paramConfig->setParamPostman($paramPostman);
         $paramConfig->setIpLocal($ipLocal);
         $paramConfig->setPortLocal($portLocal);
         $paramConfig->setUrlServer($urlServer);
-        $paramConfig->setGitlabUrl($gitlabUrl);
-        $paramConfig->setGitlabToken($gitlabToken);
-        $paramConfig->setGitlabBusinessContractProjectId($gitlabBusinessContractProjectId);
-        $paramConfig->setGitlabPathGroupDefault($gitlabPathGroupDefault);
-        $paramConfig->setPostmanApiKey($postmanApiKey);
-        $paramConfig->setPostmanApiUrl($postmanApiUrl);
-        $paramConfig->setProjectsInGke($projectsInGke);
-        $paramConfig->setExcludeProjects($excludeProjects);
+        $paramConfig->setTokenE107($tokenE107);
+        $paramConfig->setParamNewRelic($paramNewRelic);
 
         return $paramConfig;
     }

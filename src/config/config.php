@@ -1,25 +1,35 @@
 <?php
-const PATH_IMAGES = 'public/images';
+declare(strict_types=1);
 
 const ENVIRONMENT_PROD = 'prod';
 const ENVIRONMENT_TEST = 'test';
+// Chemins
+const PATH_DATA = 'data';
+const PATH_CACHE = 'var/cache';
+const PATH_CACHE_FILE = PATH_CACHE . '/file';
+const PATH_CACHE_USER = PATH_CACHE . '/user';
+const PATH_IMAGES = 'public/images';
 
 const THEME_DEFAULT = 'dark';
 
 const LEVEL_LOG_INFO = 'info';
 const LEVEL_LOG_WARN = 'warn';
 const LEVEL_LOG_ERROR = 'error';
-const LOG_FILE_DEFAULT = 'var/logs/log.log';
-const LOG_CLI_FILE_DEFAULT = 'var/logs/logCli.log';
-const TEST_LOG_FILE = 'var/logs/logTest.log';
+const PATH_LOGS = 'var/logs';
+const LOG_FILE_DEFAULT = PATH_LOGS . '/log.log';
+const LOG_CLI_FILE_DEFAULT = PATH_LOGS . '/logCli.log';
+const TEST_LOG_FILE = PATH_LOGS . '/logTest.log';
 
 const MESSAGES_SCAN_RESULTS = 'scanResults';
 const MESSAGES_POSTMAN = 'postman';
 
+// Actions
+const ACTION_PURGE_CACHE = 'purge_cache';
+
 const ACTION_GITLAB_SCAN = 'scan';
 const ACTION_GITLAB_TREE = 'tree';
 const ACTION_GITLAB_FILE = 'file';
-const ACTION_PURGE_CACHE = 'purge_cache';
+const ACTION_NEW_RELIC_URL = 'get_new_relic_url';
 
 const ACTION_POSTMAN_WORKSPACES = 'getWorkspaces';
 const ACTION_POSTMAN_CREATE_WORKSPACE = 'createWorkspace';
@@ -27,7 +37,8 @@ const ACTION_POSTMAN_CREATE_ENVIRONMENT = 'createEnvironment';
 const ACTION_POSTMAN_IMPORT_OPENAPI = 'importOpenApi';
 const ACTION_POSTMAN_GET_WORKSPACE_DETAILS = 'getWorkspaceDetails';
 
-const ACTION_MONITORING_CHECK_ONE = 'checkHealthOne';
+const ACTION_MONITORING_GET_DATA = 'getMonitoringData';
+const ACTION_SAVE_COLUMNS_PREFS = 'saveColumnsPrefs';
 
 const THEMES_COLORS = [ //
     'dark' => [ //

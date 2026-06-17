@@ -5,14 +5,20 @@ namespace App\parser;
 
 class MavenParser
 {
-    public function parse(string $xml): array
+    /**
+     * Analyse le contenu d'un fichier pom.xml pour extraire les versions de Spring Boot et de Java.
+     *
+     * @param string $xml Le contenu du fichier pom.xml.
+     * @return null[]
+     */
+    public function parsePomXml(string $xml): array
     {
         $data = [
             'springBoot' => null,
             'java' => null
         ];
 
-        $xmlObj = simplexml_load_string($xml);
+        $xmlObj = XmlParser::parse($xml);
 
         if (!$xmlObj) {
             return $data;

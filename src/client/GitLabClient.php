@@ -17,17 +17,15 @@ class GitLabClient
     private const string BASE_URI = '/api/v4/projects';
 
     private string $token;
-    private readonly Client $client;
     private Logger $logger;
 
     public function __construct(
-        Client        $client,
-        AppConfig     $appConfig,
-        LoggerFactory $loggerFactory)
+        private readonly Client $client,
+        AppConfig               $appConfig,
+        LoggerFactory           $loggerFactory)
     {
-        $this->token = $appConfig->getParamConfig()->getGitlabToken();
-        $this->client = $client;
         $this->logger = $loggerFactory->get(__CLASS__);
+        $this->token = $appConfig->getParamConfig()->getParamGitLab()->getGitlabToken();
     }
 
     /**
@@ -132,8 +130,8 @@ class GitLabClient
      */
     public function getFile(int $projectId, string $filePath, bool $raw, string $branch = 'main'): string|array|null
     {
-        $this->logger->info(UtilsLog::prefixLog(__CLASS__, __FUNCTION__, __LINE__)
-            . "Fichier avec le path $filePath");
+//        $this->logger->info(UtilsLog::prefixLog(__CLASS__, __FUNCTION__, __LINE__)
+//            . "Fichier avec le path $filePath");
 
         try {
             $encodedPath = urlencode($filePath);

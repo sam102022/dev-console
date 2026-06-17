@@ -1,0 +1,143 @@
+<?php
+declare(strict_types=1);
+
+namespace App\repository\mapper;
+
+use App\model\Project;
+use App\repository\model\ProjectEntity;
+
+class ProjectMapper
+{
+    public static function projectEntityFromArray(array $data): ProjectEntity
+    {
+        $projectEntity = new ProjectEntity();
+        $projectEntity->setName($data['name']);
+        $projectEntity->setServiceName($data['serviceName']);
+        $projectEntity->setDomain($data['domain'] ?? '');
+        $projectEntity->setDomainName($data['domainName'] ?? '');
+        $projectEntity->setSf($data['sf'] ?? '');
+        $projectEntity->setCloudGCP($data['cloudGCP'] ?? false);
+        $projectEntity->setSpringBootVersion($data['springBoot'] ?? null);
+        $projectEntity->setJavaVersion($data['java'] ?? null);
+        $projectEntity->setTechno($data['techno'] ?? null);
+        $projectEntity->setSubscriptionName($data['subscriptionName'] ?? null);
+        $projectEntity->setMdmWorkloadVersion($data['mdmWorkloadVersion'] ?? null);
+        $projectEntity->setWebUrl($data['webUrl'] ?? '');
+        $projectEntity->setArchived($data['archived'] ?? false);
+        $projectEntity->setUrlHealthCheck($data['urlHealthCheck'] ?? []);
+        $projectEntity->setUrlActuatorInfo($data['urlActuatorInfo'] ?? []);
+        $projectEntity->setUrlLogs($data['urlLogs'] ?? []);
+        $projectEntity->setUrlFronts($data['urlFronts'] ?? []);
+        $projectEntity->setUrlPubsubs($data['urlPubsubs'] ?? []);
+        $projectEntity->setUrlsRundeck($data['urlsRundeck'] ?? []);
+        $projectEntity->setUrlsDeploymentGcp($data['urlsDeploymentGcp'] ?? []);
+
+        return $projectEntity;
+    }
+
+    public static function projectFromArray(array $data): Project
+    {
+        $project = new Project();
+        $project->setName($data['name']);
+        $project->setServiceName($data['serviceName']);
+        $project->setDomain($data['domain'] ?? '');
+        $project->setDomainName($data['domainName'] ?? '');
+        $project->setSf($data['sf'] ?? '');
+        $project->setCloudGCP($data['cloudGCP'] ?? false);
+        $project->setSpringBoot($data['springBoot'] ?? null);
+        $project->setJava($data['java'] ?? null);
+        $project->setTechno($data['techno'] ?? null);
+        $project->setSubscriptionName($data['subscriptionName'] ?? null);
+        $project->setMdmWorkloadVersion($data['mdmWorkloadVersion'] ?? null);
+        $project->setWebUrl($data['webUrl'] ?? '');
+        $project->setArchived($data['archived'] ?? false);
+        $project->setUrlHealthCheck($data['urlHealthCheck'] ?? []);
+        $project->setUrlActuatorInfo($data['urlActuatorInfo'] ?? []);
+        $project->setUrlLogs($data['urlLogs'] ?? []);
+        $project->setUrlFronts($data['urlFronts'] ?? []);
+        $project->setUrlPubsubs($data['urlPubsubs'] ?? []);
+        $project->setUrlsRundeck($data['urlsRundeck'] ?? []);
+        $project->setUrlsDeploymentGcp($data['urlsDeploymentGcp'] ?? []);
+
+        return $project;
+    }
+
+    public static function fromEntity(ProjectEntity $entity): Project
+    {
+        $project = new Project();
+        $project->setName($entity->getName());
+        $project->setServiceName($entity->getServiceName());
+        $project->setDomain($entity->getDomain());
+        $project->setDomainName($entity->getDomainName());
+        $project->setSf($entity->getSf());
+        $project->setCloudGCP($entity->isCloudGCP());
+        $project->setSpringBoot($entity->getSpringBootVersion());
+        $project->setJava($entity->getJavaVersion());
+        $project->setTechno($entity->getTechno());
+        $project->setSubscriptionName($entity->getSubscriptionName());
+        $project->setMdmWorkloadVersion($entity->getMdmWorkloadVersion());
+        $project->setWebUrl($entity->getWebUrl());
+        $project->setArchived($entity->isArchived());
+        $project->setUrlHealthCheck($entity->getUrlHealthCheck());
+        $project->setUrlActuatorInfo($entity->getUrlActuatorInfo());
+        $project->setUrlLogs($entity->getUrlLogs());
+        $project->setUrlFronts($entity->getUrlFronts());
+        $project->setUrlPubsubs($entity->getUrlPubsubs());
+        $project->setUrlsRundeck($entity->getUrlsRundeck());
+        $project->setUrlsDeploymentGcp($entity->getUrlsDeploymentGcp());
+
+        return $project;
+    }
+
+    public static function toEntity(Project $project): ProjectEntity
+    {
+        return ProjectEntity::build(
+            $project->getName(),
+            $project->getServiceName(),
+            $project->getDomain() ?? '',
+            $project->getDomainName() ?? '',
+            $project->getSf() ?? '',
+            $project->isCloudGCP(),
+            $project->getSpringBoot(),
+            $project->getJava(),
+            $project->getTechno(),
+            $project->getSubscriptionName(),
+            $project->getWebUrl(),
+            $project->isArchived(),
+            $project->getUrlHealthCheck(),
+            $project->getUrlActuatorInfo(),
+            $project->getUrlLogs(),
+            $project->getUrlFronts(),
+            $project->getUrlPubsubs(),
+            $project->getMdmWorkloadVersion(),
+            $project->getUrlsRundeck(),
+            $project->getUrlsDeploymentGcp()
+        );
+    }
+
+    public static function toArray(ProjectEntity $projectEntity): array
+    {
+        return [
+            'name' => $projectEntity->getName(),
+            'serviceName' => $projectEntity->getServiceName(),
+            'domain' => $projectEntity->getDomain(),
+            'domainName' => $projectEntity->getDomainName(),
+            'sf' => $projectEntity->getSf(),
+            'cloudGCP' => $projectEntity->isCloudGCP(),
+            'springBoot' => $projectEntity->getSpringBootVersion(),
+            'java' => $projectEntity->getJavaVersion(),
+            'techno' => $projectEntity->getTechno(),
+            'subscriptionName' => $projectEntity->getSubscriptionName(),
+            'mdmWorkloadVersion' => $projectEntity->getMdmWorkloadVersion(),
+            'webUrl' => $projectEntity->getWebUrl(),
+            'archived' => $projectEntity->isArchived(),
+            'urlHealthCheck' => $projectEntity->getUrlHealthCheck(),
+            'urlActuatorInfo' => $projectEntity->getUrlActuatorInfo(),
+            'urlLogs' => $projectEntity->getUrlLogs(),
+            'urlFronts' => $projectEntity->getUrlFronts(),
+            'urlPubsubs' => $projectEntity->getUrlPubsubs(),
+            'urlsRundeck' => $projectEntity->getUrlsRundeck(),
+            'urlsDeploymentGcp' => $projectEntity->getUrlsDeploymentGcp(),
+        ];
+    }
+}

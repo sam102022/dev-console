@@ -6,17 +6,15 @@ namespace App\tests\controller;
 use App\context\IndexContext;
 use App\controller\MonitoringController;
 use App\exception\TechnicalException;
-use App\factory\LoggerFactory;
 use App\model\EnumEnvironment;
 use App\service\GitlabService;
 use App\service\MonitoringService;
+use App\service\UserPreferencesService;
 use App\viewModel\IndexViewModelFactory;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use Monolog\Logger;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\TestCase;
 use Throwable;
-use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
@@ -29,18 +27,20 @@ class MonitoringControllerTest extends AbstractControllerCase
     private IndexContext $context;
     private MonitoringController $controller;
 
-    protected function setUp(): void
+    final protected function setUp(): void
     {
         parent::setUp();
         $this->viewModelFactory = $this->createMock(IndexViewModelFactory::class);
         $this->gitlabService = $this->createMock(GitlabService::class);
         $this->monitoringService = $this->createMock(MonitoringService::class);
         $this->context = $this->createMock(IndexContext::class);
+        $this->userPreferencesService = $this->createMock(UserPreferencesService::class);
 
         $this->controller = new MonitoringController(
             $this->viewModelFactory,
             $this->gitlabService,
             $this->monitoringService,
+            $this->userPreferencesService,
             $this->context,
             $this->twigMocked,
             self::$loggerFactory
@@ -49,7 +49,7 @@ class MonitoringControllerTest extends AbstractControllerCase
         $_REQUEST = [];
     }
 
-    public function testIndex(): void
+    final public function testIndex(): void
     {
         $messages = ['some_message'];
         $scanResults = ['projects' => ['project1']];
@@ -70,7 +70,7 @@ class MonitoringControllerTest extends AbstractControllerCase
 
         $this->twigMocked->expects($this->once())
             ->method('render')
-            ->with('monitoring.html.twig', $this->callback(function ($subject) use ($viewModel) {
+            ->with('monitoring.html.twig', $this->callback(function ($subject) {
                 $this->assertEquals('viewModelValue', $subject['viewModelKey']);
                 $this->assertEquals('monitoring', $subject['current_route']);
                 return true;
@@ -86,18 +86,25 @@ class MonitoringControllerTest extends AbstractControllerCase
 
     public static function handleRequestProvider(): array
     {
+        $return1 = [
+            'health' => ['status' => 'UP', 'httpCode' => 200, 'error' => null]
+        ];
         return [
             'check one success' => [
-                'action' => ACTION_MONITORING_CHECK_ONE,
+                'action' => ACTION_MONITORING_GET_DATA,
                 'request' => ['project' => 'my-project', 'env' => 'dev'],
-                'serviceReturn' => ['status' => 'UP', 'httpCode' => 200, 'error' => null],
-                'expectedResponse' => json_encode(['success' => true, 'status' => 'UP', 'httpCode' => 200, 'error' => null]),
+                'serviceReturn' => $return1,
+                'expectedResponse' => json_encode(['success' => true,
+                    'health' => ['status' => 'UP', 'httpCode' => 200, 'error' => null]]),
             ],
             'check one failure' => [
-                'action' => ACTION_MONITORING_CHECK_ONE,
+                'action' => ACTION_MONITORING_GET_DATA,
                 'request' => ['project' => 'my-project', 'env' => 'prod'],
-                'serviceReturn' => ['status' => 'DOWN', 'httpCode' => 500, 'error' => 'Server Error'],
-                'expectedResponse' => json_encode(['success' => true, 'status' => 'DOWN', 'httpCode' => 500, 'error' => 'Server Error']),
+                'serviceReturn' => [
+                    'health' => ['status' => 'DOWN', 'httpCode' => 500, 'error' => 'Server Error'],
+                ],
+                'expectedResponse' => json_encode(['success' => true,
+                    'health' => ['status' => 'DOWN', 'httpCode' => 500, 'error' => 'Server Error']]),
             ],
             'unknown action' => [
                 'action' => 'unknown_action',
@@ -109,13 +116,13 @@ class MonitoringControllerTest extends AbstractControllerCase
     }
 
     #[DataProvider('handleRequestProvider')]
-    public function testHandleRequest(string $action, array $request, ?array $serviceReturn, string $expectedResponse): void
+    final public function testHandleRequest(string $action, array $request, ?array $serviceReturn, string $expectedResponse): void
     {
         $_REQUEST = $request;
 
         if ($serviceReturn) {
             $this->monitoringService->expects($this->once())
-                ->method('checkOne')
+                ->method('getMonitoringData')
                 ->with($request['project'], EnumEnvironment::from($request['env']))
                 ->willReturn($serviceReturn);
         }
@@ -125,15 +132,15 @@ class MonitoringControllerTest extends AbstractControllerCase
         $this->assertEquals($expectedResponse, $response);
     }
 
-    public function testHandleRequestException(): void
+    final public function testHandleRequestException(): void
     {
-        $action = ACTION_MONITORING_CHECK_ONE;
+        $action = ACTION_MONITORING_GET_DATA;
         $_REQUEST = ['project' => 'p', 'env' => 'dev'];
         $errorMessage = 'Service exception';
 
         $this->monitoringService->expects($this->once())
-            ->method('checkOne')
-            ->willThrowException(new \Exception($errorMessage));
+            ->method('getMonitoringData')
+            ->willThrowException(new Exception($errorMessage));
 
         $response = $this->controller->handleRequest($action);
 
@@ -152,10 +159,10 @@ class MonitoringControllerTest extends AbstractControllerCase
     }
 
     /**
-     * @throws GuzzleException
+     * @throws TechnicalException
      */
     #[DataProvider('renderExceptionProvider')]
-    public function testRenderCatchesExceptions(Throwable $exception): void
+    final public function testRenderCatchesExceptions(Throwable $exception): void
     {
         $this->viewModelFactory->expects($this->once())
             ->method('build')

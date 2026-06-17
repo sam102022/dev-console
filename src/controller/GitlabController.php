@@ -5,7 +5,10 @@ namespace App\controller;
 
 use App\config\AppConfig;
 use App\factory\LoggerFactory;
+use App\model\EnumEnvironment;
+use App\model\NewRelic;
 use App\service\GitlabService;
+use App\service\NewRelicService;
 use Monolog\Logger;
 use Throwable;
 
@@ -24,9 +27,10 @@ class GitlabController
      * @param LoggerFactory $loggerFactory Usine pour créer le logger.
      */
     public function __construct(
-        private readonly GitlabService $gitlabService,
-        private readonly AppConfig     $appConfig,
-        LoggerFactory                  $loggerFactory
+        private readonly GitlabService   $gitlabService,
+        private readonly NewRelicService $newRelicService,
+        private readonly AppConfig       $appConfig,
+        LoggerFactory                    $loggerFactory
     )
     {
         $this->logger = $loggerFactory->get(self::class);
@@ -40,12 +44,40 @@ class GitlabController
                     $response = $this->gitlabService->scan();
                     break;
                 case ACTION_GITLAB_TREE:
-                    $projectId = $this->appConfig->getParamConfig()->getGitlabBusinessContractProjectId();
+                    $projectId = $this->appConfig->getParamConfig()->getParamGitLab()->getGitlabBusinessContractProjectId();
                     $response = $this->gitlabService->getTree($projectId, $_REQUEST['path'] ?? '');
                     break;
                 case ACTION_GITLAB_FILE:
-                    $projectId = $this->appConfig->getParamConfig()->getGitlabBusinessContractProjectId();
-                    $response = $this->gitlabService->getFile($projectId, $_REQUEST['file'] ?? '', 'master');
+                    $projectId = $this->appConfig->getParamConfig()->getParamGitLab()->getGitlabBusinessContractProjectId();
+                    $response = $this->gitlabService->getFile($projectId, $_REQUEST['file'] ?? '');
+                    break;
+                case ACTION_NEW_RELIC_URL:
+                    $projectName = $_REQUEST['project'] ?? null;
+                    $env = $_REQUEST['env'] ?? null;
+
+                    if (empty($projectName) || empty($env)) {
+                        http_response_code(400);
+                        $response = ['error' => 'Les paramètres project et env sont requis.'];
+                        break;
+                    }
+                    $enumEnv = EnumEnvironment::from($env);
+
+                    $newRelic = $this->newRelicService->find($projectName, $enumEnv);
+                    if ($newRelic) {
+                        $response = ['url' => $newRelic->getUrl()];
+                        break;
+                    }
+
+                    $project = $this->gitlabService->getProjectByCode($projectName);
+                    $url = $this->gitlabService->buildNewRelicUrl($project, $enumEnv);
+
+                    if ($url) {
+                        $this->newRelicService->save(NewRelic::build($projectName, $enumEnv, $url));
+                        $response = ['url' => $url];
+                    } else {
+                        http_response_code(404);
+                        $response = ['error' => 'URL non trouvée.'];
+                    }
                     break;
 
                 default:

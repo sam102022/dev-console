@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.0/phpunit.xsd" 
+bootstrap="tests/bootstrap.php" cacheDirectory=".phpunit.cache" executionOrder="depends,defects"
+    colors="true"
+    failOnRisky="true"
+    failOnWarning="false"
+    failOnDeprecation="false">
+  <testsuites>
+    <testsuite name="Unit Tests">
+      <directory suffix="Test.php">tests</directory>
+    </testsuite>
+  </testsuites>
+  <source>
+    <include>
+      <directory suffix=".php">./</directory>
+    </include>
+    <exclude>
+      <directory>./node_modules</directory>
+      <directory>./tests</directory>
+      <directory>./vendor</directory>
+      <directory>./scripts</directory>
+      <file>icons/icons.php</file>
+      <file>factory/LoggerFactory.php</file>
+      <file>view/TwigFactory.php</file>
+      <file>autoload.php</file>
+      <file>controller.php</file>
+      <file>console.php</file>
+      <file>index.php</file>
+    </exclude>
+  </source>
+</phpunit>

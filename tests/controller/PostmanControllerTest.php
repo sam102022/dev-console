@@ -9,6 +9,7 @@ use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\service\PostmanService;
 use App\viewModel\IndexViewModelFactory;
+use Exception;
 use Monolog\Logger;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -56,7 +57,7 @@ class PostmanControllerTest extends AbstractControllerCase
 
         $this->twigMocked->expects($this->once())
             ->method('render')
-            ->with('postman.html.twig', $this->callback(function ($subject) use ($viewModel) {
+            ->with('postman.html.twig', $this->callback(function ($subject) {
                 $this->assertEquals('viewModelValue', $subject['viewModelKey']);
                 $this->assertEquals('postman', $subject['current_route']);
                 return true;
@@ -131,7 +132,8 @@ class PostmanControllerTest extends AbstractControllerCase
     }
 
     #[DataProvider('handleRequestProvider')]
-    public function testHandleRequest(string $action, array $input, ?string $serviceMethod, array $serviceArgs, $serviceReturn, string $expectedResponse, int $expectedHttpCode): void
+    public function testHandleRequest(string $action, array $input, ?string $serviceMethod,
+                                      array $serviceArgs, ?array $serviceReturn, string $expectedResponse, int $expectedHttpCode): void
     {
         $rawInput = null;
         if ($action === ACTION_POSTMAN_GET_WORKSPACE_DETAILS) {
@@ -160,7 +162,7 @@ class PostmanControllerTest extends AbstractControllerCase
 
         $this->postmanService->expects($this->once())
             ->method('getWorkspaces')
-            ->willThrowException(new \Exception($errorMessage));
+            ->willThrowException(new Exception($errorMessage));
 
         $response = $this->controller->handleRequest($action);
 

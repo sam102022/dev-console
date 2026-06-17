@@ -15,7 +15,10 @@ use App\model\ParamConfig;
 class AppConfig
 {
     private ParamConfig $paramConfig;
+    private string $pathCacheFile;
+    private string $pathCacheUser;
     private string $pathImages;
+    private string $pathData;
 
     /**
      * Constructeur de la classe AppConfig.
@@ -35,7 +38,11 @@ class AppConfig
         $this->paramConfig = ParamConfig::parse($params);
 
         $pathResolver = new PathResolver();
+        $this->pathCacheFile = $pathResolver->resolve(PATH_CACHE_FILE);
+        $this->pathCacheUser = $pathResolver->resolve(PATH_CACHE_USER);
         $this->pathImages = $pathResolver->resolve(PATH_IMAGES);
+        $this->pathData = $pathResolver->resolve(PATH_DATA);
+        $pathResolver->resolve(PATH_LOGS);
     }
 
     /**
@@ -94,51 +101,23 @@ class AppConfig
         return $this->paramConfig->getPortLocal();
     }
 
-    /**
-     * Retourne l'hôte de la base de données.
-     */
-    public function getDatabaseHost(): string
+    public function getPathCacheFile(): string
     {
-        return $this->paramConfig->getDatabaseHost();
+        return $this->pathCacheFile;
     }
 
-    /**
-     * Retourne le port de la base de données.
-     */
-    public function getDatabasePort(): int
+    public function getPathCacheUser(): string
     {
-        return $this->paramConfig->getDatabasePort();
+        return $this->pathCacheUser;
     }
 
-    /**
-     * Retourne le nom de la base de données.
-     */
-    public function getDatabaseName(): string
-    {
-        return $this->paramConfig->getDatabaseName();
-    }
-
-    /**
-     * Retourne le nom d'utilisateur de la base de données.
-     */
-    public function getDatabaseUsername(): string
-    {
-        return $this->paramConfig->getDatabaseUser();
-    }
-
-    /**
-     * Retourne le mot de passe de la base de données.
-     */
-    public function getDatabasePassword(): string
-    {
-        return $this->paramConfig->getDatabasePassword();
-    }
-
-    /**
-     * Retourne le chemin du dossier des images.
-     */
     public function getPathImages(): string
     {
         return $this->pathImages;
+    }
+
+    public function getPathData(): string
+    {
+        return $this->pathData;
     }
 }

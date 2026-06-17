@@ -9,6 +9,7 @@ use App\factory\LoggerFactory;
 use App\service\GitlabService;
 use App\util\UtilsLog;
 use App\viewModel\IndexViewModelFactory;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Monolog\Logger;
 use Twig\Environment;
@@ -39,12 +40,11 @@ class IndexController
      */
     public function __construct(
         private readonly IndexViewModelFactory $viewModelFactory,
-        private readonly IndexContext          $context,
-        private readonly GitlabService         $gitlabService,
-        private readonly Environment           $twig,
-        LoggerFactory                          $loggerFactory
-    )
-    {
+        private readonly IndexContext $context,
+        private readonly GitlabService $gitlabService,
+        private readonly Environment $twig,
+        LoggerFactory $loggerFactory
+    ) {
         $this->logger = $loggerFactory->get(self::class);
     }
 
@@ -52,30 +52,35 @@ class IndexController
      * Affiche la page principale.
      *
      * @param array $messages Un tableau de messages à afficher à l'utilisateur (notifications, erreurs, etc.).
-     * @throws GuzzleException
      */
     public function index(array $messages): void
     {
-        $response = $this->gitlabService->scan();
-        $this->viewModelFactory->setResults($response);
+        try {
+            $response = $this->gitlabService->scan();
+            $this->viewModelFactory->setResults($response);
+        } catch (GuzzleException | Exception $e) {
+            $this->logger->error(UtilsLog::prefixLog(self::class, __FUNCTION__, __LINE__) . $e->getMessage());
+            $messages[MESSAGES_SCAN_RESULTS] = [
+                LEVEL_LOG_ERROR => [
+                    'Une erreur est survenue lors du scan des projets GitLab.'
+                ]
+            ];
+        }
 
         $this->render($messages);
     }
 
-    /**
-     * @throws GuzzleException
-     */
     public function purgeCache(array $messages): void
     {
         $this->gitlabService->purgeCache();
-        
+
         // On force le reload de la page d'accueil avec message
         $messages[MESSAGES_SCAN_RESULTS] = [
             LEVEL_LOG_INFO => [
                 'Cache supprimé avec succès.'
             ]
         ];
-        
+
         $this->index($messages);
     }
 
@@ -88,7 +93,7 @@ class IndexController
                 'index.html.twig',
                 $viewModel
             );
-        } catch (LoaderError|RuntimeError|SyntaxError|TechnicalException $e) {
+        } catch (LoaderError | RuntimeError | SyntaxError | TechnicalException $e) {
             $this->logger->error(UtilsLog::prefixLog(self::class, __FUNCTION__, __LINE__) . $e->getMessage());
         }
     }

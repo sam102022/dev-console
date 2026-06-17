@@ -4,14 +4,12 @@ declare(strict_types=1);
 namespace App;
 
 use App\client\GitLabClient;
+use App\client\NewRelicClient;
 use App\client\PostmanClient;
 use App\config\AppConfig;
 use App\context\LocaleContext;
+use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
-use App\parser\GradleParser;
-use App\parser\MavenParser;
-use App\service\FileService;
-use App\service\GitlabService;
 use App\service\Translator;
 use App\util\UtilsLog;
 use App\view\TwigFactory;
@@ -22,6 +20,7 @@ use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\TransferException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use InvalidArgumentException;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Handler\StreamHandler;
@@ -64,13 +63,12 @@ abstract class AbstractContainer
      * @param LocaleContext $localeContext Le contexte de la locale.
      */
     public function __construct(
-        private readonly string        $pathLogs,
-        private readonly string        $env,
-        private readonly string        $pathTemplates,
-        private readonly Level         $levelLogger,
+        private readonly string $pathLogs,
+        private readonly string $env,
+        private readonly string $pathTemplates,
+        private readonly Level $levelLogger,
         private readonly LocaleContext $localeContext,
-    )
-    {
+    ) {
         $this->registerCore();
     }
 
@@ -126,7 +124,18 @@ abstract class AbstractContainer
         /**
          * AppConfig (configuration de l'application)
          */
-        $this->set(AppConfig::class, fn($c) => new AppConfig($this->env, $this->pathTemplates, $c->get(LocaleContext::class)->getLang()));
+        $this->set(AppConfig::class, function ($c) {
+            try {
+                return new AppConfig($this->env, $this->pathTemplates, $c->get(LocaleContext::class)->getLang());
+            } catch (InvalidArgumentException $e) {
+                $logger = $c->get(LoggerFactory::class)->get(__CLASS__);
+                $logger->error(
+                    UtilsLog::prefixLog(__CLASS__, __FUNCTION__, __LINE__)
+                    . "Erreur lors de l'initialisation de AppConfig: " . $e->getMessage()
+                );
+                throw new TechnicalException("Erreur lors de l'initialisation de l'application", 500, $e); // Rethrow pour que l'application puisse gérer cette erreur critique
+            }
+        });
 
         $this->set(Client::class, fn($c) => $c->get(ClientInterface::class));
         $this->set(ClientInterface::class, fn($c) => $this->createGuzzleClient($c->get(LoggerFactory::class)));
@@ -134,28 +143,27 @@ abstract class AbstractContainer
         // Clients
         $this->set(GitLabClient::class, fn($c) => new GitLabClient(
             new Client([
-                'base_uri' => $c->get(AppConfig::class)->getParamConfig()->getGitlabUrl()
+                'base_uri' => $c->get(AppConfig::class)->getParamConfig()->getParamGitLab()->getGitlabUrl()
             ]),
             $c->get(AppConfig::class),
-            $c->get(LoggerFactory::class)));
+            $c->get(LoggerFactory::class)
+        ));
 
         $this->set(PostmanClient::class, fn($c) => new PostmanClient(
             new Client([
-                'base_uri' => $c->get(AppConfig::class)->getParamConfig()->getPostmanApiUrl(),
+                'base_uri' => $c->get(AppConfig::class)->getParamConfig()->getParamPostman()->getPostmanApiUrl(),
                 'headers' => [
-                    'X-Api-Key' => $c->get(AppConfig::class)->getParamConfig()->getPostmanApiKey(),
+                    'X-Api-Key' => $c->get(AppConfig::class)->getParamConfig()->getParamPostman()->getPostmanApiKey(),
                     'Content-Type' => 'application/json'
                 ]
-            ])));
+            ])
+        ));
 
-        // Services
-        $this->set(GitlabService::class, fn($c) => new GitlabService(
-            $c->get(GitLabClient::class),
-            $c->get(MavenParser::class),
-            $c->get(GradleParser::class),
-            new FileService("../data", $c->get(LoggerFactory::class)),
-            $c->get(AppConfig::class),
-            $c->get(LoggerFactory::class)));
+        $this->set(NewRelicClient::class, fn($c) => new NewRelicClient(
+            new Client(),
+            $c->get(AppConfig::class)->getParamConfig()->getParamNewRelic(),
+            $c->get(LoggerFactory::class)
+        ));
     }
 
     /**
@@ -259,12 +267,12 @@ abstract class AbstractContainer
         // Handler stack par défaut
         $stack = HandlerStack::create();
 
-        $maxRetries = 3;
         $logger = $loggerFactory->get(__CLASS__);
 
         // Retry middleware
         $stack->push(Middleware::retry(
-            static function (int $retries, RequestInterface $request, ?ResponseInterface $response = null, ?TransferException $exception = null) use ($maxRetries, $logger): bool {
+            static function (int $retries, RequestInterface $request, ?ResponseInterface $response = null, ?TransferException $exception = null) use ($logger): bool {
+                $maxRetries = 3;
                 // Limite max de retries
                 if ($retries >= $maxRetries) {
                     return false;
@@ -277,30 +285,24 @@ abstract class AbstractContainer
                 ) {
                     $logger->error(
                         UtilsLog::prefixLog(__CLASS__, __FUNCTION__, __LINE__)
-                        . $msgRetry . "Impossible de se connecter à " . $request->getUri()
+                        . $msgRetry . "Impossible de se connecter à " . $request->getUri()->__toString()
                     );
                     return true;
                 }
 
-                if ($response) {
-                    /*$logger->debug(
+                if ($response && in_array($response->getStatusCode(), [249, 408, 429, 500, 502, 503, 504], true)) {
+                    $logger->error(
                         UtilsLog::prefixLog(__CLASS__, __FUNCTION__, __LINE__)
-                        . "Statut " . $response->getStatusCode() . " pour " . $request->getUri()
-                    );*/
-                    if (in_array($response->getStatusCode(), [249, 408, 429, 500, 502, 503, 504], true)) {
-                        $logger->error(
-                            UtilsLog::prefixLog(__CLASS__, __FUNCTION__, __LINE__)
-                            . $msgRetry . "Une erreur est survenue sur le serveur."
-                        );
-                        return true;
-                    }
+                        . $msgRetry . "Une erreur est survenue sur le serveur."
+                    );
+                    return true;
                 }
 
                 return false;
             },
             static function (int $retries) {
                 // Delay exponentiel en ms
-                return (int)pow(2, $retries) * 1000;
+                return (int) pow(2, $retries) * 1000;
             }
         ));
 
