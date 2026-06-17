@@ -5,7 +5,6 @@ namespace App\tests\util;
 
 use App\model\EnumEnvironment;
 use App\model\Project;
-use App\parser\PackageJsonParser;
 use App\tests\fixtures\ProjectFixtures;
 use App\util\MonitoringUtils;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -27,7 +26,7 @@ class MonitoringUtilsTest extends TestCase
                 ProjectFixtures::getMonitoringProject('my-project', false),
                 EnumEnvironment::REC,
                 [],
-                'https://management-my-project.domain.app-rec.xm/actuator/health'
+                'https://management-my-project.sf.app-rec.xm/actuator/health'
             ],
             'Rancher prod, migrated to GKE' => [
                 ProjectFixtures::getMonitoringProject('migrated-project', false),
@@ -39,7 +38,7 @@ class MonitoringUtilsTest extends TestCase
                 ProjectFixtures::getMonitoringProject('my-project', false),
                 EnumEnvironment::PROD,
                 [],
-                'https://management-my-project.domain.app.xm/actuator/health'
+                'https://management-my-project.sf.app.xm/actuator/health'
             ],
             'API project' => [
                 ProjectFixtures::getMonitoringProject('api-my-project', true),
@@ -71,7 +70,7 @@ class MonitoringUtilsTest extends TestCase
                 ProjectFixtures::getMonitoringProject('my-project', false),
                 EnumEnvironment::REC,
                 [],
-                'https://management-my-project.domain.app-rec.xm/actuator/info'
+                'https://management-my-project.sf.app-rec.xm/actuator/info'
             ],
             'Rancher prod, migrated to GKE' => [
                 ProjectFixtures::getMonitoringProject('migrated-project', false),
@@ -83,7 +82,7 @@ class MonitoringUtilsTest extends TestCase
                 ProjectFixtures::getMonitoringProject('my-project', false),
                 EnumEnvironment::PROD,
                 [],
-                'https://management-my-project.domain.app.xm/actuator/info'
+                'https://management-my-project.sf.app.xm/actuator/info'
             ],
             'API project' => [
                 ProjectFixtures::getMonitoringProject('api-my-project', true),

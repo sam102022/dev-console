@@ -5,8 +5,7 @@ bootstrap="tests/bootstrap.php" cacheDirectory=".phpunit.cache" executionOrder="
     colors="true"
     failOnRisky="true"
     failOnWarning="false"
-    failOnDeprecation="false"
-    showUncoveredFiles="true">
+    failOnDeprecation="false">
   <testsuites>
     <testsuite name="Unit Tests">
       <directory suffix="Test.php">tests</directory>

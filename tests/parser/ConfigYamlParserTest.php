@@ -16,7 +16,7 @@ class ConfigYamlParserTest extends TestCase
         ?string $expectedServiceName
     ): void
     {
-        $result = ConfigYamlParser::parseServiceName($yamlContent);
+        $result = ConfigYamlParser::parseServiceNameObject($yamlContent);
 
         $this->assertSame($expectedServiceName, $result);
     }

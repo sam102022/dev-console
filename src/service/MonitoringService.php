@@ -55,10 +55,7 @@ class MonitoringService
         $urlLogs = $urlsLogs[$env->value] ?? '';
 
         $healthCheckResult = $this->callAndCheckHealth($urlHealthCheck);
-        $actuatorInfoResult = null;
-        if ($healthCheckResult['httpCode'] === 200) {
-            $actuatorInfoResult = $this->callAndGetVersion($urlActuatorInfo);
-        }
+        $actuatorInfoResult = $this->callAndGetVersion($urlActuatorInfo);
 
         return [
             'actuatorInfo' => $actuatorInfoResult,

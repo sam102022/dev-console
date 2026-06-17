@@ -30,7 +30,7 @@ class ConfigYamlParser
      * @param string|null $yamlContent Le contenu d'un fichier deploy.yml.
      * @return string|null Le nom du service extrait, ou null s'il n'a pas pu être trouvé.
      */
-    private static function parseServiceNameObject(?string $yamlContent): ?string
+    public static function parseServiceNameObject(?string $yamlContent): ?string
     {
         if (empty($yamlContent)) {
             return null;
