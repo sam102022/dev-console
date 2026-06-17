@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\tests\parser;
 
 use App\parser\ConfigYamlParser;
+use App\util\MonitoringUtils;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -237,5 +238,37 @@ mdm:
 YAML,
             'subscription-3',
         ];
+    }
+
+    public static function parseVariableInValuesFileProvider(): array
+    {
+        return [
+            'valid variable name' => [
+                'yamlContent' => "CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME: \"my-subscription-name\"",
+                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
+                'expectedValue' => 'my-subscription-name'
+            ],
+            'valid variable name without quotes' => [
+                'yamlContent' => "CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME: my-subscription-name",
+                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
+                'expectedValue' => 'my-subscription-name'
+            ],
+            'valid variable name with spaces' => [
+                'yamlContent' => "CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME:   \"my-subscription-name\"  ",
+                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
+                'expectedValue' => 'my-subscription-name'
+            ],
+            'no variable name' => [
+                'yamlContent' => "OTHER_VARIABLE: my-subscription-name",
+                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
+                'expectedValue' => null
+            ]
+        ];
+    }
+
+    #[DataProvider('parseVariableInValuesFileProvider')]
+    final public function testParseVariableInValuesFile(string $yamlContent, string $variableName, ?string $expectedValue): void
+    {
+        $this->assertEquals($expectedValue, ConfigYamlParser::parseVariableInValuesFile($yamlContent, $variableName));
     }
 }

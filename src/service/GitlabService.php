@@ -23,6 +23,7 @@ use App\repository\ProjectRepository;
 use App\util\MonitoringUtils;
 use App\util\UtilsLog;
 use DateMalformedStringException;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use JsonException;
 use Monolog\Logger;
@@ -179,6 +180,9 @@ class GitlabService
      */
     private function buildProject(GitlabProject $gitLabProject): ?Project
     {
+        $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
+            . "Traitement du projet " . $gitLabProject->getName() . "...");
+        
         $pathInfo = $this->extractPathInfo($gitLabProject);
         $deploymentInfo = $this->getDeploymentInfo($gitLabProject);
         $mavenInfo = $this->scanPomXml($gitLabProject);
@@ -263,6 +267,9 @@ class GitlabService
      */
     private function scanPomXml(GitlabProject $gitLabProject): ?array
     {
+        $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
+            . "Récupération du fichier pom.xml du projet " . $gitLabProject->getName() . "...");
+
         $pom = $this->client->getFile($gitLabProject->getId(), 'pom.xml', true, $gitLabProject->getDefaultBranch());
         if (!$pom) {
             return null;
@@ -283,6 +290,9 @@ class GitlabService
 
     private function getDeploymentInfo(GitlabProject $gitLabProject): array
     {
+        $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
+            . "Récupération des infos de déploiement du projet " . $gitLabProject->getName() . "...");
+
         $chartFile = $this->client->getFile($gitLabProject->getId(), 'chart/Chart.yaml', true, $gitLabProject->getDefaultBranch());
         $cloudGCP = (bool)$chartFile;
         $mdmWorkloadVersion = $chartFile ? $this->chartParser->parseChartYaml($chartFile) : null;
@@ -293,7 +303,11 @@ class GitlabService
             // Récupère le nom du service à partir du fichier deploy.yml pour construire l'url kibana
             $deployYamlContent = $this->client->getFile($gitLabProject->getId(), 'deploy/conf/dev/deploy.yml', true, $gitLabProject->getDefaultBranch());
             if ($deployYamlContent) {
-                $deployName = ConfigYamlParser::parseServiceName($deployYamlContent);
+                try {
+                    $deployName = ConfigYamlParser::parseServiceName($deployYamlContent);
+                } catch (Exception $e) {
+                    $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "Erreur lors du parsing du fichier deploy.yml pour le projet " . $gitLabProject->getName() . " : " . $e->getMessage());
+                }
             }
         }
 
@@ -306,6 +320,9 @@ class GitlabService
 
     private function getTechno(GitlabProject $gitLabProject): string
     {
+        $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
+            . "Récupération du language du projet " . $gitLabProject->getName() . "...");
+
         $name = $gitLabProject->getName();
 
         if (str_starts_with($name, 'api')
@@ -334,6 +351,9 @@ class GitlabService
 
     private function getSubscriptionName(GitlabProject $gitLabProject): ?string
     {
+        $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
+            . "Récupération de la souscription du projet " . $gitLabProject->getName() . "...");
+
         $yamlContent = $this->client->getFile(
             $gitLabProject->getId(),
             'src/main/resources/application.yml',
@@ -351,20 +371,25 @@ class GitlabService
         }
 
         if ($yamlContent) {
-            $subscriptionName = ConfigYamlParser::parseSubscriptionName($yamlContent);
+            $subscriptionName = null;
+            try {
+                $subscriptionName = ConfigYamlParser::parseSubscriptionName($yamlContent);
 
-            if ($subscriptionName && preg_match('/^\$\{(.+)}$/', $subscriptionName, $matches)) {
-                $variableName = $matches[1];
-                $valuesDevContent = $this->client->getFile(
-                    $gitLabProject->getId(),
-                    'chart/values-dev.yaml',
-                    true,
-                    $gitLabProject->getDefaultBranch()
-                );
+                if ($subscriptionName && preg_match('/^\$\{(.+)}$/', $subscriptionName, $matches)) {
+                    $variableName = $matches[1];
+                    $valuesDevContent = $this->client->getFile(
+                        $gitLabProject->getId(),
+                        'chart/values-dev.yaml',
+                        true,
+                        $gitLabProject->getDefaultBranch()
+                    );
 
-                if ($valuesDevContent) {
-                    return MonitoringUtils::parseVariableInValuesFile($valuesDevContent, $variableName);
+                    if ($valuesDevContent) {
+                        return ConfigYamlParser::parseVariableInValuesFile($valuesDevContent, $variableName);
+                    }
                 }
+            } catch (Exception $e) {
+                $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . " Erreur lors du parsing du fichier deploy.yml pour le projet " . $gitLabProject->getName() . " : " . $e->getMessage());
             }
             return $subscriptionName;
         }

@@ -14,38 +14,6 @@ use PHPUnit\Framework\TestCase;
 class MonitoringUtilsTest extends TestCase
 {
 
-    public static function parseVariableInValuesFileProvider(): array
-    {
-        return [
-            'valid variable name' => [
-                'yamlContent' => "CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME: \"my-subscription-name\"",
-                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
-                'expectedValue' => 'my-subscription-name'
-            ],
-            'valid variable name without quotes' => [
-                'yamlContent' => "CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME: my-subscription-name",
-                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
-                'expectedValue' => 'my-subscription-name'
-            ],
-            'valid variable name with spaces' => [
-                'yamlContent' => "CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME:   \"my-subscription-name\"  ",
-                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
-                'expectedValue' => 'my-subscription-name'
-            ],
-            'no variable name' => [
-                'yamlContent' => "OTHER_VARIABLE: my-subscription-name",
-                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
-                'expectedValue' => null
-            ]
-        ];
-    }
-
-    #[DataProvider('parseVariableInValuesFileProvider')]
-    final public function testParseVariableInValuesFile(string $yamlContent, string $variableName, ?string $expectedValue): void
-    {
-        $this->assertEquals($expectedValue, MonitoringUtils::parseVariableInValuesFile($yamlContent, $variableName));
-    }
-
     public static function buildUrlActuatorHealthProvider(): array
     {
         return [
