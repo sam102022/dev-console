@@ -1,0 +1,87 @@
+name: PHP Composer
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  DB_DATABASE: iptv_test
+  DB_USER: root
+  DB_PASSWORD: root
+  DB_HOST: 127.0.0.1
+  PHP_VERSION: "8.5"
+
+jobs:
+
+  # ==========================
+  # UNIT TESTS
+  # ==========================
+  unit-tests:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mysqli
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run unit tests
+        run: composer test:unit
+
+  # ==========================
+  # INTEGRATION TESTS
+  # ==========================
+  integration-tests:
+    runs-on: ubuntu-24.04
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: dev_console_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mysqli,pdo_mysql
+          coverage: xdebug
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Wait for MySQL
+        run: |
+          until mysqladmin ping -h"${DB_HOST}" --silent; do
+            sleep 2
+          done
+
+      - name: Init database schema
+        run: |
+          mysql -h ${DB_HOST} -u${DB_USER} -p${DB_PASSWORD} ${DB_DATABASE} \
+            < backup/install.sql
+
+      - name: Run integration tests
+        env:
+          XDEBUG_MODE: coverage
+        run: composer test:integration
