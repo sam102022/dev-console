@@ -41,12 +41,12 @@
         ],
         "test:unit": [
             "Composer\\Config::disableProcessTimeout",
-            "vendor/bin/phpunit -c tests/phpunit.xml --testsuite \"Unit Tests\""
+            "vendor/bin/phpunit -c phpunit.xml --testsuite \"Unit Tests\""
         ],
         "test:integration": [
             "Composer\\Config::disableProcessTimeout",
             "@set-env-test",
-            "vendor/bin/phpunit -c tests/phpunit-it.xml --testsuite \"Integration Tests\""
+            "vendor/bin/phpunit -c phpunit-it.xml --testsuite \"Integration Tests\""
         ],
         "set-env-test": [
             "php -r \"putenv('APP_ENV=test');\""
