@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 env:
-  DB_DATABASE: iptv_test
+  DB_DATABASE: dev_console_test
   DB_USER: root
   DB_PASSWORD: root
   DB_HOST: 127.0.0.1
