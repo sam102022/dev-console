@@ -4,6 +4,7 @@ namespace App\model;
 
 enum EnumDomain: string
 {
+    case COMMON = 'common';
     case PDV = 'pdv';
 
     public function getCode(): string
@@ -14,6 +15,7 @@ enum EnumDomain: string
     public function getName(): string
     {
         return match ($this) {
+            self::COMMON => 'Commun',
             self::PDV => 'Point de Vente',
         };
     }
