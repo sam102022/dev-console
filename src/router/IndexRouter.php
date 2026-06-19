@@ -8,6 +8,7 @@ use App\controller\GitlabController;
 use App\controller\IndexController;
 use App\controller\MonitoringController;
 use App\controller\PostmanController;
+use App\controller\RundeckController;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\service\UtilsService;
@@ -28,13 +29,14 @@ final class IndexRouter
     private array $messages;
 
     public function __construct(
-        private readonly IndexController $indexController,
-        private readonly GitlabController $gitlabController,
+        private readonly IndexController      $indexController,
+        private readonly GitlabController     $gitlabController,
         private readonly MonitoringController $monitoringController,
-        private readonly PostmanController $postmanController,
-        private readonly Environment     $twig,
-        private readonly IndexContext    $indexContext,
-        LoggerFactory                    $loggerFactory,
+        private readonly PostmanController    $postmanController,
+        private readonly RundeckController    $rundeckController,
+        private readonly Environment          $twig,
+        private readonly IndexContext         $indexContext,
+        LoggerFactory                         $loggerFactory,
     )
     {
         $this->logger = $loggerFactory->get(self::class);
@@ -85,11 +87,14 @@ final class IndexRouter
         if (isset($_REQUEST['page'])) {
             $page = $_REQUEST['page'];
             switch ($page) {
-                case 'monitoring':
+                case MonitoringController::ROUTE_MONITORING:
                     $this->monitoringController->index($messages);
                     break;
-                case 'postman':
+                case PostmanController::ROUTE_POSTMAN:
                     $this->postmanController->index($messages);
+                    break;
+                case RundeckController::ROUTE_RUNDECK:
+                    $this->rundeckController->index($messages);
                     break;
                 default:
                     $this->indexController->index($messages);

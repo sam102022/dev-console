@@ -383,6 +383,50 @@ document.addEventListener('DOMContentLoaded', function() {
 
     getVisibleRows = () => displayedRows;
 
+    // --- GESTION DE L'URL ET DES FILTRES ---
+    function updateURLFromFilters() {
+        const params = new URLSearchParams(window.location.search);
+
+        const filters = {
+            domain: filterDomain.value,
+            sf: filterSf.value,
+            name: filterProjectName.value,
+            techno: filterTechno.value,
+            archived: filterArchived.value,
+            gcp: filterGcp.value
+        };
+
+        for (const [key, value] of Object.entries(filters)) {
+            if (value !== 'all' && value !== '') {
+                params.set(key, value);
+            } else {
+                params.delete(key);
+            }
+        }
+
+        const newRelativePathQuery = window.location.pathname + '?' + params.toString();
+        history.replaceState(null, '', newRelativePathQuery);
+    }
+
+    function applyFiltersFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        const filters = {
+            domain: params.get('domain'),
+            sf: params.get('sf'),
+            name: params.get('name'),
+            techno: params.get('techno'),
+            archived: params.get('archived'),
+            gcp: params.get('gcp')
+        };
+
+        if (filters.domain) filterDomain.value = filters.domain;
+        if (filters.sf) filterSf.value = filters.sf;
+        if (filters.name) filterProjectName.value = filters.name;
+        if (filters.techno) filterTechno.value = filters.techno;
+        if (filters.archived) filterArchived.value = filters.archived;
+        if (filters.gcp) filterGcp.value = filters.gcp;
+    }
+
     // --- LOGIQUE DE GESTION DES COLONNES ---
     const columnToggles = document.querySelectorAll('.column-toggle');
     const table = document.getElementById('projects-table');
@@ -536,6 +580,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         currentPage = 1;
         updatePagination();
+        updateURLFromFilters();
 
         // Décoche la case principale si on change les filtres
         checkAll.checked = false;
@@ -621,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
             filterSf.value = 'all';
             filterProjectName.value = '';
             filterTechno.value = 'all';
-            filterArchived.value = 'all';
+            filterArchived.value = 'non';
             filterGcp.value = 'all';
             applyFilters();
         });
@@ -636,6 +681,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // --- INITIALISATION ---
+    applyFiltersFromURL();
     applyFilters();
 });
 

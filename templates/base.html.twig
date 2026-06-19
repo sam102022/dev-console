@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>GitLab Scanner</title>
+    <title>Dev console</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="icon" type="image/png" href="images/favicon.png" id="favicon" data-original-href="images/favicon.png" />
     <style>
@@ -29,13 +29,16 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link {% if current_route is defined and current_route == 'index' %}active{% endif %}" href="?page=index">GitLab Scanner</a>
+                    <a class="nav-link {% if current_route is defined and current_route == constant('App\\controller\\IndexController::ROUTE_INDEX') %}active{% endif %}" href="?page=index">GitLab Scanner</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if current_route is defined and current_route == 'postman' %}active{% endif %}" href="?page=postman">Gestion Postman</a>
+                    <a class="nav-link {% if current_route is defined and current_route == constant('App\\controller\\PostmanController::ROUTE_POSTMAN') %}active{% endif %}" href="?page=postman">Gestion Postman</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {% if current_route is defined and current_route == 'monitoring' %}active{% endif %}" href="?page=monitoring">Monitoring & Logs</a>
+                    <a class="nav-link {% if current_route is defined and current_route == constant('App\\controller\\MonitoringController::ROUTE_MONITORING') %}active{% endif %}" href="?page=monitoring">Monitoring &amp; Logs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {% if current_route is defined and current_route == constant('App\\controller\\RundeckController::ROUTE_RUNDECK') %}active{% endif %}" href="?page={{constant('App\\controller\\RundeckController::ROUTE_RUNDECK')}}">Rundeck</a>
                 </li>
             </ul>
         </div>
@@ -51,6 +54,5 @@
 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script src="https://kit.fontawesome.com/940870b52f.js" crossorigin="anonymous"></script>
-<script src="/public/js/icons.js.php"></script>
 </body>
 </html>
