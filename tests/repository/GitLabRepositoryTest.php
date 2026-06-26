@@ -7,11 +7,12 @@ use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\repository\GitLabRepository;
 use App\service\RepositoryService;
+use App\tests\AbstractTestCase;
 use App\tests\fixtures\GitlabProjectEntityFixtures;
 use Monolog\Logger;
 use ReflectionClass;
 
-class GitLabRepositoryTest extends AbstractRepositoryCase
+class GitLabRepositoryTest extends AbstractTestCase
 {
     private RepositoryService $repositoryServiceMock;
     private GitLabRepository $repository;

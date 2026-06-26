@@ -8,7 +8,7 @@ use PHPUnit\Framework\TestCase;
 
 class LocaleContextTest extends TestCase
 {
-    public function testConstructorSetsDefaultLocaleAndLanguage(): void
+    final public function testConstructorSetsDefaultLocaleAndLanguage(): void
     {
         // GIVEN
         $context = new LocaleContext('fr_FR', 'fr');
@@ -18,7 +18,7 @@ class LocaleContextTest extends TestCase
         TestCase::assertSame('fr', $context->getLang());
     }
 
-    public function testLangCanBeUpdated(): void
+    final public function testLangCanBeUpdated(): void
     {
         // GIVEN
         $context = new LocaleContext('fr_FR', 'fr');
@@ -30,7 +30,7 @@ class LocaleContextTest extends TestCase
         TestCase::assertSame('en', $context->getLang());
     }
 
-    public function testLocaleCanBeUpdated(): void
+    final public function testLocaleCanBeUpdated(): void
     {
         // GIVEN
         $context = new LocaleContext('fr_FR', 'fr');
@@ -42,7 +42,7 @@ class LocaleContextTest extends TestCase
         TestCase::assertSame('en_US', $context->getLocale());
     }
 
-    public function testLocaleAndLangCanBeUpdatedIndependently(): void
+    final public function testLocaleAndLangCanBeUpdatedIndependently(): void
     {
         // GIVEN
         $context = new LocaleContext('fr_FR', 'fr');

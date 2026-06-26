@@ -8,6 +8,7 @@ use App\exception\TechnicalException;
 use App\model\EnumEnvironment;
 use App\service\GitlabService;
 use App\service\MonitoringService;
+use App\tests\AbstractTestCase;
 use App\tests\fixtures\ProjectFixtures;
 use Exception;
 use GuzzleHttp\ClientInterface;
@@ -16,7 +17,7 @@ use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-class MonitoringServiceTest extends AbstractServiceCase
+class MonitoringServiceTest extends AbstractTestCase
 {
     private GitlabService $gitlabService;
     private ClientInterface $client;
@@ -35,6 +36,9 @@ class MonitoringServiceTest extends AbstractServiceCase
         );
     }
 
+    /**
+     * @throws TechnicalException
+     */
     final public function testCheckOneThrowsExceptionWhenEnvIsNull(): void
     {
         $this->expectException(FunctionalException::class);
@@ -42,7 +46,7 @@ class MonitoringServiceTest extends AbstractServiceCase
     }
 
     /**
-     * @throws FunctionalException
+     * @throws FunctionalException|TechnicalException
      */
     final public function testCheckOneReturnsEmptyWhenProjectNotFound(): void
     {

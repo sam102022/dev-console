@@ -4,14 +4,12 @@ declare(strict_types=1);
 namespace App\tests\service;
 
 use App\client\PostmanClient;
-use App\factory\LoggerFactory;
 use App\service\PostmanService;
+use App\tests\AbstractTestCase;
 use InvalidArgumentException;
-use Monolog\Logger;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\TestCase;
 
-class PostmanServiceTest extends AbstractServiceCase
+class PostmanServiceTest extends AbstractTestCase
 {
     private PostmanClient $client;
     private PostmanService $service;

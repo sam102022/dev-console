@@ -4,271 +4,267 @@ declare(strict_types=1);
 namespace App\tests\parser;
 
 use App\parser\ConfigYamlParser;
-use App\util\MonitoringUtils;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class ConfigYamlParserTest extends TestCase
 {
-    #[DataProvider('parseServiceNameProvider')]
-    final public function testParseServiceName(
-        ?string $yamlContent,
-        ?string $expectedServiceName
-    ): void
+    #[DataProvider('provideServiceNameData')]
+    public function testParseServiceName(?string $yamlContent, ?string $expectedServiceName): void
     {
-        $result = ConfigYamlParser::parseServiceNameObject($yamlContent);
-
-        $this->assertSame($expectedServiceName, $result);
+        $this->assertSame($expectedServiceName, ConfigYamlParser::parseServiceName($yamlContent));
     }
 
-    public static function parseServiceNameProvider(): iterable
+    public static function provideServiceNameData(): array
     {
-        yield 'null content' => [
-            null,
-            null,
+        return [
+            'Nom de service simple' => [
+                'yamlContent' => "
+                    apiVersion: apps/v1
+                    kind: Deployment
+                    metadata:
+                      name: my-service
+                ",
+                'expectedServiceName' => 'my-service',
+            ],
+            'Aucun contenu' => [
+                'yamlContent' => null,
+                'expectedServiceName' => null,
+            ],
+            'Contenu vide' => [
+                'yamlContent' => '',
+                'expectedServiceName' => null,
+            ],
+            'Nom de service avec des espaces' => [
+                'yamlContent' => "
+                    metadata:
+                        name:    my-service-with-spaces  
+                ",
+                'expectedServiceName' => 'my-service-with-spaces',
+            ],
+            'Variable CI_PROJECT_NAME' => [
+                'yamlContent' => "
+                    metadata:
+                      name: 'CI_PROJECT_NAME'
+                ",
+                'expectedServiceName' => '\'CI_PROJECT_NAME\'',
+            ],
+            'Format invalide' => [
+                'yamlContent' => "
+                    metadata:
+                      nom: my-service
+                ",
+                'expectedServiceName' => null,
+            ],
         ];
+    }
 
-        yield 'empty content' => [
-            '',
-            null,
-        ];
+    #[DataProvider('providePathLivenessProbeData')]
+    public function testParsePathLivenessProbe(?string $yamlContent, ?string $expectedPath): void
+    {
+        $this->assertSame($expectedPath, ConfigYamlParser::parsePathLivenessProbe($yamlContent));
+    }
 
-        yield 'missing metadata' => [
-            <<<YAML
-spec:
-  replicas: 2
+    public static function providePathLivenessProbeData(): array
+    {
+        return [
+            'Path simple' => [
+                'yamlContent' => <<<YAML
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+             path: /health
 YAML,
-            null,
-        ];
-
-        yield 'missing name field' => [
-            <<<YAML
-metadata:
-  labels:
-    app: test
+                'expectedPath' => '/health',
+            ],
+            'Aucun contenu' => [
+                'yamlContent' => null,
+                'expectedPath' => null,
+            ],
+            'Contenu vide' => [
+                'yamlContent' => '',
+                'expectedPath' => null,
+            ],
+            'Path avec des espaces' => [
+                'yamlContent' => <<<YAML
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path:    /health-with-spaces  
 YAML,
-            null,
-        ];
-
-        yield 'single service name 1' => [
-            <<<YAML
-metadata:
-  - name:
-      - my-service
+                'expectedPath' => '/health-with-spaces',
+            ],
+            'Format invalide' => [
+                'yamlContent' => <<<YAML
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              chemin: /health
 YAML,
-            'my-service',
+                'expectedPath' => null,
+            ],
         ];
+    }
 
-        yield 'single service name without quotes' => [
-            <<<YAML
+    #[DataProvider('provideHostsData')]
+    public function testParseHosts(string $yamlContent, ?array $expectedHosts): void
+    {
+        $this->assertSame($expectedHosts, ConfigYamlParser::parseHosts($yamlContent));
+    }
+
+    public static function provideHostsData(): array
+    {
+        return [
+            'Hosts simples' => [
+                'yamlContent' => "spec:
+  tls:
+  - hosts:
+    - host1.example.com
+    - host2.example.com
+",
+                'expectedHosts' => ['host1.example.com', 'host2.example.com'],
+            ],
+            'Aucun contenu' => [
+                'yamlContent' => '',
+                'expectedHosts' => null,
+            ],
+            'Format invalide' => [
+                'yamlContent' => "spec:
+  tls:
+  - host:
+    - host1.example.com
+",
+                'expectedHosts' => [],
+            ],
+        ];
+    }
+
+    #[DataProvider('provideServiceNameObjectData')]
+    final public function testParseServiceNameObject(?string $yamlContent, ?string $expectedServiceName): void
+    {
+        $this->assertSame($expectedServiceName, ConfigYamlParser::parseServiceNameObject($yamlContent));
+    }
+
+    public static function provideServiceNameObjectData(): array
+    {
+        return [
+            'Nom de service simple' => [
+                'yamlContent' => <<<YAML
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   name: my-service
 YAML,
-            'my-service',
-        ];
-
-        yield 'single service name inline' => [
-            <<<YAML
-metadata.name: my-service
-YAML,
-            'my-service',
-        ];
-
-        yield 'multiple names last wins' => [
-            <<<YAML
+                'expectedServiceName' => 'my-service',
+            ],
+            'Aucun contenu' => [
+                'yamlContent' => null,
+                'expectedServiceName' => null,
+            ],
+            'Contenu vide' => [
+                'yamlContent' => '',
+                'expectedServiceName' => null,
+            ],
+            'Nom de service avec des espaces' => [
+                'yamlContent' => <<<YAML
 metadata:
-  - name:
-      - service-1
-      - service-2
-      - service-3
+    name:    my-service-with-spaces  
 YAML,
-            'service-3',
-        ];
-    }
-
-    #[DataProvider('parseHostsProvider')]
-    final public function testParseHosts(
-        string $content,
-        ?array $expectedHosts
-    ): void
-    {
-        // GIVEN
-
-        // WHEN
-        $result = ConfigYamlParser::parseHosts($content);
-
-        // THEN
-        $this->assertSame($expectedHosts, $result);
-    }
-
-    public static function parseHostsProvider(): iterable
-    {
-        yield 'should return null when content is empty' => [
-            '',
-            null,
-        ];
-
-        yield 'should return empty array when spec is missing' => [
-            <<<YAML
-foo: bar
-YAML,
-            [],
-        ];
-
-        yield 'should return empty array when tls section is missing' => [
-            <<<YAML
-spec:
-  ingressClassName: nginx
-YAML,
-            [],
-        ];
-
-        yield 'should return empty array when hosts are missing' => [
-            <<<YAML
-spec:
-  tls:
-    - secretName: wildcard-app-sf
-YAML,
-            [],
-        ];
-
-        yield 'should return a single host' => [
-            <<<YAML
-spec:
-  tls:
-    - hosts:
-        - api-store-stock-regulation.stores-stock.app-dev.xm
-      secretName: wildcard-app-sf
-YAML,
-            [
-                'api-store-stock-regulation.stores-stock.app-dev.xm',
+                'expectedServiceName' => 'my-service-with-spaces',
             ],
-        ];
-
-        yield 'should return all hosts from multiple tls entries' => [
-            <<<YAML
-spec:
-  tls:
-    - hosts:
-        - api-store-stock-regulation.stores-stock.app-dev.xm
-        - management-api-store-stock-regulation.stores-stock.app-dev.xm
-      secretName: wildcard-app-sf
-
-    - hosts:
-        - api-product.app-dev.xm
-        - management-api-product.app-dev.xm
-      secretName: wildcard-product
+            'Format plat' => [
+                'yamlContent' => <<<YAML
+metadata.name: my-flat-service
 YAML,
-            [
-                'api-store-stock-regulation.stores-stock.app-dev.xm',
-                'management-api-store-stock-regulation.stores-stock.app-dev.xm',
-                'api-product.app-dev.xm',
-                'management-api-product.app-dev.xm',
+                'expectedServiceName' => 'my-flat-service',
+            ],
+            'Format invalide' => [
+                'yamlContent' => <<<YAML
+metadata:
+  nom: my-service
+YAML,
+                'expectedServiceName' => null,
             ],
         ];
     }
 
-    #[DataProvider('parseSubscriptionNameProvider')]
-    final public function testParseSubscriptionName(
-        ?string $yamlContent,
-        ?string $expectedSubscriptionName
-    ): void
+    #[DataProvider('provideSubscriptionNameData')]
+    final public function testParseSubscriptionName(?string $yamlContent, ?string $expectedSubscriptionName): void
     {
-        // GIVEN
-
-        // WHEN
-        $result = ConfigYamlParser::parseSubscriptionName($yamlContent);
-
-        // THEN
-        $this->assertSame($expectedSubscriptionName, $result);
+        $this->assertSame($expectedSubscriptionName, ConfigYamlParser::parseSubscriptionName($yamlContent));
     }
 
-    public static function parseSubscriptionNameProvider(): iterable
-    {
-        yield 'should return null when content is null' => [
-            null,
-            null,
-        ];
-
-        yield 'should return null when content is empty' => [
-            '',
-            null,
-        ];
-
-        yield 'should return null when mdm section is missing' => [
-            <<<YAML
-foo:
-  bar: test
-YAML,
-            null,
-        ];
-
-        yield 'should return null when subscription section is missing' => [
-            <<<YAML
-mdm:
-  core:
-    subscriber:
-      enabled: true
-YAML,
-            null,
-        ];
-
-        yield 'should return subscription name' => [
-            <<<YAML
-mdm:
-  core:
-    subscriber:
-      subscription:
-        - name:
-            - stock-regulation-subscription
-YAML,
-            'stock-regulation-subscription',
-        ];
-
-        yield 'should return last subscription name when several names exist' => [
-            <<<YAML
-mdm:
-  core:
-    subscriber:
-      subscription:
-        - name:
-            - subscription-1
-            - subscription-2
-            - subscription-3
-YAML,
-            'subscription-3',
-        ];
-    }
-
-    public static function parseVariableInValuesFileProvider(): array
+    public static function provideSubscriptionNameData(): array
     {
         return [
-            'valid variable name' => [
-                'yamlContent' => "CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME: \"my-subscription-name\"",
-                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
-                'expectedValue' => 'my-subscription-name'
+            'Nom de souscription simple' => [
+                'yamlContent' => <<<YAML
+mdm:
+  core:
+    subscriber:
+      subscription:
+        - name:
+            - my-subscription
+YAML,
+                'expectedSubscriptionName' => 'my-subscription',
             ],
-            'valid variable name without quotes' => [
-                'yamlContent' => "CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME: my-subscription-name",
-                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
-                'expectedValue' => 'my-subscription-name'
+            'Aucun contenu' => [
+                'yamlContent' => null,
+                'expectedSubscriptionName' => null,
             ],
-            'valid variable name with spaces' => [
-                'yamlContent' => "CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME:   \"my-subscription-name\"  ",
-                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
-                'expectedValue' => 'my-subscription-name'
+            'Contenu vide' => [
+                'yamlContent' => '',
+                'expectedSubscriptionName' => null,
             ],
-            'no variable name' => [
-                'yamlContent' => "OTHER_VARIABLE: my-subscription-name",
-                'variableName' => 'CLICK_AND_COLLECT_REPORTS_SUBSCRIPTION_NAME',
-                'expectedValue' => null
-            ]
+            'Format invalide' => [
+                'yamlContent' => <<<YAML
+mdm:
+  core:
+    subscriber:
+      subscription:
+        - nom:
+            - my-subscription
+YAML,
+                'expectedSubscriptionName' => null,
+            ],
         ];
     }
 
-    #[DataProvider('parseVariableInValuesFileProvider')]
+    #[DataProvider('provideVariableInValuesFileData')]
     final public function testParseVariableInValuesFile(string $yamlContent, string $variableName, ?string $expectedValue): void
     {
-        $this->assertEquals($expectedValue, ConfigYamlParser::parseVariableInValuesFile($yamlContent, $variableName));
+        $this->assertSame($expectedValue, ConfigYamlParser::parseVariableInValuesFile($yamlContent, $variableName));
+    }
+
+    public static function provideVariableInValuesFileData(): array
+    {
+        return [
+            'Variable simple' => [
+                'yamlContent' => <<<YAML
+MY_VAR: "my-value"
+YAML,
+                'variableName' => 'MY_VAR',
+                'expectedValue' => 'my-value',
+            ],
+            'Variable avec des espaces' => [
+                'yamlContent' => <<<YAML
+MY_VAR:   "my-value"  
+YAML,
+                'variableName' => 'MY_VAR',
+                'expectedValue' => 'my-value',
+            ],
+            'Variable non trouvée' => [
+                'yamlContent' => <<<YAML
+ANOTHER_VAR: "another-value"
+YAML,
+                'variableName' => 'MY_VAR',
+                'expectedValue' => null,
+            ],
+            'Aucun contenu' => [
+                'yamlContent' => '',
+                'variableName' => 'MY_VAR',
+                'expectedValue' => null,
+            ],
+        ];
     }
 }

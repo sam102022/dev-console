@@ -4,10 +4,10 @@ declare(strict_types=1);
 namespace App\tests\repository\mapper;
 
 use App\repository\mapper\RundeckProjectMapper;
+use App\tests\AbstractTestCase;
 use App\tests\fixtures\RundeckProjectEntityFixtures;
-use App\tests\service\AbstractServiceCase;
 
-class RundeckProjectMapperTest extends AbstractServiceCase
+class RundeckProjectMapperTest extends AbstractTestCase
 {
 
     final public function testFromArray(): void

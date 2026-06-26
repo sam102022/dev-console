@@ -11,17 +11,19 @@ use App\controller\PostmanController;
 use App\controller\RundeckController;
 use App\exception\TechnicalException;
 use App\router\IndexRouter;
+use App\tests\AbstractTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\MockObject\MockObject;
 
 
-class IndexRouterTest extends AbstractRouterCase
+class IndexRouterTest extends AbstractTestCase
 {
     private IndexController $indexController;
-    private GitlabController $gitlabController;
-    private MonitoringController $monitoringController;
-    private PostmanController $postmanController;
-    private RundeckController $rundeckController;
-    private IndexContext $indexContext;
+    private GitlabController|MockObject $gitlabController;
+    private MonitoringController|MockObject $monitoringController;
+    private PostmanController|MockObject $postmanController;
+    private RundeckController|MockObject $rundeckController;
+    private IndexContext|MockObject $indexContext;
     private IndexRouter $router;
 
     protected function setUp(): void

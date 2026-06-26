@@ -196,7 +196,8 @@ class MonitoringUtils
         }
 
         $uriActuator = '';
-        if (str_starts_with($projectName, 'api')) {
+        // TODO Pas terrible, trouver une autre solution plus propre pour l'api store stock
+        if ($projectName !== 'api-store-stock' && str_starts_with($projectName, 'api')) {
             $uriActuator .= '/v1';
         }
         $uriActuator .= '/actuator/' . $actuatorEndpoint->value;
