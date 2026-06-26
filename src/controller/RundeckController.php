@@ -7,11 +7,10 @@ use App\context\IndexContext;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\model\EnumEnvironment;
-use App\service\GitlabService;
-use App\service\MonitoringService;
+use App\service\RundeckService;
 use App\service\UserPreferencesService;
 use App\util\UtilsLog;
-use App\viewModel\IndexViewModelFactory;
+use App\viewModel\RundeckViewModelFactory;
 use Monolog\Logger;
 use Throwable;
 use Twig\Environment;
@@ -19,9 +18,9 @@ use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
-class MonitoringController
+class RundeckController
 {
-    public const string ROUTE_MONITORING = 'monitoring';
+    public const string ROUTE_RUNDECK = 'rundeck';
 
     /**
      * @var Logger L'instance du logger pour cette classe.
@@ -29,38 +28,36 @@ class MonitoringController
     private readonly Logger $logger;
 
     /**
-     * Constructeur de la classe MonitoringController.
+     * Constructeur de la classe RundeckController.
      *
-     * @param IndexViewModelFactory $viewModelFactory Usine pour créer le modèle de vue de public.
-     * @param GitlabService $gitlabService Service gitlab.
-     * @param MonitoringService $monitoringService Service monitoring.
+     * @param RundeckViewModelFactory $viewModelFactory Usine pour créer le modèle de vue de public.
+     * @param RundeckService $rundeckService Service rundeck.
      * @param UserPreferencesService $userPreferencesService Service de préférences utilisateur.
      * @param IndexContext $context Le contexte de la session public.
      * @param Environment $twig L'environnement Twig pour le rendu des templates.
      * @param LoggerFactory $loggerFactory Usine pour créer le logger.
      */
     public function __construct(
-        private readonly IndexViewModelFactory  $viewModelFactory,
-        private readonly GitlabService          $gitlabService,
-        private readonly MonitoringService      $monitoringService,
-        private readonly UserPreferencesService $userPreferencesService,
-        private readonly IndexContext           $context,
-        private readonly Environment            $twig,
-        LoggerFactory                           $loggerFactory,
+        private readonly RundeckViewModelFactory $viewModelFactory,
+        private readonly RundeckService          $rundeckService,
+        private readonly UserPreferencesService  $userPreferencesService,
+        private readonly IndexContext            $context,
+        private readonly Environment             $twig,
+        LoggerFactory                            $loggerFactory,
     )
     {
         $this->logger = $loggerFactory->get(self::class);
     }
 
     /**
-     * Affiche la page pour gérer les collections postman.
+     * Affiche la page pour gérer les collections rundeck.
      *
      * @param array $messages Un tableau de messages à afficher à l'utilisateur (notifications, erreurs, etc.).
      * @throws TechnicalException
      */
     public function index(array $messages): void
     {
-        $response = $this->gitlabService->scan();
+        $response = $this->rundeckService->findAll();
         $this->viewModelFactory->setResults($response);
 
         $this->render($messages);
@@ -70,11 +67,11 @@ class MonitoringController
     {
         try {
             $viewModel = $this->viewModelFactory->build($this->context, $messages);
-            $viewModel['current_route'] = self::ROUTE_MONITORING;
-            $viewModel['columns_prefs'] = $this->userPreferencesService->get('monitoring_columns', []);
+            $viewModel['current_route'] = self::ROUTE_RUNDECK;
+            $viewModel['columns_prefs'] = $this->userPreferencesService->get('rundeck_columns', []);
 
             echo $this->twig->render(
-                'monitoring.html.twig',
+                'rundeck.html.twig',
                 $viewModel
             );
         } catch (LoaderError|RuntimeError|SyntaxError|TechnicalException $e) {
@@ -95,16 +92,9 @@ class MonitoringController
         try {
             http_response_code(200);
             switch ($action) {
-                case ACTION_MONITORING_GET_DATA:
-                    $data = $this->monitoringService->getMonitoringData($project, $env);
-                    $response = [
-                        'success' => true,
-                        ...$data,
-                    ];
-                    break;
                 case ACTION_SAVE_COLUMNS_PREFS:
                     $columns = $input['columns'] ?? [];
-                    $this->userPreferencesService->set('monitoring_columns', $columns);
+                    $this->userPreferencesService->set('rundeck_columns', $columns);
                     $response = ['success' => true];
                     break;
 

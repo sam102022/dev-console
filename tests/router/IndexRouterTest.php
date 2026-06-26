@@ -8,18 +8,22 @@ use App\controller\GitlabController;
 use App\controller\IndexController;
 use App\controller\MonitoringController;
 use App\controller\PostmanController;
+use App\controller\RundeckController;
 use App\exception\TechnicalException;
 use App\router\IndexRouter;
+use App\tests\AbstractTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\MockObject\MockObject;
 
 
-class IndexRouterTest extends AbstractRouterCase
+class IndexRouterTest extends AbstractTestCase
 {
     private IndexController $indexController;
-    private GitlabController $gitlabController;
-    private MonitoringController $monitoringController;
-    private PostmanController $postmanController;
-    private IndexContext $indexContext;
+    private GitlabController|MockObject $gitlabController;
+    private MonitoringController|MockObject $monitoringController;
+    private PostmanController|MockObject $postmanController;
+    private RundeckController|MockObject $rundeckController;
+    private IndexContext|MockObject $indexContext;
     private IndexRouter $router;
 
     protected function setUp(): void
@@ -29,6 +33,7 @@ class IndexRouterTest extends AbstractRouterCase
         $this->gitlabController = $this->createMock(GitlabController::class);
         $this->monitoringController = $this->createMock(MonitoringController::class);
         $this->postmanController = $this->createMock(PostmanController::class);
+        $this->rundeckController = $this->createMock(RundeckController::class);
         $this->indexContext = $this->createMock(IndexContext::class);
         $this->indexContext->method('initMessages')->willReturn([]);
 
@@ -37,6 +42,7 @@ class IndexRouterTest extends AbstractRouterCase
             $this->gitlabController,
             $this->monitoringController,
             $this->postmanController,
+            $this->rundeckController,
             $this->twigMocked,
             $this->indexContext,
             self::$loggerFactory

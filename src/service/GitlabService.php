@@ -298,6 +298,7 @@ class GitlabService
         $mdmWorkloadVersion = $chartFile ? $this->chartParser->parseChartYaml($chartFile) : null;
 
         $deployName = null;
+        $pathlivenessProbe = null;
         if (!$cloudGCP) {
             // Ex : id = 648
             // Récupère le nom du service à partir du fichier deploy.yml pour construire l'url kibana
@@ -305,6 +306,7 @@ class GitlabService
             if ($deployYamlContent) {
                 try {
                     $deployName = ConfigYamlParser::parseServiceName($deployYamlContent);
+                    $pathlivenessProbe = ConfigYamlParser::parsePathLivenessProbe($deployYamlContent);
                 } catch (Exception $e) {
                     $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "Erreur lors du parsing du fichier deploy.yml pour le projet " . $gitLabProject->getName() . " : " . $e->getMessage());
                 }
@@ -314,6 +316,7 @@ class GitlabService
         return [
             'cloudGCP' => $cloudGCP,
             'deployName' => $deployName,
+            'pathlivenessProbe' => $pathlivenessProbe,
             'mdmWorkloadVersion' => $mdmWorkloadVersion,
         ];
     }

@@ -7,12 +7,13 @@ use App\controller\GitlabController;
 use App\model\EnumEnvironment;
 use App\service\GitlabService;
 use App\service\NewRelicService;
+use App\tests\AbstractTestCase;
 use App\tests\fixtures\NewRelicFixtures;
 use App\tests\fixtures\ProjectFixtures;
 use Exception;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-class GitlabControllerTest extends AbstractControllerCase
+class GitlabControllerTest extends AbstractTestCase
 {
     private GitlabService $gitlabService;
     private NewRelicService $newRelicService;

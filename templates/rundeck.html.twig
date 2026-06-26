@@ -1,0 +1,478 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<style>
+.sortable-header {
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+.sortable-header:hover {
+    text-decoration: underline;
+}
+.sort-icon {
+    font-size: 0.8em;
+    margin-left: 5px;
+    opacity: 0.5;
+}
+.url-link {
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+.url-link:hover {
+    opacity: 1;
+}
+</style>
+<div class="card shadow rounded mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">⚙️ Rundeck</h5>
+        <div>
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm" type="button" id="columns-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fa-solid fa-table-columns"></i> Colonnes
+                </button>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="columns-dropdown" id="columns-menu">
+                    <h6 class="dropdown-header">Afficher/Masquer les colonnes</h6>
+                    <div class="px-3 py-2">
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-domain" data-column="domain" checked>
+                            <label class="form-check-label" for="toggle-col-domain">Domaine</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-sf" data-column="sf" checked>
+                            <label class="form-check-label" for="toggle-col-sf">SF</label>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-dev" data-column="dev" checked>
+                            <label class="form-check-label" for="toggle-col-dev">DEV</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-rec" data-column="rec" checked>
+                            <label class="form-check-label" for="toggle-col-rec">REC</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-pp" data-column="pp" checked>
+                            <label class="form-check-label" for="toggle-col-pp">PP</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-prod" data-column="prod" checked>
+                            <label class="form-check-label" for="toggle-col-prod">PROD</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 text-nowrap" id="projects-table">
+                <thead class="thead-dark">
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th data-column="domain"><a class="sortable-header" data-sort="domain">Domaine <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                        <th data-column="sf"><a class="sortable-header" data-sort="sf">SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                        <th><a class="sortable-header" data-sort="name">Nom <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                        <th class="text-center" style="width: 120px;" data-column="dev">
+                            <div class="d-flex justify-content-center align-items-center">
+                                <span>DEV</span>
+                                <span class="ml-2" style="cursor: pointer;" data-toggle="collapse" data-target="#legend-row" aria-expanded="false" aria-controls="legend-row">
+                                    <i class="fa-solid fa-circle-info text-muted" data-toggle="tooltip" data-placement="top" title="Afficher/Masquer la légende"></i>
+                                </span>
+                            </div>
+                        </th>
+                        <th class="text-center" style="width: 120px;" data-column="rec">REC</th>
+                        <th class="text-center" style="width: 120px;" data-column="pp">PP</th>
+                        <th class="text-center" style="width: 120px;" data-column="prod">PROD</th>
+                        <th class="text-center" style="width: 80px;">Actions</th>
+                    </tr>
+                    <tr>
+                        <td colspan="10" class="p-0" style="border: none;">
+                            <div class="collapse" id="legend-row">
+                                <div class="card card-body bg-light border-0">
+                                    <small class="text-muted">
+                                        <i class="fa-brands fa-gitlab text-warning"></i> Projet Gitlab |
+                                        <i class="fa-solid fa-code-branch text-danger"></i> Rundeck |
+                                    </small>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th data-column="domain">
+                            <div class="input-group input-group-sm">
+                                <select id="filter_domain" class="form-control custom-select filter-input">
+                                    <option value="all">Tous</option>
+                                    {% for key, value in domains %}
+                                        <option value="{{ key }}">{{ value }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_domain').value='all'; document.getElementById('filter_domain').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                        </th>
+                        <th data-column="sf">
+                            <div class="input-group input-group-sm">
+                                <select id="filter_sf" class="form-control custom-select filter-input">
+                                    <option value="all">Tous</option>
+                                    {% for key, value in sfs %}
+                                        <option value="{{ key }}">{{ value }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_sf').value='all'; document.getElementById('filter_sf').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="filter_project_name" class="form-control filter-input" placeholder="Filtrer par nom..." aria-label="Filtrer par nom">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_project_name').value=''; document.getElementById('filter_project_name').dispatchEvent(new Event('input'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                        </th>
+                        <th data-column="dev">
+                        </th>
+                        <th data-column="rec">
+                        </th>
+                        <th data-column="pp">
+                        </th>
+                        <th data-column="prod">
+                        </th>
+                        <th>
+                            <button class="btn btn-outline-light btn-sm mr-2" type="button" id="btn-reset-filters" title="Réinitialiser les filtres"><i class="fa-solid fa-rotate-left"></i></button>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="projects-tbody">
+                    {% for r in results %}
+                        {% set isEligibleForLogs = r.techno is defined and r.techno != '' and r.techno != 'php' %}
+                        <tr class="project-row" data-project-name="{{ r.name }}">
+                            <td class="col-index text-muted font-weight-bold"></td>
+                            <td class="col-domain" data-column="domain" data-value="{{ r.domain }}">{{ r.domain }}</td>
+                            <td class="col-sf" data-column="sf" data-value="{{ r.sf }}">{{ r.sf }}</td>
+                            <td class="col-name">
+                                {% set projectName = r.name|length > 35
+                                    ? r.name|slice(0, 35) ~ '...'
+                                    : r.name
+                                %}
+                                {% if r.webUrl is defined and r.webUrl != '' %}
+                                    <a href="{{ r.webUrl }}"
+                                       class="url-link text-decoration-none"
+                                       target="_blank"
+                                       title="Voir le projet Gitlab{% if r.archived %} archivé{% endif %} {{ r.name }}">
+                                        <i class="fa-brands fa-gitlab text-warning"></i> {{ projectName }}
+                                    </a>
+                                {% else %}
+                                    {{ projectName }}
+                                {% endif %}
+                            </td>
+
+                            {% for env in ['dev', 'rec', 'pp', 'prod'] %}
+                            <td class="col-{{ env }} text-left" data-column="{{ env }}" data-env="{{ env }}">
+                                {% if r.urlsRundeck[env] is defined and r.urlsRundeck[env] != '' %}
+                                <a href="{{ r.urlsRundeck[env] }}" class="url-link ml-2" target="_blank" title="Voir le Rundeck de {{ env }}">
+                                    <i class="fa-solid fa-code-branch text-danger"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+
+                            <td class="text-center">
+
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <div>
+            <select id="rows_per_page" class="form-control form-control-sm d-inline-block w-auto">
+                <option value="10">10 par page</option>
+                <option value="15" selected>15 par page</option>
+                <option value="25">25 par page</option>
+                <option value="50">50 par page</option>
+                <option value="1000">Tout afficher</option>
+            </select>
+            <span id="pagination-info" class="ml-2 text-muted small"></span>
+        </div>
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm mb-0" id="pagination-container">
+                <!-- Les boutons de pagination seront générés ici par JS -->
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialisation des tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+
+    // Éléments DOM (Filtres)
+    const filterDomain = document.getElementById('filter_domain');
+    const filterSf = document.getElementById('filter_sf');
+    const filterProjectName = document.getElementById('filter_project_name');
+    const btnResetFilters = document.getElementById('btn-reset-filters');
+    const tbody = document.getElementById('projects-tbody');
+    let rows = Array.from(document.querySelectorAll('.project-row'));
+
+    // Éléments DOM (Pagination)
+    const rowsPerPageSelect = document.getElementById('rows_per_page');
+    const paginationContainer = document.getElementById('pagination-container');
+    const paginationInfo = document.getElementById('pagination-info');
+
+    // État de la pagination et du tri
+    let currentPage = 1;
+    let rowsPerPage = parseInt(rowsPerPageSelect.value);
+    let filteredRows = [];
+    let displayedRows = [];
+    let currentSortColumn = '';
+    let currentSortDirection = 'asc';
+
+    // --- GESTION DE L'URL ET DES FILTRES ---
+    function updateURLFromFilters() {
+        const params = new URLSearchParams(window.location.search);
+
+        if (filterDomain.value !== 'all') {
+            params.set('domain', filterDomain.value);
+        } else {
+            params.delete('domain');
+        }
+
+        if (filterSf.value !== 'all') {
+            params.set('sf', filterSf.value);
+        } else {
+            params.delete('sf');
+        }
+
+        if (filterProjectName.value !== '') {
+            params.set('name', filterProjectName.value);
+        } else {
+            params.delete('name');
+        }
+
+        const newRelativePathQuery = window.location.pathname + '?' + params.toString();
+        history.replaceState(null, '', newRelativePathQuery);
+    }
+
+    function applyFiltersFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        const domain = params.get('domain');
+        const sf = params.get('sf');
+        const name = params.get('name');
+
+        if (domain) filterDomain.value = domain;
+        if (sf) filterSf.value = sf;
+        if (name) filterProjectName.value = name;
+    }
+
+    // --- LOGIQUE DE GESTION DES COLONNES ---
+    const columnToggles = document.querySelectorAll('.column-toggle');
+    const table = document.getElementById('projects-table');
+    const columnsPrefs = {{ columns_prefs|json_encode|raw }};
+
+    function setColumnVisibility(column, visible) {
+        const cells = table.querySelectorAll(`[data-column="${column}"]`);
+        cells.forEach(cell => {
+            cell.style.display = visible ? '' : 'none';
+        });
+    }
+
+    async function saveColumnPrefs() {
+        const prefs = {};
+        columnToggles.forEach(toggle => {
+            prefs[toggle.dataset.column] = toggle.checked;
+        });
+
+        try {
+            await fetch('?action=saveColumnsPrefs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ columns: prefs })
+            });
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde des préférences de colonnes:', error);
+        }
+    }
+
+    columnToggles.forEach(toggle => {
+        const column = toggle.dataset.column;
+        if (columnsPrefs[column] !== undefined) {
+            toggle.checked = columnsPrefs[column];
+        }
+        setColumnVisibility(column, toggle.checked);
+
+        toggle.addEventListener('change', function() {
+            setColumnVisibility(column, this.checked);
+            saveColumnPrefs();
+        });
+    });
+
+    document.getElementById('columns-menu').addEventListener('click', function (e) {
+        e.stopPropagation();
+    });
+
+    // --- LOGIQUE DE TRI ---
+    const sortHeaders = document.querySelectorAll('.sortable-header');
+    sortHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+            const column = this.getAttribute('data-sort');
+            if (currentSortColumn === column) {
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSortColumn = column;
+                currentSortDirection = 'asc';
+            }
+
+            sortHeaders.forEach(h => {
+                const icon = h.querySelector('.sort-icon');
+                icon.className = 'fa-solid fa-sort sort-icon';
+                icon.style.opacity = '0.5';
+            });
+            const currentIcon = this.querySelector('.sort-icon');
+            currentIcon.className = currentSortDirection === 'asc' ? 'fa-solid fa-sort-up sort-icon' : 'fa-solid fa-sort-down sort-icon';
+            currentIcon.style.opacity = '1';
+
+            rows.sort((a, b) => {
+                let valA = getColumnValue(a, column);
+                let valB = getColumnValue(b, column);
+                const numA = parseFloat(valA);
+                const numB = parseFloat(valB);
+                if (!isNaN(numA) && !isNaN(numB) && isFinite(valA) && isFinite(valB)) {
+                    valA = numA;
+                    valB = numB;
+                } else {
+                    valA = valA.toString().toLowerCase();
+                    valB = valB.toString().toLowerCase();
+                }
+                if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
+                if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+            applyFilters();
+        });
+    });
+
+    function getColumnValue(row, column) {
+        switch(column) {
+            case 'domain': return row.querySelector('.col-domain').getAttribute('data-value');
+            case 'sf': return row.querySelector('.col-sf').getAttribute('data-value');
+            case 'name': return row.querySelector('.col-name').textContent.trim();
+            default: return '';
+        }
+    }
+
+    // --- FILTRAGE ET PAGINATION ---
+    function applyFilters() {
+        const valDomain = filterDomain.value.toLowerCase();
+        const valSf = filterSf.value.toLowerCase();
+        const valName = filterProjectName.value.toLowerCase();
+
+        filteredRows = rows.filter(row => {
+            const domain = row.querySelector('.col-domain').getAttribute('data-value').toLowerCase();
+            const sf = row.querySelector('.col-sf').getAttribute('data-value').toLowerCase();
+            const name = row.querySelector('.col-name').textContent.toLowerCase();
+            const matchDomain = (valDomain === 'all' || domain === valDomain);
+            const matchSf = (valSf === 'all' || sf === valSf);
+            const matchName = (valName === '' || name.includes(valName));
+            return matchDomain && matchSf && matchName;
+        });
+
+        filteredRows.forEach((row, index) => {
+            row.querySelector('.col-index').textContent = index + 1;
+        });
+
+        currentPage = 1;
+        updatePagination();
+        updateURLFromFilters();
+    }
+
+    function updatePagination() {
+        const totalRows = filteredRows.length;
+        const totalPages = Math.ceil(totalRows / rowsPerPage);
+
+        if (currentPage < 1) currentPage = 1;
+        if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+
+        rows.forEach(row => row.style.display = 'none');
+        displayedRows = filteredRows.slice(startIndex, endIndex);
+        displayedRows.forEach(row => row.style.display = '');
+
+        const endDisplayIndex = Math.min(endIndex, totalRows);
+        const startDisplayIndex = totalRows === 0 ? 0 : startIndex + 1;
+        paginationInfo.textContent = `Affichage de ${startDisplayIndex} à ${endDisplayIndex} sur ${totalRows}`;
+
+        paginationContainer.innerHTML = '';
+        if (totalPages <= 1) return;
+
+        paginationContainer.insertAdjacentHTML('beforeend', `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${currentPage - 1}">&laquo;</a></li>`);
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                paginationContainer.insertAdjacentHTML('beforeend', `<li class="page-item ${currentPage === i ? 'active' : ''}"><a class="page-link" href="#" data-page="${i}">${i}</a></li>`);
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
+                paginationContainer.insertAdjacentHTML('beforeend', `<li class="page-item disabled"><a class="page-link" href="#">...</a></li>`);
+            }
+        }
+        paginationContainer.insertAdjacentHTML('beforeend', `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${currentPage + 1}">&raquo;</a></li>`);
+    }
+
+    // --- ÉCOUTEURS D'ÉVÉNEMENTS ---
+    paginationContainer.addEventListener('click', function(e) {
+        if (e.target.tagName === 'A') {
+            e.preventDefault();
+            const page = parseInt(e.target.getAttribute('data-page'));
+            if (!isNaN(page)) {
+                currentPage = page;
+                updatePagination();
+            }
+        }
+    });
+
+    rowsPerPageSelect.addEventListener('change', function() {
+        rowsPerPage = parseInt(this.value);
+        currentPage = 1;
+        updatePagination();
+    });
+
+    document.querySelectorAll('.filter-input').forEach(input => {
+        const eventType = input.tagName === 'SELECT' ? 'change' : 'input';
+        input.addEventListener(eventType, applyFilters);
+    });
+
+    if (btnResetFilters) {
+        btnResetFilters.addEventListener('click', function() {
+            const params = new URLSearchParams(window.location.search);
+            filterDomain.value = 'all';
+            filterSf.value = 'all';
+            filterProjectName.value = '';
+
+            params.delete('domain');
+            params.delete('sf');
+            params.delete('name');
+
+            const newRelativePathQuery = window.location.pathname + '?' + params.toString();
+            history.replaceState(null, '', newRelativePathQuery);
+
+            applyFilters();
+        });
+    }
+
+    // --- INITIALISATION ---
+    applyFiltersFromURL();
+    applyFilters();
+});
+</script>
+{% endblock body %}

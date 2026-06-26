@@ -41,6 +41,7 @@ class IndexContext
     {
         return [
             MESSAGES_SCAN_RESULTS => [],
+            MESSAGES_RUNDECK_RESULTS => [],
             MESSAGES_POSTMAN => []
         ];
     }

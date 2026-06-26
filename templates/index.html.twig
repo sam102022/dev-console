@@ -22,11 +22,7 @@
 {% endif %}
 <div class="card shadow rounded">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">GitLab Scanner</h5>
-        <div>
-            <a href="?action=purge_cache" class="btn btn-danger btn-sm mr-2" onclick="return confirm('Êtes-vous sûr de vouloir supprimer le cache local ? Un scan complet (plus lent) sera effectué.')">Vider le cache local</a>
-            <a href="?page=index&amp;pathGroup=core%2Fdev%2Fpdv" class="btn btn-primary btn-sm">Scanner</a>
-        </div>
+        <h5 class="mb-0">Projets GitLab</h5>
     </div>
 
     <div class="card-body p-0">
@@ -46,55 +42,95 @@
                 <tr>
                     <th></th>
                     <th>
-                        <select id="filter_domain" class="form-control filter-input">
-                            <option value="all">Tous</option>
-{% for key, value in domains %}
-                            <option value="{{ key }}">{{ value }}</option>
-{% endfor %}
-                        </select>
+                        <div class="input-group input-group-sm">
+                            <select id="filter_domain" class="form-control filter-input">
+                                <option value="all">Tous</option>
+                                {% for key, value in domains %}
+                                    <option value="{{ key }}">{{ value }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_domain').value='all'; document.getElementById('filter_domain').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
                     </th>
                     <th>
-                        <select id="filter_sf" class="form-control filter-input">
-                            <option value="all">Tous</option>
-{% for key, value in sfs %}
-                            <option value="{{ key }}">{{ value }}</option>
-{% endfor %}
-                        </select>
+                        <div class="input-group input-group-sm">
+                            <select id="filter_sf" class="form-control filter-input">
+                                <option value="all">Tous</option>
+                                {% for key, value in sfs %}
+                                    <option value="{{ key }}">{{ value }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_sf').value='all'; document.getElementById('filter_sf').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
                     </th>
                     <th>
-                        <input id="filter_project_name" class="form-control filter-input" value="" placeholder="Filtrer..." />
+                        <div class="input-group input-group-sm">
+                            <input id="filter_project_name" class="form-control filter-input" value="" placeholder="Filtrer..." />
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_project_name').value=''; document.getElementById('filter_project_name').dispatchEvent(new Event('input'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
                     </th>
                     <th>
-                        <select id="filter_gcp" class="form-control filter-input">
-                            <option value="all">Tous</option>
-                            <option value="non">Non</option>
-                            <option value="oui">Oui</option>
-                        </select>
+                        <div class="input-group input-group-sm">
+                            <select id="filter_gcp" class="form-control filter-input">
+                                <option value="all">Tous</option>
+                                <option value="non">Non</option>
+                                <option value="oui">Oui</option>
+                            </select>
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_gcp').value='all'; document.getElementById('filter_gcp').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
                     </th>
                     <th>
-                        <input id="filter_springboot_version" class="form-control filter-input" value="" placeholder="Filtrer..." />
+                        <div class="input-group input-group-sm">
+                            <input id="filter_springboot_version" class="form-control filter-input" value="" placeholder="Filtrer..." />
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_springboot_version').value=''; document.getElementById('filter_springboot_version').dispatchEvent(new Event('input'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
                     </th>
                     <th>
-                        <select id="filter_java_version" class="form-control filter-input">
-                            <option value="all">Tous</option>
-                            <option value="n/a">N/A</option>
-                            <option value="1.8">1.8</option>
-                            <option value="11">11</option>
-                            <option value="17">17</option>
-                            <option value="21">21</option>
-                            <option value="25">25</option>
-                        </select>
+                        <div class="input-group input-group-sm">
+                            <select id="filter_java_version" class="form-control filter-input">
+                                <option value="all">Tous</option>
+                                <option value="n/a">N/A</option>
+                                <option value="1.8">1.8</option>
+                                <option value="11">11</option>
+                                <option value="17">17</option>
+                                <option value="21">21</option>
+                                <option value="25">25</option>
+                            </select>
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_java_version').value='all'; document.getElementById('filter_java_version').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
                     </th>
                     <th>
-                        <input id="filter_mdm_version" class="form-control filter-input" value="" placeholder="Filtrer..." />
+                        <div class="input-group input-group-sm">
+                            <input id="filter_mdm_version" class="form-control filter-input" value="" placeholder="Filtrer..." />
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_mdm_version').value=''; document.getElementById('filter_mdm_version').dispatchEvent(new Event('input'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
                     </th>
                     <th>
-                        <select id="filter_status" class="form-control filter-input">
-                            <option value="all">Tous</option>
-                            <option value="OK">OK</option>
-                            <option value="Java obsolète">Java obsolète</option>
-                            <option value="Spring Boot ancien">Spring Boot ancien</option>
-                        </select>
+                        <div class="input-group input-group-sm">
+                            <select id="filter_status" class="form-control filter-input">
+                                <option value="all">Tous</option>
+                                <option value="OK">OK</option>
+                                <option value="Java obsolète">Java obsolète</option>
+                                <option value="Spring Boot ancien">Spring Boot ancien</option>
+                            </select>
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_status').value='all'; document.getElementById('filter_status').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        </div>
                     </th>
                 </tr>
             </thead>
@@ -204,6 +240,56 @@ document.addEventListener('DOMContentLoaded', function() {
     let filteredRows = [];
     let currentSortColumn = '';
     let currentSortDirection = 'asc'; // 'asc' ou 'desc'
+
+    // --- GESTION DE L'URL ET DES FILTRES ---
+    function updateURLFromFilters() {
+        const params = new URLSearchParams(window.location.search);
+
+        const filters = {
+            domain: filterDomain.value,
+            sf: filterSf.value,
+            name: filterProjectName.value,
+            gcp: filterGcp.value,
+            sb_version: filterSbVersion.value,
+            java_version: filterJavaVersion.value,
+            mdm_version: filterMdmVersion.value,
+            status: filterStatus.value
+        };
+
+        for (const [key, value] of Object.entries(filters)) {
+            if (value !== 'all' && value !== '') {
+                params.set(key, value);
+            } else {
+                params.delete(key);
+            }
+        }
+
+        const newRelativePathQuery = window.location.pathname + '?' + params.toString();
+        history.replaceState(null, '', newRelativePathQuery);
+    }
+
+    function applyFiltersFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        const filters = {
+            domain: params.get('domain'),
+            sf: params.get('sf'),
+            name: params.get('name'),
+            gcp: params.get('gcp'),
+            sb_version: params.get('sb_version'),
+            java_version: params.get('java_version'),
+            mdm_version: params.get('mdm_version'),
+            status: params.get('status')
+        };
+
+        if (filters.domain) filterDomain.value = filters.domain;
+        if (filters.sf) filterSf.value = filters.sf;
+        if (filters.name) filterProjectName.value = filters.name;
+        if (filters.gcp) filterGcp.value = filters.gcp;
+        if (filters.sb_version) filterSbVersion.value = filters.sb_version;
+        if (filters.java_version) filterJavaVersion.value = filters.java_version;
+        if (filters.mdm_version) filterMdmVersion.value = filters.mdm_version;
+        if (filters.status) filterStatus.value = filters.status;
+    }
 
     // --- LOGIQUE DE TRI ---
     const sortHeaders = document.querySelectorAll('.sortable-header');
@@ -323,6 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Après un filtrage, on retourne toujours à la page 1
         currentPage = 1;
         updatePagination();
+        updateURLFromFilters();
     }
 
     // --- LOGIQUE DE PAGINATION ---
@@ -415,6 +502,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Initialisation au chargement de la page
+    applyFiltersFromURL();
     applyFilters();
 });
 </script>

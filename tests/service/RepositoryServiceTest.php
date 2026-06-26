@@ -1,21 +1,22 @@
 <?php
 declare(strict_types=1);
 
+namespace App\tests\service;
 
 use App\exception\TechnicalException;
 use App\service\RepositoryService;
-use App\tests\service\AbstractServiceCase;
+use App\tests\AbstractTestCase;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
 
 
-class RepositoryServiceTest extends AbstractServiceCase
+final class RepositoryServiceTest extends AbstractTestCase
 {
     private vfsStreamDirectory $root;
 
     final protected function setUp(): void
     {
-        AbstractServiceCase::setUp();
+        AbstractTestCase::setUp();
         $this->root = vfsStream::setup();
     }
 

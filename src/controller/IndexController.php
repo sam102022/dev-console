@@ -24,6 +24,8 @@ use Twig\Error\SyntaxError;
  */
 class IndexController
 {
+    public const string ROUTE_INDEX = 'index';
+
     /**
      * @var Logger L'instance du logger pour cette classe.
      */
@@ -88,7 +90,7 @@ class IndexController
     {
         try {
             $viewModel = $this->viewModelFactory->build($this->context, $messages);
-            $viewModel['current_route'] = 'index';
+            $viewModel['current_route'] = self::ROUTE_INDEX;
             echo $this->twig->render(
                 'index.html.twig',
                 $viewModel

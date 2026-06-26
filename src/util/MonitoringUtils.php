@@ -196,7 +196,8 @@ class MonitoringUtils
         }
 
         $uriActuator = '';
-        if (str_starts_with($projectName, 'api')) {
+        // TODO Pas terrible, trouver une autre solution plus propre pour l'api store stock
+        if ($projectName !== 'api-store-stock' && str_starts_with($projectName, 'api')) {
             $uriActuator .= '/v1';
         }
         $uriActuator .= '/actuator/' . $actuatorEndpoint->value;
@@ -387,16 +388,35 @@ class MonitoringUtils
      *
      * @param Project $project L'objet projet PHP.
      * @param EnumEnvironment $env L'environnement ciblé.
+     * @param RundeckProject|null $rundeckProject L'objet rundeck projet.
      * @return string L'URL du rundeck.
      */
     public static function buildRundeckUrl(Project $project, EnumEnvironment $env, ?RundeckProject $rundeckProject): string
     {
         if ($rundeckProject !== null) {
-            $pattern = 'https://rundeck-%s.siege.xm/project/%s/job/show/%s';
-            return sprintf($pattern, $env->value, $project->getSf(), $rundeckProject->getToken());
+            return self::buildRundeckUrlFromRundeckProject($rundeckProject, $env);
         }
         $pattern = 'https://rundeck-%s.siege.xm/project/%s/jobs';
         return sprintf($pattern, $env->value, $project->getSf());
+    }
+
+    /**
+     * Construit l'URL du serveur rundeck d'un sf.
+     *
+     * @param RundeckProject $rundeckProject L'objet rundeck projet.
+     * @param EnumEnvironment $env L'environnement ciblé.
+     * @return string L'URL du rundeck.
+     */
+    public static function buildRundeckUrlFromRundeckProject(RundeckProject $rundeckProject, EnumEnvironment $env): string
+    {
+        $pattern = 'https://rundeck-%s.siege.xm/project/%s/job/show/%s';
+        $token = $rundeckProject->getToken();
+        $tokenVal = '';
+        if (is_array($token)) {
+            $tokenObj = $token[0] ?? [];
+            $tokenVal = $tokenObj[$env->value] ?? '';
+        }
+        return sprintf($pattern, $env->value, $rundeckProject->getSf(), $tokenVal);
     }
 
     /**
