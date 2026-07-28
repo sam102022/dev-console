@@ -20,6 +20,9 @@ final class RepositoryServiceTest extends AbstractTestCase
         $this->root = vfsStream::setup();
     }
 
+    /**
+     * @throws TechnicalException
+     */
     final public function testSaveAndReadFile(): void
     {
         $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
@@ -32,6 +35,9 @@ final class RepositoryServiceTest extends AbstractTestCase
         $this->assertEquals(json_encode($data), $this->root->getChild($filename)->getContent());
     }
 
+    /**
+     * @throws TechnicalException
+     */
     final public function testReadFile(): void
     {
         $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);

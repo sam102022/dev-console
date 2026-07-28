@@ -195,12 +195,16 @@ class MonitoringUtils
             }
         }
 
-        $uriActuator = '';
-        // TODO Pas terrible, trouver une autre solution plus propre pour l'api store stock
-        if ($projectName !== 'api-store-stock' && str_starts_with($projectName, 'api')) {
-            $uriActuator .= '/v1';
+        if($project->getPathLivenessProbe()) {
+            $uriActuator = $project->getPathLivenessProbe();
         }
-        $uriActuator .= '/actuator/' . $actuatorEndpoint->value;
+        else {
+            $uriActuator = '';
+            if (str_starts_with($projectName, 'api')) {
+                $uriActuator .= '/v1';
+            }
+            $uriActuator .= '/actuator/' . $actuatorEndpoint->value;
+        }
 
         $urlHealthCheck = "https://management-$projectName.$domain$uriActuator";
 
