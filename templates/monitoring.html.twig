@@ -430,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- LOGIQUE DE GESTION DES COLONNES ---
     const columnToggles = document.querySelectorAll('.column-toggle');
     const table = document.getElementById('projects-table');
-    const columnsPrefs = {{ columns_prefs|json_encode|raw }};
+    const columnsPrefs = {{ columns_prefs|default({})|json_encode|raw }};
 
     function setColumnVisibility(column, visible) {
         const cells = table.querySelectorAll(`[data-column="${column}"]`);
@@ -692,6 +692,18 @@ function checkSingleRow(btn) {
     checkHealth('single', row);
 }
 
+// Function to get currently visible environment columns
+function getVisibleEnvironments() {
+    const visibleEnvs = [];
+    ['dev', 'rec', 'pp', 'prod'].forEach(env => {
+        const toggle = document.getElementById(`toggle-col-${env}`);
+        if (toggle && toggle.checked) {
+            visibleEnvs.push(env);
+        }
+    });
+    return visibleEnvs;
+}
+
 // --- LOGIQUE DE MONITORING ---
 let abortController = null;
 
@@ -718,10 +730,10 @@ async function checkHealth(mode, specificRow = null) {
 
     abortController = new AbortController();
     const signal = abortController.signal;
-    const environments = ['dev', 'rec', 'pp', 'prod'];
+    const environmentsToProcess = getVisibleEnvironments(); // Get visible environments
 
     targetRows.forEach(row => {
-        environments.forEach(env => {
+        environmentsToProcess.forEach(env => { // Use visible environments
             const cell = row.querySelector(`.col-${env}`);
             if(cell) {
                 const urlHealthCheck = cell.getAttribute('data-url-health');
@@ -752,13 +764,13 @@ async function checkHealth(mode, specificRow = null) {
 
             const projectName = row.getAttribute('data-project-name');
             if (!projectName) {
-                updateRowBadgesError(row, environments);
+                updateRowBadgesError(row, environmentsToProcess); // Use visible environments
                 continue;
             }
 
             // On lance les requêtes d'environnement pour ce projet via notre backend
             await Promise.all(
-                environments.map(env => checkEnvironment(row, projectName, env, signal))
+                environmentsToProcess.map(env => checkEnvironment(row, projectName, env, signal)) // Use visible environments
             );
         }
     } catch (error) {
@@ -770,7 +782,7 @@ async function checkHealth(mode, specificRow = null) {
 
         // S'il y a eu annulation, on remet les badges "En attente" sur ceux qui tournaient encore
         if (signal.aborted) {
-            resetPendingBadges(targetRows, environments);
+            resetPendingBadges(targetRows, environmentsToProcess); // Use visible environments
         }
         abortController = null;
     }
@@ -865,8 +877,8 @@ function updateVersionBadge(badge, text, type, url) {
     }
 }
 
-function updateRowBadgesError(row, environments) {
-    environments.forEach(env => {
+function updateRowBadgesError(row, environmentsToProcess) { // Renamed parameter
+    environmentsToProcess.forEach(env => { // Use environmentsToProcess
         const cell = row.querySelector(`.col-${env}`);
         if(cell){
             const urlHealthCheck = cell.getAttribute('data-url-health');
@@ -879,9 +891,9 @@ function updateRowBadgesError(row, environments) {
     });
 }
 
-function resetPendingBadges(rows, environments) {
+function resetPendingBadges(rows, environmentsToProcess) { // Renamed parameter
     rows.forEach(row => {
-        environments.forEach(env => {
+        environmentsToProcess.forEach(env => { // Use environmentsToProcess
             const cell = row.querySelector(`.col-${env}`);
             if(cell) {
                 const healthBadge = cell.querySelector('.health-badge');

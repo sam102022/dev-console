@@ -77,6 +77,7 @@ final class IndexRouter
                 case ACTION_POSTMAN_GET_WORKSPACE_DETAILS:
                     echo $this->postmanController->handleRequest($action);
                     break;
+                case ACTION_SAVE_COLUMNS_PREFS:
                 case ACTION_MONITORING_GET_DATA:
                     echo $this->monitoringController->handleRequest($action);
                     break;

@@ -86,6 +86,8 @@ class MonitoringController
     {
         $input = json_decode(file_get_contents("php://input"), true) ?? [];
 
+        $this->logger->info(UtilsLog::prefixLog(self::class, __FUNCTION__, __LINE__) . 'input:' . json_encode($input));
+
         // Si ce n'est pas du JSON, on essaie via GET/POST
         $project = $input['project'] ?? $_REQUEST['project'] ?? '';
         $envString = $input['env'] ?? $_REQUEST['env'] ?? '';
