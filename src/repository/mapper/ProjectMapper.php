@@ -22,7 +22,7 @@ class ProjectMapper
         $projectEntity->setTechno($data['techno'] ?? null);
         $projectEntity->setSubscriptionName($data['subscriptionName'] ?? null);
         $projectEntity->setMdmWorkloadVersion($data['mdmWorkloadVersion'] ?? null);
-        $projectEntity->setPathLivenessProbe($data['pathLivenessProbe'] ?? null); // Added this line
+        $projectEntity->setPathLivenessProbe($data['pathLivenessProbe'] ?? null);
         $projectEntity->setWebUrl($data['webUrl'] ?? '');
         $projectEntity->setArchived($data['archived'] ?? false);
         $projectEntity->setUrlHealthCheck($data['urlHealthCheck'] ?? []);
@@ -78,7 +78,7 @@ class ProjectMapper
         $project->setTechno($entity->getTechno());
         $project->setSubscriptionName($entity->getSubscriptionName());
         $project->setMdmWorkloadVersion($entity->getMdmWorkloadVersion());
-        $project->setPathLivenessProbe($entity->getPathLivenessProbe()); // Added this line
+        $project->setPathLivenessProbe($entity->getPathLivenessProbe());
         $project->setWebUrl($entity->getWebUrl());
         $project->setArchived($entity->isArchived());
         $project->setUrlHealthCheck($entity->getUrlHealthCheck());
@@ -113,7 +113,7 @@ class ProjectMapper
             $project->getUrlFronts(),
             $project->getUrlPubsubs(),
             $project->getMdmWorkloadVersion(),
-            $project->getPathLivenessProbe(), // Added this line
+            $project->getPathLivenessProbe(),
             $project->getUrlsRundeck(),
             $project->getUrlsDeploymentGcp()
         );
@@ -133,7 +133,7 @@ class ProjectMapper
             'techno' => $projectEntity->getTechno(),
             'subscriptionName' => $projectEntity->getSubscriptionName(),
             'mdmWorkloadVersion' => $projectEntity->getMdmWorkloadVersion(),
-            'pathLivenessProbe' => $projectEntity->getPathLivenessProbe(), // Added this line
+            'pathLivenessProbe' => $projectEntity->getPathLivenessProbe(),
             'webUrl' => $projectEntity->getWebUrl(),
             'archived' => $projectEntity->isArchived(),
             'urlHealthCheck' => $projectEntity->getUrlHealthCheck(),

@@ -16,7 +16,7 @@ class ProjectEntity
     private ?string $techno = null;
     private ?string $subscriptionName = null;
     private ?string $mdmWorkloadVersion = null;
-    private ?string $pathLivenessProbe = null; // Added this line
+    private ?string $pathLivenessProbe = null;
     private string $webUrl;
     private bool $archived;
     private array $urlHealthCheck = [];
@@ -281,7 +281,7 @@ class ProjectEntity
         array   $urlFronts = [],
         array   $urlPubsubs = [],
         ?string $mdmWorkloadVersion = null,
-        ?string $pathLivenessProbe = null, // Added this line
+        ?string $pathLivenessProbe = null,
         array   $urlsRundeck = [],
         array   $urlsDeploymentGcp = []
     ): self
@@ -298,7 +298,7 @@ class ProjectEntity
         $project->setTechno($techno);
         $project->setSubscriptionName($subscriptionName);
         $project->setMdmWorkloadVersion($mdmWorkloadVersion);
-        $project->setPathLivenessProbe($pathLivenessProbe); // Added this line
+        $project->setPathLivenessProbe($pathLivenessProbe);
         $project->setUrlHealthCheck($urlHealthCheck);
         $project->setUrlActuatorInfo($urlActuatorInfo);
         $project->setUrlLogs($urlLogs);
