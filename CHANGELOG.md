@@ -9,7 +9,7 @@ Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
 ### Changed
 
-Remplacement des requêtes synchrones par des requêtes asynchrones (Guzzle)
+- Remplacement des requêtes synchrones par des requêtes asynchrones (Guzzle)
 
 ## [1.2.0] - 17/06/2026
 
