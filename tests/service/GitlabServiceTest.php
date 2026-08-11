@@ -120,13 +120,15 @@ class GitlabServiceTest extends AbstractTestCase
 
         $this->gitLabRepository->method('findAll')->willReturn($projectEntities);
 
-        $this->client->method('getFile')
-            ->willReturnMap([
-                [1, 'pom.xml', true, 'main', '<pom1/>'],
-                [1, 'chart/Chart.yaml', true, 'main', 'content'],
-                [2, 'pom.xml', true, 'main', '<pom2/>'],
-                [2, 'chart/Chart.yaml', true, 'main', null],
-            ]);
+        $this->client->method('getFileAsync')
+            ->willReturnCallback(function ($id, $path, $raw, $branch) {
+                $content = null;
+                if ($id === 1 && $path === 'pom.xml') $content = '<pom1/>';
+                if ($id === 1 && $path === 'chart/Chart.yaml') $content = 'content';
+                if ($id === 2 && $path === 'pom.xml') $content = '<pom2/>';
+
+                return \GuzzleHttp\Promise\Create::promiseFor($content);
+            });
 
         $this->mavenParser->method('parsePomXml')
             ->willReturnMap([
@@ -214,7 +216,7 @@ class GitlabServiceTest extends AbstractTestCase
         ];
         $this->gitLabRepository->method('findAll')->willReturn($projectEntities);
 
-        $this->client->method('getFile')->willReturn(null);
+        $this->client->method('getFileAsync')->willReturn(\GuzzleHttp\Promise\Create::promiseFor(null));
 
         $projectEntity = ProjectEntityFixtures::getProjectBEntity();
         $expectedProject = ProjectMapper::fromEntity($projectEntity);

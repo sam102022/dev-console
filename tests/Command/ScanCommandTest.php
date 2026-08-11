@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace App\tests\Command;
+namespace App\tests\command;
 
-use App\Command\ScanCommand;
+use App\command\ScanCommand;
 use App\exception\TechnicalException;
 use App\service\GitlabService;
 use App\tests\AbstractTestCase;

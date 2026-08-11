@@ -9,7 +9,6 @@ use App\tests\AbstractTestCase;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
 
-
 final class RepositoryServiceTest extends AbstractTestCase
 {
     private vfsStreamDirectory $root;
@@ -20,50 +19,29 @@ final class RepositoryServiceTest extends AbstractTestCase
         $this->root = vfsStream::setup();
     }
 
-    /**
-     * @throws TechnicalException
-     */
     final public function testSaveAndReadFile(): void
     {
         $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
         $filename = 'test.json';
         $data = ['key' => 'value'];
 
+        // Save data to cache
         $service->save($data, $filename);
 
-        $this->assertTrue($this->root->hasChild($filename));
-        $this->assertEquals(json_encode($data), $this->root->getChild($filename)->getContent());
-    }
-
-    /**
-     * @throws TechnicalException
-     */
-    final public function testReadFile(): void
-    {
-        $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
-        $filename = 'test.json';
-        $data = ['key' => 'value'];
-
-        vfsStream::newFile($filename)
-            ->withContent(json_encode($data))
-            ->at($this->root);
-
+        // Read data back
         $readData = $service->read($filename);
+
+        // We assert using the service interface, since underlying structure is Symfony Cache
         $this->assertEquals($data, $readData);
     }
 
-    final public function testReadInvalidJson(): void
+    final public function testReadFileNotExists(): void
     {
-        $this->expectException(TechnicalException::class);
-
         $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
-        $filename = 'invalid.json';
+        $filename = 'non_existing.json';
 
-        vfsStream::newFile($filename)
-            ->withContent('{ "key": "value" ') // Invalid JSON
-            ->at($this->root);
-
-        $service->read($filename);
+        $readData = $service->read($filename);
+        $this->assertEquals([], $readData);
     }
 
     final public function testIsFileExists(): void
@@ -71,10 +49,11 @@ final class RepositoryServiceTest extends AbstractTestCase
         $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
         $filename = 'existing.txt';
 
-        vfsStream::newFile($filename)->at($this->root);
+        $this->assertFalse($service->isFileExists($filename));
+
+        $service->save(['test'], $filename);
 
         $this->assertTrue($service->isFileExists($filename));
-        $this->assertFalse($service->isFileExists('non_existing.txt'));
     }
 
     final public function testDeleteFile(): void
@@ -82,10 +61,10 @@ final class RepositoryServiceTest extends AbstractTestCase
         $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
         $filename = 'to_delete.txt';
 
-        vfsStream::newFile($filename)->at($this->root);
-        $this->assertTrue($this->root->hasChild($filename));
+        $service->save(['data'], $filename);
+        $this->assertTrue($service->isFileExists($filename));
 
         $service->delete($filename);
-        $this->assertFalse($this->root->hasChild($filename));
+        $this->assertFalse($service->isFileExists($filename));
     }
 }

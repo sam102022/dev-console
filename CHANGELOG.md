@@ -5,6 +5,12 @@ Historique de tous les changements notables du projet dev-console
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
 
+## [1.3.0] - 11/08/2026
+
+### Changed
+
+Remplacement des requêtes synchrones par des requêtes asynchrones (Guzzle)
+
 ## [1.2.0] - 17/06/2026
 
 ### Added

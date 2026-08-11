@@ -155,6 +155,35 @@ class GitLabClient
     }
 
     /**
+     * Permet de récupérer un fichier d'un projet en asynchrone
+     *
+     * @param int $projectId Identifiant du projet gitlab
+     * @param string $filePath Chemin du fichier
+     * @param bool $raw Mode brut
+     * @param string $branch Nom de la branche
+     * @return \GuzzleHttp\Promise\PromiseInterface
+     */
+    public function getFileAsync(int $projectId, string $filePath, bool $raw, string $branch = 'main'): \GuzzleHttp\Promise\PromiseInterface
+    {
+        $encodedPath = urlencode($filePath);
+        $uri = self::BASE_URI . "/$projectId/repository/files/$encodedPath";
+        if ($raw) {
+            $uri .= "/raw";
+        }
+        $uri .= "?ref=$branch";
+
+        return $this->requestAsync('GET', $uri)->then(
+            function (ResponseInterface $response) use ($raw) {
+                $contents = $response->getBody()->getContents();
+                return $raw ? $contents : json_decode($contents, true);
+            },
+            function (\Throwable $e) {
+                return null;
+            }
+        );
+    }
+
+    /**
      * @throws GuzzleException
      */
     private function requestGET(string $uri, ?array $options = null): ResponseInterface
@@ -178,6 +207,20 @@ class GitLabClient
         );
 
         return $this->client->request($method, $uri, $options);
+    }
+
+    private function requestAsync(string $method, string $uri, ?array $options = null): \GuzzleHttp\Promise\PromiseInterface
+    {
+        if (empty($options)) {
+            $options = [];
+        }
+
+        $options['headers'] = array_merge(
+            $options['headers'] ?? [],
+            $this->getHeaders()
+        );
+
+        return $this->client->requestAsync($method, $uri, $options);
     }
 
     private function getHeaders(): array
