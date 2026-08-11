@@ -12,15 +12,15 @@ use App\repository\GitLabRepository;
 use App\repository\mapper\ProjectMapper;
 use App\repository\ProjectRepository;
 use App\service\GitlabService;
-use App\service\NewRelicService;
 use App\service\RundeckService;
+use App\tests\AbstractTestCase;
 use App\tests\fixtures\GitlabProjectEntityFixtures;
 use App\tests\fixtures\GitlabProjectFixtures;
 use App\tests\fixtures\ProjectEntityFixtures;
 use DateMalformedStringException;
 use GuzzleHttp\Exception\GuzzleException;
 
-class GitlabServiceTest extends AbstractServiceCase
+class GitlabServiceTest extends AbstractTestCase
 {
     private GitLabClient $client;
     private MavenParser $mavenParser;

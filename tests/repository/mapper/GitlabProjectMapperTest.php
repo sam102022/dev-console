@@ -6,9 +6,9 @@ namespace App\tests\repository\mapper;
 use App\model\GitlabProject;
 use App\repository\mapper\GitlabProjectMapper;
 use App\repository\model\GitlabProjectEntity;
-use App\tests\service\AbstractServiceCase;
+use App\tests\AbstractTestCase;
 
-class GitlabProjectMapperTest extends AbstractServiceCase
+class GitlabProjectMapperTest extends AbstractTestCase
 {
 
     final public function testFromArray(): void

@@ -6,20 +6,17 @@ namespace App\tests\controller;
 use App\context\IndexContext;
 use App\controller\PostmanController;
 use App\exception\TechnicalException;
-use App\factory\LoggerFactory;
 use App\service\PostmanService;
+use App\tests\AbstractTestCase;
 use App\viewModel\IndexViewModelFactory;
 use Exception;
-use Monolog\Logger;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\TestCase;
 use Throwable;
-use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
-class PostmanControllerTest extends AbstractControllerCase
+class PostmanControllerTest extends AbstractTestCase
 {
     private IndexViewModelFactory $viewModelFactory;
     private PostmanService $postmanService;
@@ -45,7 +42,7 @@ class PostmanControllerTest extends AbstractControllerCase
         $_GET = [];
     }
 
-    public function testIndex(): void
+    final public function testIndex(): void
     {
         $messages = ['some_message'];
         $viewModel = ['viewModelKey' => 'viewModelValue'];
@@ -132,7 +129,7 @@ class PostmanControllerTest extends AbstractControllerCase
     }
 
     #[DataProvider('handleRequestProvider')]
-    public function testHandleRequest(string $action, array $input, ?string $serviceMethod,
+    final public function testHandleRequest(string $action, array $input, ?string $serviceMethod,
                                       array $serviceArgs, ?array $serviceReturn, string $expectedResponse, int $expectedHttpCode): void
     {
         $rawInput = null;
@@ -155,7 +152,7 @@ class PostmanControllerTest extends AbstractControllerCase
         $this->assertEquals($expectedHttpCode, http_response_code());
     }
 
-    public function testHandleRequestException(): void
+    final public function testHandleRequestException(): void
     {
         $action = ACTION_POSTMAN_WORKSPACES;
         $errorMessage = 'Service exception';
@@ -181,7 +178,7 @@ class PostmanControllerTest extends AbstractControllerCase
     }
 
     #[DataProvider('renderExceptionProvider')]
-    public function testRenderCatchesExceptions(Throwable $exception): void
+    final public function testRenderCatchesExceptions(Throwable $exception): void
     {
         $this->viewModelFactory->expects($this->once())
             ->method('build')

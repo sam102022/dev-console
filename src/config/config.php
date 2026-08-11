@@ -21,6 +21,7 @@ const LOG_CLI_FILE_DEFAULT = PATH_LOGS . '/logCli.log';
 const TEST_LOG_FILE = PATH_LOGS . '/logTest.log';
 
 const MESSAGES_SCAN_RESULTS = 'scanResults';
+const MESSAGES_RUNDECK_RESULTS = 'rundeckResults';
 const MESSAGES_POSTMAN = 'postman';
 
 // Actions

@@ -3,19 +3,15 @@ declare(strict_types=1);
 
 namespace App\tests\service;
 
-use App\client\NewRelicClient;
 use App\exception\TechnicalException;
-use App\factory\LoggerFactory;
 use App\model\EnumEnvironment;
 use App\model\NewRelic;
 use App\repository\mapper\NewRelicMapper;
 use App\repository\NewRelicRepository;
 use App\service\NewRelicService;
-use Monolog\Logger;
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\TestCase;
+use App\tests\AbstractTestCase;
 
-class NewRelicServiceTest extends AbstractServiceCase
+class NewRelicServiceTest extends AbstractTestCase
 {
     private NewRelicRepository $repositoryMock;
     private NewRelicService $service;

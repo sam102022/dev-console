@@ -111,7 +111,7 @@ class MonitoringService
         $json = $this->call($urlActuatorInfo);
         if ($json['body']) {
             $body = $json['body'];
-            if (($body['build'] && $body['build']['version'] ?? null) !== null) {
+            if (isset($body['build']['version'])) {
                 $version = $body['build']['version'];
             }
         }

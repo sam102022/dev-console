@@ -5,12 +5,13 @@ namespace App\tests\service;
 
 use App\exception\TechnicalException;
 use App\model\EnumEnvironment;
+use App\repository\mapper\RundeckProjectMapper;
 use App\repository\RundeckRepository;
 use App\service\RundeckService;
+use App\tests\AbstractTestCase;
 use App\tests\fixtures\RundeckProjectEntityFixtures;
-use App\repository\mapper\RundeckProjectMapper;
 
-class RundeckServiceTest extends AbstractServiceCase
+class RundeckServiceTest extends AbstractTestCase
 {
     private RundeckRepository $rundeckRepository;
     private RundeckService $service;

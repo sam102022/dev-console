@@ -16,6 +16,7 @@ class Project extends AbstractModel
     public ?string $techno = null;
     public ?string $subscriptionName = null;
     public ?string $mdmWorkloadVersion = null;
+    public ?string $pathLivenessProbe = null;
     private string $webUrl;
     private bool $archived;
     public array $urlHealthCheck = [];
@@ -225,6 +226,24 @@ class Project extends AbstractModel
     }
 
     /**
+     * @return string|null
+     */
+    public function getPathLivenessProbe(): ?string
+    {
+        return $this->pathLivenessProbe;
+    }
+
+    /**
+     * @param string|null $pathLivenessProbe
+     * @return Project
+     */
+    public function setPathLivenessProbe(?string $pathLivenessProbe): self
+    {
+        $this->pathLivenessProbe = $pathLivenessProbe;
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getWebUrl(): string
@@ -333,7 +352,7 @@ class Project extends AbstractModel
     public static function build(string  $name, ?string $serviceName, ?string $domain, ?string $domainName, ?string $sf, bool $cloudGCP,
                                  ?string $springBoot, ?string $java, ?string $techno, ?string $subscriptionName, string $webUrl,
                                  bool    $archived, array $urlHealthCheck, array $urlActuatorInfo, array $urlLogs, array $urlFronts, array $urlPubsubs,
-                                 ?string $mdmWorkloadVersion = null, array $urlsRundeck = [], array $urlsDeploymentGcp = []): self
+                                 ?string $mdmWorkloadVersion = null, ?string $pathLivenessProbe = null, array $urlsRundeck = [], array $urlsDeploymentGcp = []): self
     {
         $project = new self();
         $project->setName($name);
@@ -347,6 +366,7 @@ class Project extends AbstractModel
         $project->setTechno($techno);
         $project->setSubscriptionName($subscriptionName);
         $project->setMdmWorkloadVersion($mdmWorkloadVersion);
+        $project->setPathLivenessProbe($pathLivenessProbe);
         $project->setWebUrl($webUrl);
         $project->setArchived($archived);
         $project->setUrlHealthCheck($urlHealthCheck);

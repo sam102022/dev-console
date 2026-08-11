@@ -7,11 +7,12 @@ use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\repository\RundeckRepository;
 use App\service\RepositoryService;
+use App\tests\AbstractTestCase;
 use App\tests\fixtures\RundeckProjectEntityFixtures;
 use Monolog\Logger;
 use ReflectionClass;
 
-class RundeckRepositoryTest extends AbstractRepositoryCase
+class RundeckRepositoryTest extends AbstractTestCase
 {
     private RepositoryService $repositoryServiceMock;
     private RundeckRepository $repository;

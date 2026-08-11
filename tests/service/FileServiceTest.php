@@ -5,11 +5,12 @@ namespace App\tests\service;
 
 use App\exception\TechnicalException;
 use App\service\FileService;
+use App\tests\AbstractTestCase;
 use org\bovigo\vfs\vfsStream;
 use org\bovigo\vfs\vfsStreamDirectory;
 
 
-class FileServiceTest extends AbstractServiceCase
+class FileServiceTest extends AbstractTestCase
 {
     private vfsStreamDirectory $root;
 

@@ -6,11 +6,11 @@ namespace App\tests\service;
 use App\service\IconService;
 use App\service\Translator;
 use App\service\TwigTranslationExtension;
-use PHPUnit\Framework\TestCase;
+use App\tests\AbstractTestCase;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
 
-class TwigTranslationExtensionTest extends TestCase
+class TwigTranslationExtensionTest extends AbstractTestCase
 {
     private Translator $translatorMock;
     private TwigTranslationExtension $extension;

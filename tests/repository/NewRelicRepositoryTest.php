@@ -9,11 +9,12 @@ use App\model\EnumEnvironment;
 use App\repository\model\NewRelicEntity;
 use App\repository\NewRelicRepository;
 use App\service\RepositoryService;
+use App\tests\AbstractTestCase;
 use Monolog\Logger;
 use PHPUnit\Framework\Attributes\DataProvider;
 use ReflectionClass;
 
-class NewRelicRepositoryTest extends AbstractRepositoryCase
+class NewRelicRepositoryTest extends AbstractTestCase
 {
     private RepositoryService $repositoryServiceMock;
     private NewRelicRepository $repository;

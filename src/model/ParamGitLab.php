@@ -25,6 +25,9 @@ class ParamGitLab
     /** @var array Les projets à exclure séparés par une virgule. */
     private array $excludeProjects;
 
+    /** @var array Les domaines à exclure séparés par une virgule. */
+    private array $excludeDomains;
+
     public function getGitlabUrl(): string
     {
         return $this->gitlabUrl;
@@ -85,6 +88,16 @@ class ParamGitLab
         $this->excludeProjects = $excludeProjects;
     }
 
+    public function getExcludeDomains(): array
+    {
+        return $this->excludeDomains;
+    }
+
+    public function setExcludeDomains(array $excludeDomains): void
+    {
+        $this->excludeDomains = $excludeDomains;
+    }
+
     public static function parse(array $params): self
     {
         if (!isset(
@@ -110,6 +123,12 @@ class ParamGitLab
             $excludeProjects = array_map('trim', explode(',', $params['exclude_projects']));
         }
         $paramGitLab->setExcludeProjects($excludeProjects);
+
+        $excludeDomains = [];
+        if (!empty($params['exclude_domains'])) {
+            $excludeDomains = array_map('trim', explode(',', $params['exclude_domains']));
+        }
+        $paramGitLab->setExcludeDomains($excludeDomains);
 
         return $paramGitLab;
     }

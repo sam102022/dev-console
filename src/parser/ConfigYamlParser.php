@@ -23,6 +23,20 @@ class ConfigYamlParser
     }
 
     /**
+     * Analyse le contenu d'un fichier deploy.yml pour extraire le path du health
+     *
+     * @param string|null $deployYamlContent Le contenu du fichier deploy.yml.
+     * @return string|null Le path du health extrait, ou null s'il n'a pas pu être trouvé.
+     */
+    public static function parsePathLivenessProbe(?string $deployYamlContent): ?string
+    {
+        if ($deployYamlContent && preg_match('/livenessProbe:(?:.|\n)*?path:\s*([^\s]+)/s', $deployYamlContent, $matches)) {
+            return $matches[1];
+        }
+        return null;
+    }
+
+    /**
      * Analyse le contenu d'un fichier deploy.yml pour extraire le nom du service.
      * Provoque l'erreur :
      * Multiple documents are not supported at line 217 (near "---").

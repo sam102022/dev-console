@@ -9,10 +9,11 @@ use App\repository\mapper\ProjectMapper;
 use App\repository\model\ProjectEntity;
 use App\repository\ProjectRepository;
 use App\service\RepositoryService;
+use App\tests\AbstractTestCase;
 use Monolog\Logger;
 use ReflectionClass;
 
-class ProjectRepositoryTest extends AbstractRepositoryCase
+class ProjectRepositoryTest extends AbstractTestCase
 {
     private RepositoryService $repositoryServiceMock;
     private ProjectRepository $repository;

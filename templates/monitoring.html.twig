@@ -32,7 +32,7 @@
 </style>
 <div class="card shadow rounded mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">🩺 Monitoring &amp; 📰 Logs</h5>
+        <h5 class="mb-0">🩺 Monitoring &amp; 🔗 Links</h5>
         <div>
             <div class="dropdown">
                 <button class="btn btn-outline-secondary btn-sm" type="button" id="columns-dropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -365,6 +365,53 @@ document.addEventListener('DOMContentLoaded', function() {
     const tbody = document.getElementById('projects-tbody');
     let rows = Array.from(document.querySelectorAll('.project-row'));
 
+    // Sauvegarde des options SF originales pour pouvoir les filtrer dynamiquement
+    const originalSfOptions = Array.from(filterSf.options).map(opt => ({
+        value: opt.value,
+        text: opt.textContent
+    }));
+
+    function updateSfFilter() {
+        const selectedDomain = filterDomain.value;
+        const currentSelectedSf = filterSf.value;
+
+        let allowedSfs = null;
+        if (selectedDomain !== 'all') {
+            allowedSfs = new Set();
+            rows.forEach(row => {
+                const domain = row.querySelector('.col-domain').getAttribute('data-value');
+                const sf = row.querySelector('.col-sf').getAttribute('data-value');
+                if (domain === selectedDomain && sf) {
+                    allowedSfs.add(sf);
+                }
+            });
+        }
+
+        // Vider les options de filterSf
+        filterSf.innerHTML = '';
+
+        // Reconstruire les options de filterSf
+        originalSfOptions.forEach(opt => {
+            if (opt.value === 'all' || !allowedSfs || allowedSfs.has(opt.value)) {
+                const newOpt = document.createElement('option');
+                newOpt.value = opt.value;
+                newOpt.textContent = opt.text;
+                filterSf.appendChild(newOpt);
+            }
+        });
+
+        // Restaurer la sélection de SF si elle est toujours disponible, sinon réinitialiser à 'all'
+        const hasSelected = Array.from(filterSf.options).some(opt => opt.value === currentSelectedSf);
+        if (hasSelected) {
+            filterSf.value = currentSelectedSf;
+        } else {
+            filterSf.value = 'all';
+        }
+    }
+
+    // Associer la mise à jour du filtre SF au changement du filtre Domaine
+    filterDomain.addEventListener('change', updateSfFilter);
+
     // Éléments DOM (Pagination)
     const rowsPerPageSelect = document.getElementById('rows_per_page');
     const paginationContainer = document.getElementById('pagination-container');
@@ -383,10 +430,62 @@ document.addEventListener('DOMContentLoaded', function() {
 
     getVisibleRows = () => displayedRows;
 
+    // --- GESTION DE L'URL ET DES FILTRES ---
+    function updateURLFromFilters() {
+        const params = new URLSearchParams(window.location.search);
+
+        const filters = {
+            domain: filterDomain.value,
+            sf: filterSf.value,
+            name: filterProjectName.value,
+            techno: filterTechno.value,
+            archived: filterArchived.value,
+            gcp: filterGcp.value
+        };
+
+        for (const [key, value] of Object.entries(filters)) {
+            if (value !== 'all' && value !== '') {
+                params.set(key, value);
+                sessionStorage.setItem('app_filter_' + key, value);
+            } else {
+                params.delete(key);
+                sessionStorage.removeItem('app_filter_' + key);
+            }
+        }
+
+        const newRelativePathQuery = window.location.pathname + '?' + params.toString();
+        history.replaceState(null, '', newRelativePathQuery);
+    }
+
+    function applyFiltersFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        
+        const getFilterValue = (key) => {
+            if (params.has(key)) return params.get(key);
+            return sessionStorage.getItem('app_filter_' + key);
+        };
+
+        const filters = {
+            domain: getFilterValue('domain'),
+            sf: getFilterValue('sf'),
+            name: getFilterValue('name'),
+            techno: getFilterValue('techno'),
+            archived: getFilterValue('archived'),
+            gcp: getFilterValue('gcp')
+        };
+
+        if (filters.domain) filterDomain.value = filters.domain;
+        if (filters.sf) filterSf.value = filters.sf;
+        if (filters.name) filterProjectName.value = filters.name;
+        if (filters.techno) filterTechno.value = filters.techno;
+        if (filters.archived) filterArchived.value = filters.archived;
+        if (filters.gcp) filterGcp.value = filters.gcp;
+    }
+
     // --- LOGIQUE DE GESTION DES COLONNES ---
     const columnToggles = document.querySelectorAll('.column-toggle');
     const table = document.getElementById('projects-table');
-    const columnsPrefs = {{ columns_prefs|json_encode|raw }};
+    const columnsPrefs = {{ columns_prefs|default({})|json_encode|raw }};
 
     function setColumnVisibility(column, visible) {
         const cells = table.querySelectorAll(`[data-column="${column}"]`);
@@ -536,6 +635,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         currentPage = 1;
         updatePagination();
+        updateURLFromFilters();
 
         // Décoche la case principale si on change les filtres
         checkAll.checked = false;
@@ -618,10 +718,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (btnResetFilters) {
         btnResetFilters.addEventListener('click', function() {
             filterDomain.value = 'all';
+            updateSfFilter();
             filterSf.value = 'all';
             filterProjectName.value = '';
             filterTechno.value = 'all';
-            filterArchived.value = 'all';
+            filterArchived.value = 'non';
             filterGcp.value = 'all';
             applyFilters();
         });
@@ -636,6 +737,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // --- INITIALISATION ---
+    applyFiltersFromURL();
+    updateSfFilter();
     applyFilters();
 });
 
@@ -643,6 +747,18 @@ document.addEventListener('DOMContentLoaded', function() {
 function checkSingleRow(btn) {
     const row = btn.closest('.project-row');
     checkHealth('single', row);
+}
+
+// Function to get currently visible environment columns
+function getVisibleEnvironments() {
+    const visibleEnvs = [];
+    ['dev', 'rec', 'pp', 'prod'].forEach(env => {
+        const toggle = document.getElementById(`toggle-col-${env}`);
+        if (toggle && toggle.checked) {
+            visibleEnvs.push(env);
+        }
+    });
+    return visibleEnvs;
 }
 
 // --- LOGIQUE DE MONITORING ---
@@ -671,10 +787,10 @@ async function checkHealth(mode, specificRow = null) {
 
     abortController = new AbortController();
     const signal = abortController.signal;
-    const environments = ['dev', 'rec', 'pp', 'prod'];
+    const environmentsToProcess = getVisibleEnvironments(); // Get visible environments
 
     targetRows.forEach(row => {
-        environments.forEach(env => {
+        environmentsToProcess.forEach(env => { // Use visible environments
             const cell = row.querySelector(`.col-${env}`);
             if(cell) {
                 const urlHealthCheck = cell.getAttribute('data-url-health');
@@ -705,13 +821,13 @@ async function checkHealth(mode, specificRow = null) {
 
             const projectName = row.getAttribute('data-project-name');
             if (!projectName) {
-                updateRowBadgesError(row, environments);
+                updateRowBadgesError(row, environmentsToProcess); // Use visible environments
                 continue;
             }
 
             // On lance les requêtes d'environnement pour ce projet via notre backend
             await Promise.all(
-                environments.map(env => checkEnvironment(row, projectName, env, signal))
+                environmentsToProcess.map(env => checkEnvironment(row, projectName, env, signal)) // Use visible environments
             );
         }
     } catch (error) {
@@ -723,7 +839,7 @@ async function checkHealth(mode, specificRow = null) {
 
         // S'il y a eu annulation, on remet les badges "En attente" sur ceux qui tournaient encore
         if (signal.aborted) {
-            resetPendingBadges(targetRows, environments);
+            resetPendingBadges(targetRows, environmentsToProcess); // Use visible environments
         }
         abortController = null;
     }
@@ -818,8 +934,8 @@ function updateVersionBadge(badge, text, type, url) {
     }
 }
 
-function updateRowBadgesError(row, environments) {
-    environments.forEach(env => {
+function updateRowBadgesError(row, environmentsToProcess) { // Renamed parameter
+    environmentsToProcess.forEach(env => { // Use environmentsToProcess
         const cell = row.querySelector(`.col-${env}`);
         if(cell){
             const urlHealthCheck = cell.getAttribute('data-url-health');
@@ -832,9 +948,9 @@ function updateRowBadgesError(row, environments) {
     });
 }
 
-function resetPendingBadges(rows, environments) {
+function resetPendingBadges(rows, environmentsToProcess) { // Renamed parameter
     rows.forEach(row => {
-        environments.forEach(env => {
+        environmentsToProcess.forEach(env => { // Use environmentsToProcess
             const cell = row.querySelector(`.col-${env}`);
             if(cell) {
                 const healthBadge = cell.querySelector('.health-badge');

@@ -7,6 +7,7 @@ use App\context\IndexContext;
 use App\controller\IndexController;
 use App\exception\TechnicalException;
 use App\service\GitlabService;
+use App\tests\AbstractTestCase;
 use App\viewModel\IndexViewModelFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Throwable;
@@ -14,7 +15,7 @@ use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
-class IndexControllerTest extends AbstractControllerCase
+class IndexControllerTest extends AbstractTestCase
 {
     private IndexViewModelFactory $viewModelFactory;
     private IndexContext $context;

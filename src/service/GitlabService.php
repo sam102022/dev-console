@@ -175,7 +175,6 @@ class GitlabService
      *
      * @param GitlabProject $gitLabProject Le projet gitlab à scanner
      * @return Project|null
-     * @throws DateMalformedStringException
      * @throws TechnicalException
      */
     private function buildProject(GitlabProject $gitLabProject): ?Project
@@ -203,6 +202,7 @@ class GitlabService
             'webUrl' => $gitLabProject->getWebUrl(),
             'archived' => $gitLabProject->isArchived(),
             'mdmWorkloadVersion' => $deploymentInfo['mdmWorkloadVersion'],
+            'pathLivenessProbe' => $deploymentInfo['pathLivenessProbe'],
             'urlHealthCheck' => [],
             'urlActuatorInfo' => [],
             'urlLogs' => [],
@@ -298,6 +298,7 @@ class GitlabService
         $mdmWorkloadVersion = $chartFile ? $this->chartParser->parseChartYaml($chartFile) : null;
 
         $deployName = null;
+        $pathLivenessProbe = null;
         if (!$cloudGCP) {
             // Ex : id = 648
             // Récupère le nom du service à partir du fichier deploy.yml pour construire l'url kibana
@@ -305,6 +306,7 @@ class GitlabService
             if ($deployYamlContent) {
                 try {
                     $deployName = ConfigYamlParser::parseServiceName($deployYamlContent);
+                    $pathLivenessProbe = ConfigYamlParser::parsePathLivenessProbe($deployYamlContent);
                 } catch (Exception $e) {
                     $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "Erreur lors du parsing du fichier deploy.yml pour le projet " . $gitLabProject->getName() . " : " . $e->getMessage());
                 }
@@ -314,6 +316,7 @@ class GitlabService
         return [
             'cloudGCP' => $cloudGCP,
             'deployName' => $deployName,
+            'pathLivenessProbe' => $pathLivenessProbe,
             'mdmWorkloadVersion' => $mdmWorkloadVersion,
         ];
     }
@@ -407,9 +410,25 @@ class GitlabService
         $gitlabProjects = $this->getProjects($this->appConfig->getParamConfig()->getParamGitLab()->getGitlabPathGroupDefault());
         $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . ' nb gitlab projects:' . count($gitlabProjects));
 
+        $excludeDomains = $this->appConfig->getParamConfig()->getParamGitLab()->getExcludeDomains();
+
         $projects = [];
         foreach ($gitlabProjects as $gitlabProject) {
             if (in_array($gitlabProject->getName(), $this->excludeProjects, true)) {
+                continue;
+            }
+
+            $pathInfo = $this->extractPathInfo($gitlabProject);
+            
+            $isDomainExcluded = false;
+            foreach ($excludeDomains as $pattern) {
+                if ($pathInfo['domain'] !== null && fnmatch($pattern, $pathInfo['domain'])) {
+                    $isDomainExcluded = true;
+                    break;
+                }
+            }
+            
+            if ($isDomainExcluded) {
                 continue;
             }
 

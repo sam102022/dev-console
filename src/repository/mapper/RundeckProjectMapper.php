@@ -12,50 +12,44 @@ class RundeckProjectMapper
     {
         $path = $data['path'] ?? null;
         $projectName = $path ? basename($path) : null;
-        $nom = $data['nom'] ?? null;
+        $name = $data['name'] ?? null;
+        $domain = $data['domain'] ?? null;
 
         $entity = new RundeckProjectEntity();
-        $entity->setEnv($data['env'] ?? '');
         $entity->setSf($data['sf'] ?? '');
         $entity->setCategory($data['category'] ?? null);
-        $entity->setToken($data['token'] ?? '');
+        
+        $token = $data['token'] ?? [];
+        if (is_string($token)) {
+            $token = [['dev' => '', 'prod' => $token]];
+        }
+        $entity->setToken($token);
+        
         $entity->setPath($path);
         $entity->setProjectName($projectName);
-        $entity->setNom($nom);
+        $entity->setName($name);
+        $entity->setDomain($domain);
         return $entity;
     }
 
     public static function toArray(RundeckProjectEntity $entity): array
     {
         return [
-            'env' => $entity->getEnv(),
             'sf' => $entity->getSf(),
             'category' => $entity->getCategory(),
             'token' => $entity->getToken(),
             'path' => $entity->getPath(),
             'projectName' => $entity->getProjectName(),
-            'nom' => $entity->getNom(),
+            'name' => $entity->getName(),
+            'domain' => $entity->getDomain(),
         ];
-    }
-
-    public static function fromEntity(RundeckProjectEntity $entity): RundeckProject
-    {
-        $model = new RundeckProject();
-        $model->setNom($entity->getNom());
-        $model->setEnv($entity->getEnv());
-        $model->setSf($entity->getSf());
-        $model->setCategory($entity->getCategory());
-        $model->setToken($entity->getToken());
-        $model->setPath($entity->getPath());
-        $model->setProjectName($entity->getProjectName());
-        return $model;
     }
 
     public static function toEntity(RundeckProject $project): RundeckProjectEntity
     {
         $entity = new RundeckProjectEntity();
-        $entity->setNom($project->getNom());
-        $entity->setEnv($project->getEnv());
+        $entity->setName($project->getName());
+        $entity->setDomain($project->getDomain());
         $entity->setSf($project->getSf());
         $entity->setCategory($project->getCategory());
         $entity->setToken($project->getToken());
@@ -67,8 +61,8 @@ class RundeckProjectMapper
     public static function toModel(RundeckProjectEntity $entity): RundeckProject
     {
         $model = new RundeckProject();
-        $model->setNom($entity->getNom());
-        $model->setEnv($entity->getEnv());
+        $model->setName($entity->getName());
+        $model->setDomain($entity->getDomain());
         $model->setSf($entity->getSf());
         $model->setCategory($entity->getCategory());
         $model->setToken($entity->getToken());

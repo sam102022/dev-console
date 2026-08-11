@@ -10,16 +10,16 @@ use App\model\EnumEnvironment;
 use App\service\GitlabService;
 use App\service\MonitoringService;
 use App\service\UserPreferencesService;
+use App\tests\AbstractTestCase;
 use App\viewModel\IndexViewModelFactory;
 use Exception;
-use GuzzleHttp\Exception\GuzzleException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Throwable;
 use Twig\Error\LoaderError;
 use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
-class MonitoringControllerTest extends AbstractControllerCase
+class MonitoringControllerTest extends AbstractTestCase
 {
     private IndexViewModelFactory $viewModelFactory;
     private GitlabService $gitlabService;

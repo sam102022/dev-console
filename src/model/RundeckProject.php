@@ -5,47 +5,47 @@ namespace App\model;
 
 class RundeckProject
 {
-    private string $nom = '';
-    private string $env = '';
+    private string $name = '';
+    private string $domain = '';
     private string $sf = '';
     private ?string $category = null;
-    private string $token = '';
+    private array $token = [];
     private ?string $path = null;
     private ?string $projectName = null;
 
     /**
      * @return string
      */
-    public function getNom(): string
+    public function getName(): string
     {
-        return $this->nom;
+        return $this->name;
     }
 
     /**
-     * @param string $nom
+     * @param string $name
      * @return RundeckProject
      */
-    public function setNom(string $nom): self
+    public function setName(string $name): self
     {
-        $this->nom = $nom;
+        $this->name = $name;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getEnv(): string
+    public function getDomain(): string
     {
-        return $this->env;
+        return $this->domain;
     }
 
     /**
-     * @param string $env
+     * @param string $domain
      * @return RundeckProject
      */
-    public function setEnv(string $env): self
+    public function setDomain(string $domain): self
     {
-        $this->env = $env;
+        $this->domain = $domain;
         return $this;
     }
 
@@ -86,18 +86,18 @@ class RundeckProject
     }
 
     /**
-     * @return string
+     * @return array
      */
-    public function getToken(): string
+    public function getToken(): array
     {
         return $this->token;
     }
 
     /**
-     * @param string $token
+     * @param array $token
      * @return RundeckProject
      */
-    public function setToken(string $token): self
+    public function setToken(array $token): self
     {
         $this->token = $token;
         return $this;

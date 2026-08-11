@@ -18,6 +18,8 @@ use Twig\Error\SyntaxError;
 
 class PostmanController
 {
+    public const string ROUTE_POSTMAN = 'postman';
+
     /**
      * @var Logger L'instance du logger pour cette classe.
      */
@@ -56,7 +58,7 @@ class PostmanController
     {
         try {
             $viewModel = $this->viewModelFactory->build($this->context, $messages);
-            $viewModel['current_route'] = 'postman';
+            $viewModel['current_route'] = self::ROUTE_POSTMAN;
             echo $this->twig->render(
                 'postman.html.twig',
                 $viewModel
