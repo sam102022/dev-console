@@ -410,9 +410,25 @@ class GitlabService
         $gitlabProjects = $this->getProjects($this->appConfig->getParamConfig()->getParamGitLab()->getGitlabPathGroupDefault());
         $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . ' nb gitlab projects:' . count($gitlabProjects));
 
+        $excludeDomains = $this->appConfig->getParamConfig()->getParamGitLab()->getExcludeDomains();
+
         $projects = [];
         foreach ($gitlabProjects as $gitlabProject) {
             if (in_array($gitlabProject->getName(), $this->excludeProjects, true)) {
+                continue;
+            }
+
+            $pathInfo = $this->extractPathInfo($gitlabProject);
+            
+            $isDomainExcluded = false;
+            foreach ($excludeDomains as $pattern) {
+                if ($pathInfo['domain'] !== null && fnmatch($pattern, $pathInfo['domain'])) {
+                    $isDomainExcluded = true;
+                    break;
+                }
+            }
+            
+            if ($isDomainExcluded) {
                 continue;
             }
 

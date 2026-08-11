@@ -224,6 +224,53 @@ document.addEventListener('DOMContentLoaded', function() {
     const tbody = document.getElementById('projects-tbody');
     let rows = Array.from(document.querySelectorAll('.project-row'));
 
+    // Sauvegarde des options SF originales pour pouvoir les filtrer dynamiquement
+    const originalSfOptions = Array.from(filterSf.options).map(opt => ({
+        value: opt.value,
+        text: opt.textContent
+    }));
+
+    function updateSfFilter() {
+        const selectedDomain = filterDomain.value;
+        const currentSelectedSf = filterSf.value;
+
+        let allowedSfs = null;
+        if (selectedDomain !== 'all') {
+            allowedSfs = new Set();
+            rows.forEach(row => {
+                const domain = row.querySelector('.col-domain').getAttribute('data-value');
+                const sf = row.querySelector('.col-sf').getAttribute('data-value');
+                if (domain === selectedDomain && sf) {
+                    allowedSfs.add(sf);
+                }
+            });
+        }
+
+        // Vider les options de filterSf
+        filterSf.innerHTML = '';
+
+        // Reconstruire les options de filterSf
+        originalSfOptions.forEach(opt => {
+            if (opt.value === 'all' || !allowedSfs || allowedSfs.has(opt.value)) {
+                const newOpt = document.createElement('option');
+                newOpt.value = opt.value;
+                newOpt.textContent = opt.text;
+                filterSf.appendChild(newOpt);
+            }
+        });
+
+        // Restaurer la sélection de SF si elle est toujours disponible, sinon réinitialiser à 'all'
+        const hasSelected = Array.from(filterSf.options).some(opt => opt.value === currentSelectedSf);
+        if (hasSelected) {
+            filterSf.value = currentSelectedSf;
+        } else {
+            filterSf.value = 'all';
+        }
+    }
+
+    // Associer la mise à jour du filtre SF au changement du filtre Domaine
+    filterDomain.addEventListener('change', updateSfFilter);
+
     // Éléments DOM (Pagination)
     const rowsPerPageSelect = document.getElementById('rows_per_page');
     const paginationContainer = document.getElementById('pagination-container');
@@ -456,6 +503,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btnResetFilters.addEventListener('click', function() {
             const params = new URLSearchParams(window.location.search);
             filterDomain.value = 'all';
+            updateSfFilter();
             filterSf.value = 'all';
             filterProjectName.value = '';
 
@@ -472,6 +520,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- INITIALISATION ---
     applyFiltersFromURL();
+    updateSfFilter();
     applyFilters();
 });
 </script>
