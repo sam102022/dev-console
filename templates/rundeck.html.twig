@@ -288,22 +288,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateURLFromFilters() {
         const params = new URLSearchParams(window.location.search);
 
-        if (filterDomain.value !== 'all') {
-            params.set('domain', filterDomain.value);
-        } else {
-            params.delete('domain');
-        }
+        const filters = {
+            domain: filterDomain.value,
+            sf: filterSf.value,
+            name: filterProjectName.value
+        };
 
-        if (filterSf.value !== 'all') {
-            params.set('sf', filterSf.value);
-        } else {
-            params.delete('sf');
-        }
-
-        if (filterProjectName.value !== '') {
-            params.set('name', filterProjectName.value);
-        } else {
-            params.delete('name');
+        for (const [key, value] of Object.entries(filters)) {
+            if (value !== 'all' && value !== '') {
+                params.set(key, value);
+                sessionStorage.setItem('app_filter_' + key, value);
+            } else {
+                params.delete(key);
+                sessionStorage.removeItem('app_filter_' + key);
+            }
         }
 
         const newRelativePathQuery = window.location.pathname + '?' + params.toString();
@@ -312,9 +310,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function applyFiltersFromURL() {
         const params = new URLSearchParams(window.location.search);
-        const domain = params.get('domain');
-        const sf = params.get('sf');
-        const name = params.get('name');
+        
+        const getFilterValue = (key) => {
+            if (params.has(key)) return params.get(key);
+            return sessionStorage.getItem('app_filter_' + key);
+        };
+
+        const domain = getFilterValue('domain');
+        const sf = getFilterValue('sf');
+        const name = getFilterValue('name');
 
         if (domain) filterDomain.value = domain;
         if (sf) filterSf.value = sf;
@@ -501,18 +505,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (btnResetFilters) {
         btnResetFilters.addEventListener('click', function() {
-            const params = new URLSearchParams(window.location.search);
             filterDomain.value = 'all';
             updateSfFilter();
             filterSf.value = 'all';
             filterProjectName.value = '';
-
-            params.delete('domain');
-            params.delete('sf');
-            params.delete('name');
-
-            const newRelativePathQuery = window.location.pathname + '?' + params.toString();
-            history.replaceState(null, '', newRelativePathQuery);
 
             applyFilters();
         });

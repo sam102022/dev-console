@@ -446,8 +446,10 @@ document.addEventListener('DOMContentLoaded', function() {
         for (const [key, value] of Object.entries(filters)) {
             if (value !== 'all' && value !== '') {
                 params.set(key, value);
+                sessionStorage.setItem('app_filter_' + key, value);
             } else {
                 params.delete(key);
+                sessionStorage.removeItem('app_filter_' + key);
             }
         }
 
@@ -457,13 +459,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function applyFiltersFromURL() {
         const params = new URLSearchParams(window.location.search);
+        
+        const getFilterValue = (key) => {
+            if (params.has(key)) return params.get(key);
+            return sessionStorage.getItem('app_filter_' + key);
+        };
+
         const filters = {
-            domain: params.get('domain'),
-            sf: params.get('sf'),
-            name: params.get('name'),
-            techno: params.get('techno'),
-            archived: params.get('archived'),
-            gcp: params.get('gcp')
+            domain: getFilterValue('domain'),
+            sf: getFilterValue('sf'),
+            name: getFilterValue('name'),
+            techno: getFilterValue('techno'),
+            archived: getFilterValue('archived'),
+            gcp: getFilterValue('gcp')
         };
 
         if (filters.domain) filterDomain.value = filters.domain;

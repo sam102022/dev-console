@@ -306,8 +306,10 @@ document.addEventListener('DOMContentLoaded', function() {
         for (const [key, value] of Object.entries(filters)) {
             if (value !== 'all' && value !== '') {
                 params.set(key, value);
+                sessionStorage.setItem('app_filter_' + key, value);
             } else {
                 params.delete(key);
+                sessionStorage.removeItem('app_filter_' + key);
             }
         }
 
@@ -317,15 +319,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function applyFiltersFromURL() {
         const params = new URLSearchParams(window.location.search);
+        
+        const getFilterValue = (key) => {
+            if (params.has(key)) return params.get(key);
+            return sessionStorage.getItem('app_filter_' + key);
+        };
+
         const filters = {
-            domain: params.get('domain'),
-            sf: params.get('sf'),
-            name: params.get('name'),
-            gcp: params.get('gcp'),
-            sb_version: params.get('sb_version'),
-            java_version: params.get('java_version'),
-            mdm_version: params.get('mdm_version'),
-            status: params.get('status')
+            domain: getFilterValue('domain'),
+            sf: getFilterValue('sf'),
+            name: getFilterValue('name'),
+            gcp: getFilterValue('gcp'),
+            sb_version: getFilterValue('sb_version'),
+            java_version: getFilterValue('java_version'),
+            mdm_version: getFilterValue('mdm_version'),
+            status: getFilterValue('status')
         };
 
         if (filters.domain) filterDomain.value = filters.domain;
