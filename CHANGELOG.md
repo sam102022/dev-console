@@ -5,6 +5,12 @@ Historique de tous les changements notables du projet dev-console
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
 
+## [1.4.0] - 11/08/2026
+
+### Changed
+
+- Centralisation du JavaScript (DRY)
+
 ## [1.3.0] - 11/08/2026
 
 ### Changed
