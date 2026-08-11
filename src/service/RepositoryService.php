@@ -6,95 +6,62 @@ namespace App\service;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\util\UtilsLog;
-use JsonException;
 use Monolog\Logger;
+use Symfony\Component\Cache\Adapter\FilesystemAdapter;
 
 class RepositoryService
 {
     private Logger $logger;
-    private string $path;
+    private FilesystemAdapter $cache;
 
     public function __construct(string $path, LoggerFactory $loggerFactory)
     {
-        $this->path = $path;
+        $this->cache = new FilesystemAdapter('dev_console_data', 0, $path);
         $this->logger = $loggerFactory->get(__CLASS__);
     }
 
-    private function getPath(string $filename): string
+    private function sanitizeKey(string $filename): string
     {
-        return $this->path . "/$filename";
+        return preg_replace('/[^a-zA-Z0-9_]/', '_', $filename);
     }
 
     public function isFileExists(string $filename): bool
     {
-        $pathFile = $this->getPath($filename);
-        return file_exists($pathFile);
+        return $this->cache->hasItem($this->sanitizeKey($filename));
     }
 
-    /**
-     * @throws TechnicalException
-     */
     public function read(string $filename): array
     {
-        $pathFile = $this->getPath($filename);
-        if (!is_readable($pathFile)) {
+        $key = $this->sanitizeKey($filename);
+        $item = $this->cache->getItem($key);
+        
+        if (!$item->isHit()) {
             return [];
         }
 
-        $data = file_get_contents($pathFile);
-        if ($data === false) {
-            $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "Erreur lors de la lecture du fichier $pathFile");
-            throw new TechnicalException("Erreur lors de la lecture du fichier $pathFile");
-        }
-
-        if (empty(trim($data))) {
-            return [];
-        }
-
-        try {
-            return json_decode($data, true, 512, JSON_THROW_ON_ERROR);
-        } catch (JsonException $e) {
-            $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                . "Erreur lors du décodage JSON du fichier $filename : " . $e->getMessage());
-            throw new TechnicalException("Erreur lors du décodage JSON du fichier $filename", 400, $e);
-        }
+        $data = $item->get();
+        return is_array($data) ? $data : [];
     }
 
-    /**
-     * @throws TechnicalException
-     */
     public function save(array $responseJson, string $filename): void
     {
+        $key = $this->sanitizeKey($filename);
         $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-            . "Sauvegarde du fichier $filename");
+            . "Sauvegarde du cache pour la clef $key");
 
-        $pathFile = $this->getPath($filename);
+        $item = $this->cache->getItem($key);
+        $item->set($responseJson);
+        $this->cache->save($item);
 
-        try {
-            $jsonData = json_encode($responseJson, JSON_THROW_ON_ERROR); //  | JSON_PRETTY_PRINT
-            if (file_put_contents($pathFile, $jsonData) === false) {
-                $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                    . "Cannot write to file ($pathFile)");
-                throw new TechnicalException("Cannot write to file ($pathFile)");
-            }
-
-            $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                . "Success, wrote to file ($pathFile)");
-
-        } catch (JsonException $e) {
-            $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                . "Error encoding JSON for file $filename: " . $e->getMessage());
-            throw new TechnicalException("Error encoding JSON for file $filename", 400, $e);
-        }
+        $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
+            . "Success, saved to cache ($key)");
     }
 
     public function delete(string $filename): void
     {
-        $pathFile = $this->getPath($filename);
-        if (file_exists($pathFile)) {
-            unlink($pathFile);
-            $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-                . "Fichier supprimé: $filename");
-        }
+        $key = $this->sanitizeKey($filename);
+        $this->cache->deleteItem($key);
+        $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
+            . "Cache supprimé: $key");
     }
 }

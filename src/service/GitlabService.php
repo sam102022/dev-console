@@ -182,13 +182,37 @@ class GitlabService
         $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
             . "Traitement du projet " . $gitLabProject->getName() . "...");
         
-        $pathInfo = $this->extractPathInfo($gitLabProject);
-        $deploymentInfo = $this->getDeploymentInfo($gitLabProject);
-        $mavenInfo = $this->scanPomXml($gitLabProject);
-        $techno = $this->getTechno($gitLabProject);
-        $subscriptionName = $this->getSubscriptionName($gitLabProject);
+        $id = $gitLabProject->getId();
+        $branch = $gitLabProject->getDefaultBranch() ?? 'master';
+        
+        $promises = [
+            'pom' => $this->client->getFileAsync($id, 'pom.xml', true, $branch),
+            'chart' => $this->client->getFileAsync($id, 'chart/Chart.yaml', true, $branch),
+            'deploy' => $this->client->getFileAsync($id, 'deploy/conf/dev/deploy.yml', true, $branch),
+            'package' => $this->client->getFileAsync($id, 'package.json', true, $branch),
+            'app_yml' => $this->client->getFileAsync($id, 'src/main/resources/application.yml', true, $branch),
+            'app_yaml' => $this->client->getFileAsync($id, 'src/main/resources/application.yaml', true, $branch),
+            'values_dev' => $this->client->getFileAsync($id, 'chart/values-dev.yaml', true, $branch),
+        ];
+        
+        $results = \GuzzleHttp\Promise\Utils::settle($promises)->wait();
+        
+        $files = [
+            'pom' => $results['pom']['state'] === 'fulfilled' ? $results['pom']['value'] : null,
+            'chart' => $results['chart']['state'] === 'fulfilled' ? $results['chart']['value'] : null,
+            'deploy' => $results['deploy']['state'] === 'fulfilled' ? $results['deploy']['value'] : null,
+            'package' => $results['package']['state'] === 'fulfilled' ? $results['package']['value'] : null,
+            'app_yml' => $results['app_yml']['state'] === 'fulfilled' ? $results['app_yml']['value'] : null,
+            'app_yaml' => $results['app_yaml']['state'] === 'fulfilled' ? $results['app_yaml']['value'] : null,
+            'values_dev' => $results['values_dev']['state'] === 'fulfilled' ? $results['values_dev']['value'] : null,
+        ];
 
+        $pathInfo = $this->extractPathInfo($gitLabProject);
+        $deploymentInfo = $this->getDeploymentInfo($files);
+        $mavenInfo = $this->scanPomXml($files);
         $projectName = $gitLabProject->getName();
+        $techno = $this->getTechno($projectName, $files);
+        $subscriptionName = $this->getSubscriptionName($files);
 
         $data = [
             'name' => $projectName,
@@ -262,15 +286,12 @@ class GitlabService
     /**
      * Scan un fichier pom.xml d'un projet gitlab
      *
-     * @param GitlabProject $gitLabProject Le projet gitlab à scanner
+     * @param array $files Les fichiers prechargés
      * @return array|null
      */
-    private function scanPomXml(GitlabProject $gitLabProject): ?array
+    private function scanPomXml(array $files): ?array
     {
-        $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-            . "Récupération du fichier pom.xml du projet " . $gitLabProject->getName() . "...");
-
-        $pom = $this->client->getFile($gitLabProject->getId(), 'pom.xml', true, $gitLabProject->getDefaultBranch());
+        $pom = $files['pom'];
         if (!$pom) {
             return null;
         }
@@ -288,27 +309,21 @@ class GitlabService
         ];
     }
 
-    private function getDeploymentInfo(GitlabProject $gitLabProject): array
+    private function getDeploymentInfo(array $files): array
     {
-        $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-            . "Récupération des infos de déploiement du projet " . $gitLabProject->getName() . "...");
-
-        $chartFile = $this->client->getFile($gitLabProject->getId(), 'chart/Chart.yaml', true, $gitLabProject->getDefaultBranch());
+        $chartFile = $files['chart'];
         $cloudGCP = (bool)$chartFile;
         $mdmWorkloadVersion = $chartFile ? $this->chartParser->parseChartYaml($chartFile) : null;
 
         $deployName = null;
         $pathLivenessProbe = null;
         if (!$cloudGCP) {
-            // Ex : id = 648
-            // Récupère le nom du service à partir du fichier deploy.yml pour construire l'url kibana
-            $deployYamlContent = $this->client->getFile($gitLabProject->getId(), 'deploy/conf/dev/deploy.yml', true, $gitLabProject->getDefaultBranch());
+            $deployYamlContent = $files['deploy'];
             if ($deployYamlContent) {
                 try {
                     $deployName = ConfigYamlParser::parseServiceName($deployYamlContent);
                     $pathLivenessProbe = ConfigYamlParser::parsePathLivenessProbe($deployYamlContent);
                 } catch (Exception $e) {
-                    $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "Erreur lors du parsing du fichier deploy.yml pour le projet " . $gitLabProject->getName() . " : " . $e->getMessage());
                 }
             }
         }
@@ -321,13 +336,8 @@ class GitlabService
         ];
     }
 
-    private function getTechno(GitlabProject $gitLabProject): string
+    private function getTechno(string $name, array $files): string
     {
-        $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-            . "Récupération du language du projet " . $gitLabProject->getName() . "...");
-
-        $name = $gitLabProject->getName();
-
         if (str_starts_with($name, 'api')
             || str_starts_with($name, 'flow')
             || str_starts_with($name, 'batch')
@@ -340,37 +350,19 @@ class GitlabService
             return 'php';
         }
 
-        $packageFile = $this->client->getFile(
-            $gitLabProject->getId(),
-            'package.json',
-            true,
-            $gitLabProject->getDefaultBranch()
-        );
+        $packageFile = $files['package'];
 
         return $packageFile
             ? (PackageJsonParser::parsePackage($packageFile) ?? '')
             : '';
     }
 
-    private function getSubscriptionName(GitlabProject $gitLabProject): ?string
+    private function getSubscriptionName(array $files): ?string
     {
-        $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__)
-            . "Récupération de la souscription du projet " . $gitLabProject->getName() . "...");
-
-        $yamlContent = $this->client->getFile(
-            $gitLabProject->getId(),
-            'src/main/resources/application.yml',
-            true,
-            $gitLabProject->getDefaultBranch()
-        );
+        $yamlContent = $files['app_yml'];
 
         if (!$yamlContent) {
-            $yamlContent = $this->client->getFile(
-                $gitLabProject->getId(),
-                'src/main/resources/application.yaml',
-                true,
-                $gitLabProject->getDefaultBranch()
-            );
+            $yamlContent = $files['app_yaml'];
         }
 
         if ($yamlContent) {
@@ -380,19 +372,13 @@ class GitlabService
 
                 if ($subscriptionName && preg_match('/^\$\{(.+)}$/', $subscriptionName, $matches)) {
                     $variableName = $matches[1];
-                    $valuesDevContent = $this->client->getFile(
-                        $gitLabProject->getId(),
-                        'chart/values-dev.yaml',
-                        true,
-                        $gitLabProject->getDefaultBranch()
-                    );
+                    $valuesDevContent = $files['values_dev'];
 
                     if ($valuesDevContent) {
                         return ConfigYamlParser::parseVariableInValuesFile($valuesDevContent, $variableName);
                     }
                 }
             } catch (Exception $e) {
-                $this->logger->error(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . " Erreur lors du parsing du fichier deploy.yml pour le projet " . $gitLabProject->getName() . " : " . $e->getMessage());
             }
             return $subscriptionName;
         }

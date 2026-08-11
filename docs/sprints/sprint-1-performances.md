@@ -17,6 +17,6 @@ Actuellement, le scan GitLab souffre du problème "N+1 requêtes" : pour chaque 
    - *Tâche technique* : Implémenter le `FilesystemAdapter` ou le `RedisAdapter` dans le `RepositoryService`. Cela permettra de lire/écrire les projets individuellement au lieu de charger un énorme tableau en mémoire.
 
 ## ✅ Definition of Done (DoD)
-- Le temps d'exécution de la commande `php bin/console.php app:scan` est divisé par au moins 5.
+- Le temps d'exécution de la commande `php bin/console.php app:scan` est divisé par au moins 5 (actuellement 12 minutes d'execution).
 - La mémoire RAM utilisée lors du chargement des pages web (Index, Monitoring, Rundeck) est réduite.
 - Les tests unitaires de `GitlabService` et `RepositoryService` passent avec succès.
