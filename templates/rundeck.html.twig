@@ -149,44 +149,7 @@
                     </tr>
                 </thead>
                 <tbody id="projects-tbody">
-                    {% for r in results %}
-                        {% set isEligibleForLogs = r.techno is defined and r.techno != '' and r.techno != 'php' %}
-                        <tr class="project-row" data-project-name="{{ r.name }}">
-                            <td class="col-index text-muted font-weight-bold"></td>
-                            <td class="col-domain" data-column="domain" data-value="{{ r.domain }}">{{ r.domain }}</td>
-                            <td class="col-sf" data-column="sf" data-value="{{ r.sf }}">{{ r.sf }}</td>
-                            <td class="col-name">
-                                {% set projectName = r.name|length > 35
-                                    ? r.name|slice(0, 35) ~ '...'
-                                    : r.name
-                                %}
-                                {% if r.webUrl is defined and r.webUrl != '' %}
-                                    <a href="{{ r.webUrl }}"
-                                       class="url-link text-decoration-none"
-                                       target="_blank"
-                                       title="Voir le projet Gitlab{% if r.archived %} archivé{% endif %} {{ r.name }}">
-                                        <i class="fa-brands fa-gitlab text-warning"></i> {{ projectName }}
-                                    </a>
-                                {% else %}
-                                    {{ projectName }}
-                                {% endif %}
-                            </td>
-
-                            {% for env in ['dev', 'rec', 'pp', 'prod'] %}
-                            <td class="col-{{ env }} text-left" data-column="{{ env }}" data-env="{{ env }}">
-                                {% if r.urlsRundeck[env] is defined and r.urlsRundeck[env] != '' %}
-                                <a href="{{ r.urlsRundeck[env] }}" class="url-link ml-2" target="_blank" title="Voir le Rundeck de {{ env }}">
-                                    <i class="fa-solid fa-code-branch text-danger"></i>
-                                </a>
-                                {% endif %}
-                            </td>
-                            {% endfor %}
-
-                            <td class="text-center">
-
-                            </td>
-                        </tr>
-                    {% endfor %}
+                    {% include 'common/_rundeck_rows.html.twig' %}
                 </tbody>
             </table>
         </div>
@@ -211,5 +174,8 @@
     </div>
 </div>
 
+<script>
+    window.columnsPrefs = {{ columns_prefs|default([])|json_encode|raw }};
+</script>
 <script src="js/datagrid.js"></script>
 {% endblock body %}

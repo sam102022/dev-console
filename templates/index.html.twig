@@ -135,62 +135,7 @@
                 </tr>
             </thead>
             <tbody id="projects-tbody">
-                {% for r in results %}
-                    <tr class="project-row">
-                        <td class="col-index text-muted font-weight-bold"></td>
-                        <td class="col-domain" data-value="{{ r.domain }}">{{ r.domain }}</td>
-                        <td class="col-sf" data-value="{{ r.sf }}">{{ r.sf }}</td>
-                        <td class="col-name">
-                            {% if r.webUrl is defined and r.webUrl != '' %}
-                                <a href="{{ r.webUrl }}"
-                                   class="url-link text-decoration-none"
-                                   target="_blank"
-                                   title="Voir le projet Gitlab{% if r.archived %} archivé{% endif %} {{ r.name }}">
-                                    <i class="fa-brands fa-gitlab text-warning"></i> {{ r.name }}
-                                </a>
-                            {% else %}
-                                {{ r.name }}
-                            {% endif %}
-                        </td>
-                        <td class="col-gcp" data-value="{% if r.cloudGCP == 1 %}oui{% else %}non{% endif %}">
-                            {% if r.cloudGCP == 1 %}<i class="fa-brands fa-google text-primary"></i>{% else %}-{% endif %}
-                        </td>
-
-                        <td class="col-sb">
-                            <span class="badge badge-info">
-                                {{ r.springBoot|default('N/A') }}
-                            </span>
-                        </td>
-
-                        <td class="col-java" data-value="{{ r.java|default('N/A') }}">
-                            <span class="badge badge-secondary">
-                                {{ r.java|default('N/A') }}
-                            </span>
-                        </td>
-
-                        <td class="col-mdm">
-                            <span class="badge badge-info">
-                                {{ r.mdmWorkloadVersion|default('N/A') }}
-                            </span>
-                        </td>
-
-                        <td class="col-status">
-                            {% set status = 'success' %}
-                            {% set label = 'OK' %}
-
-                            {% if r.java|default(0) < 17 %}
-                                {% set status = 'danger' %}
-                                {% set label = 'Java obsolète' %}
-                            {% elseif r.springBoot|default(0) < 3 %}
-                                {% set status = 'warning' %}
-                                {% set label = 'Spring Boot ancien' %}
-                            {% endif %}
-                            <span class="badge badge-{{ status }} status-label">
-                                {{ label }}
-                            </span>
-                        </td>
-                    </tr>
-                {% endfor %}
+                {% include 'common/_index_rows.html.twig' %}
             </tbody>
         </table>
     </div>

@@ -7,13 +7,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const tbody = document.getElementById('projects-tbody');
     if (!tbody) return;
 
-    let rows = Array.from(document.querySelectorAll('.project-row'));
     const filterInputs = document.querySelectorAll('.filter-input');
     const filterDomain = document.getElementById('filter_domain');
     const filterSf = document.getElementById('filter_sf');
     const btnResetFilters = document.getElementById('btn-reset-filters');
     
-    // --- GESTION DES COLONNES (Si applicable) ---
+    // --- GESTION DES COLONNES ---
     const columnToggles = document.querySelectorAll('.column-toggle');
     const table = document.getElementById('projects-table');
     
@@ -31,8 +30,11 @@ document.addEventListener('DOMContentLoaded', function() {
             prefs[toggle.dataset.column] = toggle.checked;
         });
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const page = urlParams.get('page') || 'monitoring';
+
         try {
-            await fetch('?action=saveColumnsPrefs', {
+            await fetch(`?page=${page}&action=saveColumnsPrefs`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ columns: prefs })
@@ -42,7 +44,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    if (columnToggles.length > 0 && typeof window.columnsPrefs !== 'undefined') {
+    if (columnToggles.length > 0) {
+        if (typeof window.columnsPrefs === 'undefined') {
+            window.columnsPrefs = {};
+        }
+
         columnToggles.forEach(toggle => {
             const column = toggle.dataset.column;
             if (window.columnsPrefs[column] !== undefined) {
@@ -73,31 +79,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }));
     }
 
-    function updateSfFilter() {
-        if (!filterDomain || !filterSf) return;
+    function updateSfFilterDropdown(allowedSfs) {
+        if (!filterSf) return;
         
-        const selectedDomain = filterDomain.value;
         const currentSelectedSf = filterSf.value;
-
-        let allowedSfs = null;
-        if (selectedDomain !== 'all') {
-            allowedSfs = new Set();
-            rows.forEach(row => {
-                const domainCol = row.querySelector('.col-domain');
-                const sfCol = row.querySelector('.col-sf');
-                if (domainCol && sfCol) {
-                    const domain = domainCol.getAttribute('data-value');
-                    const sf = sfCol.getAttribute('data-value');
-                    if (domain === selectedDomain && sf) {
-                        allowedSfs.add(sf);
-                    }
-                }
-            });
-        }
 
         filterSf.innerHTML = '';
         originalSfOptions.forEach(opt => {
-            if (opt.value === 'all' || !allowedSfs || allowedSfs.has(opt.value)) {
+            if (opt.value === 'all' || !allowedSfs || allowedSfs.includes(opt.value)) {
                 const newOpt = document.createElement('option');
                 newOpt.value = opt.value;
                 newOpt.textContent = opt.text;
@@ -107,10 +96,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const hasSelected = Array.from(filterSf.options).some(opt => opt.value === currentSelectedSf);
         filterSf.value = hasSelected ? currentSelectedSf : 'all';
-    }
-
-    if (filterDomain) {
-        filterDomain.addEventListener('change', updateSfFilter);
     }
 
     // --- URL ET SESSION STORAGE ---
@@ -154,20 +139,63 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- PAGINATION ---
+    // --- PAGINATION & AJAX ---
     const rowsPerPageSelect = document.getElementById('rows_per_page');
     const paginationContainer = document.getElementById('pagination-container');
     const paginationInfo = document.getElementById('pagination-info');
 
     let currentPage = 1;
     let rowsPerPage = rowsPerPageSelect ? parseInt(rowsPerPageSelect.value) : 15;
-    let filteredRows = [...rows];
-    window.filteredRows = filteredRows; // Expose for external checkboxes
+    let totalRows = 0;
 
-    function updatePagination() {
+    async function fetchData() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const pageName = urlParams.get('page') || 'index';
+
+        const params = new URLSearchParams();
+        params.set('action', 'getDatagridRows');
+        params.set('page', pageName);
+        params.set('p', currentPage);
+        params.set('rows_per_page', rowsPerPage);
+        params.set('sort_column', currentSortColumn);
+        params.set('sort_dir', currentSortDirection);
+
+        filterInputs.forEach(input => {
+            const key = getFilterKey(input);
+            const val = input.value;
+            if (val !== 'all' && val !== '') {
+                params.set('filter_' + key, val);
+            }
+        });
+
+        try {
+            const response = await fetch('?' + params.toString());
+            const data = await response.json();
+
+            if (data.success) {
+                tbody.innerHTML = data.html;
+                totalRows = data.totalRows;
+
+                if (data.allowedSfs) {
+                    updateSfFilterDropdown(data.allowedSfs);
+                }
+
+                updatePaginationControls();
+
+                // Réappliquer la visibilité des colonnes pour le nouveau DOM
+                columnToggles.forEach(toggle => setColumnVisibility(toggle.dataset.column, toggle.checked));
+
+                // Déclencher un événement global pour d'autres scripts (comme la sélection globale)
+                document.dispatchEvent(new CustomEvent('datagrid.filtered', { detail: { totalRows: totalRows } }));
+            }
+        } catch (error) {
+            console.error('Erreur fetchData datagrid:', error);
+        }
+    }
+
+    function updatePaginationControls() {
         if (!paginationContainer || !paginationInfo) return;
-        
-        const totalRows = window.filteredRows.length;
+
         const totalPages = Math.ceil(totalRows / rowsPerPage);
 
         if (currentPage < 1) currentPage = 1;
@@ -175,10 +203,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const startIndex = (currentPage - 1) * rowsPerPage;
         const endIndex = startIndex + rowsPerPage;
-
-        rows.forEach(row => row.style.display = 'none');
-        const displayedRows = window.filteredRows.slice(startIndex, endIndex);
-        displayedRows.forEach(row => row.style.display = '');
 
         const endDisplayIndex = Math.min(endIndex, totalRows);
         const startDisplayIndex = totalRows === 0 ? 0 : startIndex + 1;
@@ -205,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const page = parseInt(e.target.getAttribute('data-page'));
                 if (!isNaN(page)) {
                     currentPage = page;
-                    updatePagination();
+                    fetchData();
                 }
             }
         });
@@ -215,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function() {
         rowsPerPageSelect.addEventListener('change', function() {
             rowsPerPage = parseInt(this.value);
             currentPage = 1;
-            updatePagination();
+            fetchData();
         });
     }
 
@@ -223,20 +247,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentSortColumn = '';
     let currentSortDirection = 'asc';
     const sortHeaders = document.querySelectorAll('.sortable-header');
-
-    function getColumnValue(row, column) {
-        const cell = row.querySelector(`[data-column="${column}"]`);
-        if (cell) {
-            if (cell.hasAttribute('data-value')) return cell.getAttribute('data-value');
-            return cell.textContent.trim();
-        }
-        const genericCell = row.querySelector(`.col-${column}`);
-        if (genericCell) {
-            if (genericCell.hasAttribute('data-value')) return genericCell.getAttribute('data-value');
-            return genericCell.textContent.trim();
-        }
-        return '';
-    }
 
     sortHeaders.forEach(header => {
         header.addEventListener('click', function() {
@@ -261,64 +271,33 @@ document.addEventListener('DOMContentLoaded', function() {
                 currentIcon.style.opacity = '1';
             }
 
-            rows.sort((a, b) => {
-                let valA = getColumnValue(a, column);
-                let valB = getColumnValue(b, column);
-                const numA = parseFloat(valA);
-                const numB = parseFloat(valB);
-                if (!isNaN(numA) && !isNaN(numB) && isFinite(valA) && isFinite(valB)) {
-                    valA = numA;
-                    valB = numB;
-                } else {
-                    valA = valA.toString().toLowerCase();
-                    valB = valB.toString().toLowerCase();
-                }
-                if (valA < valB) return currentSortDirection === 'asc' ? -1 : 1;
-                if (valA > valB) return currentSortDirection === 'asc' ? 1 : -1;
-                return 0;
-            });
-
-            rows.forEach(row => tbody.appendChild(row));
-            window.applyDatagridFilters();
+            currentPage = 1;
+            fetchData();
         });
     });
 
     // --- FILTRES ---
+    let filterDebounceTimeout = null;
+
     window.applyDatagridFilters = function() {
-        window.filteredRows = rows.filter(row => {
-            let match = true;
-            filterInputs.forEach(input => {
-                const val = input.value.toLowerCase();
-                if (val === 'all' || val === '') return;
-
-                const key = getFilterKey(input);
-                let cellVal = getColumnValue(row, key).toLowerCase();
-                
-                if (input.tagName === 'SELECT') {
-                    if (cellVal !== val) match = false;
-                } else {
-                    if (!cellVal.includes(val)) match = false;
-                }
-            });
-            return match;
-        });
-
-        window.filteredRows.forEach((row, index) => {
-            const idxCol = row.querySelector('.col-index');
-            if (idxCol) idxCol.textContent = index + 1;
-        });
-
-        // Trigger custom global events for views that need extra behavior (like unchecking checkboxes)
-        document.dispatchEvent(new CustomEvent('datagrid.filtered', { detail: { filteredRows: window.filteredRows } }));
-
         currentPage = 1;
-        updatePagination();
         updateURLFromFilters();
+        fetchData();
     };
 
     filterInputs.forEach(input => {
         const eventType = input.tagName === 'SELECT' ? 'change' : 'input';
-        input.addEventListener(eventType, window.applyDatagridFilters);
+        
+        input.addEventListener(eventType, function() {
+            if (eventType === 'input') {
+                clearTimeout(filterDebounceTimeout);
+                filterDebounceTimeout = setTimeout(() => {
+                    window.applyDatagridFilters();
+                }, 300); // 300ms debounce
+            } else {
+                window.applyDatagridFilters();
+            }
+        });
     });
 
     if (btnResetFilters) {
@@ -327,13 +306,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (input.tagName === 'SELECT') input.value = 'all';
                 else input.value = '';
             });
-            updateSfFilter();
             window.applyDatagridFilters();
         });
     }
 
     // --- START ---
     applyFiltersFromURL();
-    updateSfFilter();
     window.applyDatagridFilters();
 });

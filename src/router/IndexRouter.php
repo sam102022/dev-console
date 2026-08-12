@@ -78,12 +78,34 @@ final class IndexRouter
                     echo $this->postmanController->handleRequest($action);
                     break;
                 case ACTION_SAVE_COLUMNS_PREFS:
+                    $page = $_REQUEST['page'] ?? '';
+                    if ($page === RundeckController::ROUTE_RUNDECK) {
+                        echo $this->rundeckController->handleRequest($action);
+                    } else {
+                        echo $this->monitoringController->handleRequest($action);
+                    }
+                    break;
                 case ACTION_MONITORING_GET_DATA:
                     echo $this->monitoringController->handleRequest($action);
+                    break;
+                case ACTION_GET_DATAGRID_ROWS:
+                    $page = $_REQUEST['page'] ?? 'index';
+                    switch ($page) {
+                        case MonitoringController::ROUTE_MONITORING:
+                            echo $this->monitoringController->handleRequest($action);
+                            break;
+                        case RundeckController::ROUTE_RUNDECK:
+                            echo $this->rundeckController->handleRequest($action);
+                            break;
+                        default:
+                            echo $this->indexController->handleRequest($action);
+                            break;
+                    }
                     break;
                 default:
                     $this->notFound($action);
             }
+            return; // Fin de l'exécution pour toutes les actions (évite le double rendu)
         }
         if (isset($_REQUEST['page'])) {
             $page = $_REQUEST['page'];

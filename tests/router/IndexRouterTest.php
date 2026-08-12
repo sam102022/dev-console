@@ -66,6 +66,7 @@ class IndexRouterTest extends AbstractTestCase
             'postman import openapi' => [ACTION_POSTMAN_IMPORT_OPENAPI, 'postmanController', 'handleRequest'],
             'postman get workspace details' => [ACTION_POSTMAN_GET_WORKSPACE_DETAILS, 'postmanController', 'handleRequest'],
             'monitoring check one' => [ACTION_MONITORING_GET_DATA, 'monitoringController', 'handleRequest'],
+            'get datagrid rows' => [ACTION_GET_DATAGRID_ROWS, 'indexController', 'handleRequest'],
         ];
     }
 
@@ -87,6 +88,7 @@ class IndexRouterTest extends AbstractTestCase
         return [
             'monitoring page' => ['monitoring', 'monitoringController'],
             'postman page' => ['postman', 'postmanController'],
+            'rundeck page' => ['rundeck', 'rundeckController'],
             'default page' => ['any_other_page', 'indexController'],
         ];
     }
@@ -102,6 +104,46 @@ class IndexRouterTest extends AbstractTestCase
         $this->{$controllerName}->expects($this->once())->method('index')->with($this->anything());
 
         $this->router->dispatch();
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchSaveColumnsPrefsMonitoring(): void
+    {
+        $_REQUEST['action'] = ACTION_SAVE_COLUMNS_PREFS;
+        $_REQUEST['page'] = 'monitoring';
+
+        $this->monitoringController->expects($this->once())
+            ->method('handleRequest')
+            ->with(ACTION_SAVE_COLUMNS_PREFS)
+            ->willReturn('{"success":true}');
+
+        ob_start();
+        $this->router->dispatch();
+        $output = ob_get_clean();
+
+        $this->assertEquals('{"success":true}', $output);
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchSaveColumnsPrefsRundeck(): void
+    {
+        $_REQUEST['action'] = ACTION_SAVE_COLUMNS_PREFS;
+        $_REQUEST['page'] = 'rundeck';
+
+        $this->rundeckController->expects($this->once())
+            ->method('handleRequest')
+            ->with(ACTION_SAVE_COLUMNS_PREFS)
+            ->willReturn('{"success":true}');
+
+        ob_start();
+        $this->router->dispatch();
+        $output = ob_get_clean();
+
+        $this->assertEquals('{"success":true}', $output);
     }
 
     /**
@@ -143,5 +185,45 @@ class IndexRouterTest extends AbstractTestCase
         $_GET['theme'] = 'light';
         $this->router->dispatch();
         $this->assertEquals('light', $_SESSION['theme']);
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchGetDatagridRowsMonitoring(): void
+    {
+        $_REQUEST['action'] = ACTION_GET_DATAGRID_ROWS;
+        $_REQUEST['page'] = 'monitoring';
+
+        $this->monitoringController->expects($this->once())
+            ->method('handleRequest')
+            ->with(ACTION_GET_DATAGRID_ROWS)
+            ->willReturn('{"success":true}');
+
+        ob_start();
+        $this->router->dispatch();
+        $output = ob_get_clean();
+
+        $this->assertEquals('{"success":true}', $output);
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchGetDatagridRowsRundeck(): void
+    {
+        $_REQUEST['action'] = ACTION_GET_DATAGRID_ROWS;
+        $_REQUEST['page'] = 'rundeck';
+
+        $this->rundeckController->expects($this->once())
+            ->method('handleRequest')
+            ->with(ACTION_GET_DATAGRID_ROWS)
+            ->willReturn('{"success":true}');
+
+        ob_start();
+        $this->router->dispatch();
+        $output = ob_get_clean();
+
+        $this->assertEquals('{"success":true}', $output);
     }
 }

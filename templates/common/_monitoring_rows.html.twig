@@ -1,0 +1,98 @@
+{% set offset = offset|default(0) %}
+{% for r in results %}
+    {% set isEligibleForActuatorInfo = r.name starts with 'api' or r.name starts with 'flow' and r.techno == 'java' %}
+    {% set isEligibleForHealth = r.name starts with 'api' or r.name starts with 'flow' and r.techno == 'java' %}
+    {% set isEligibleForLogs = r.techno is defined and r.techno != '' and r.techno != 'php' %}
+    <tr class="project-row" data-project-name="{{ r.name }}">
+        <td class="text-center">
+            <input type="checkbox" class="row-checkbox">
+        </td>
+        <td class="col-index text-muted font-weight-bold">{{ loop.index0 + offset + 1 }}</td>
+        <td class="col-domain" data-column="domain" data-value="{{ r.domain }}">{{ r.domain }}</td>
+        <td class="col-sf" data-column="sf" data-value="{{ r.sf }}">{{ r.sf }}</td>
+        <td class="col-name">
+            {% set projectName = r.name|length > 35
+                ? r.name|slice(0, 35) ~ '...'
+                : r.name
+            %}
+            {% if r.webUrl is defined and r.webUrl != '' %}
+                <a href="{{ r.webUrl }}"
+                   class="url-link text-decoration-none"
+                   target="_blank"
+                   title="Voir le projet Gitlab{% if r.archived %} archivé{% endif %} {{ r.name }}">
+                    <i class="fa-brands fa-gitlab text-warning"></i> {{ projectName }}
+                </a>
+            {% else %}
+                {{ projectName }}
+            {% endif %}
+        </td>
+        <td class="col-techno" data-column="techno" data-value="{{ r.techno|default('') }}">
+            {% if r.techno is defined and r.techno %}
+                {{ r.techno }}
+            {% endif %}
+        </td>
+        <td class="col-archived" data-column="archived" data-value="{% if r.archived %}oui{% else %}non{% endif %}">
+            {% if r.archived %}<i class="fa-solid fa-box-archive text-danger mr-1" title="Projet archivé"></i>{% endif %}
+        </td>
+        <td class="col-gcp" data-column="gcp" data-value="{% if r.cloudGCP == 1 %}oui{% else %}non{% endif %}">
+            {% if r.cloudGCP == 1 %}<i class="fa-brands fa-google text-primary"></i>{% else %}-{% endif %}
+        </td>
+
+        {% for env in ['dev', 'rec', 'pp', 'prod'] %}
+        <td class="col-{{ env }} text-left" data-column="{{ env }}" data-env="{{ env }}"
+            data-url-actuator-info="{% if isEligibleForActuatorInfo %}{{ r.urlActuatorInfo[env] | default('') }}{% endif %}"
+            data-url-health="{% if isEligibleForHealth %}{{ r.urlHealthCheck[env] | default('') }}{% endif %}"
+            data-url-logs="{{ r.urlLogs[env] | default('') }}">
+
+            {% if isEligibleForHealth %}
+                <span class="health-badge badge badge-secondary"><i class="fa-solid fa-hourglass"></i></span>
+            {% endif %}
+            {% if isEligibleForActuatorInfo %}
+                <span class="version-badge badge badge-secondary ml-1"><i class="fa-solid fa-tag"></i></span>
+            {% endif %}
+
+            {% if (r.techno == 'react' or r.techno == 'nuxt' or r.techno == 'php') and r.urlFronts[env] is defined and r.urlFronts[env] != '' %}
+                <a href="{{ r.urlFronts[env] }}" class="url-link ml-2" target="_blank" title="Voir le front de {{ env }}">
+                    <i class="fa-solid fa-desktop text-success"></i>
+                </a>
+            {% endif %}
+
+            {% if r.urlPubsubs[env] is defined and r.urlPubsubs[env] != '' %}
+                <a href="{{ r.urlPubsubs[env] }}" class="url-link ml-2" target="_blank" title="Voir le pubsub de {{ env }}">
+                    <i class="fa-solid fa-comment-dots text-primary"></i>
+                </a>
+            {% endif %}
+
+            {% if isEligibleForLogs and r.urlLogs[env] is defined and r.urlLogs[env] != '' %}
+            <a href="{{ r.urlLogs[env] }}" class="log-link ml-2" target="_blank" title="Voir les logs de {{ env }}">
+                <i class="fa-solid fa-file-lines text-info"></i>
+            </a>
+            {% endif %}
+
+            {% if r.urlsRundeck[env] is defined and r.urlsRundeck[env] != '' %}
+            <a href="{{ r.urlsRundeck[env] }}" class="url-link ml-2" target="_blank" title="Voir le Rundeck de {{ env }}">
+                <i class="fa-solid fa-code-branch text-danger"></i>
+            </a>
+            {% endif %}
+
+            {% if r.urlsDeploymentGcp[env] is defined and r.urlsDeploymentGcp[env] != '' %}
+            <a href="{{ r.urlsDeploymentGcp[env] }}" class="url-link ml-2" target="_blank" title="Voir le déploiement de {{ env }}">
+                <i class="fa-solid fa-server text-secondary"></i>
+            </a>
+            {% endif %}
+
+            {% if r.techno == 'java' and (env == 'rec' or env == 'prod') %}
+            <a href="#" class="new-relic-link ml-2" data-project="{{ r.name }}" data-env="{{ env }}" title="Voir sur New Relic ({{ env }})">
+                <i class="fa-solid fa-chart-line text-info"></i>
+            </a>
+            {% endif %}
+        </td>
+        {% endfor %}
+
+        <td class="text-center">
+            {% if isEligibleForHealth %}
+                <button class="btn btn-sm btn-outline-primary btn-check-single" onclick="checkSingleRow(this)"><i class="fa-solid fa-rotate"></i></button>
+            {% endif %}
+        </td>
+    </tr>
+{% endfor %}
