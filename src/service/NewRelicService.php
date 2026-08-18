@@ -49,4 +49,12 @@ class NewRelicService
         $entity = NewRelicMapper::toEntity($model);
         $this->newRelicRepository->save($entity);
     }
+
+    /**
+     * Purge le cache des URLs New Relic.
+     */
+    public function purgeAll(): void
+    {
+        $this->newRelicRepository->purgeAll();
+    }
 }

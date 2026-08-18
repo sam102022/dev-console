@@ -87,4 +87,14 @@ class NewRelicServiceTest extends AbstractTestCase
         // Act
         $this->service->save($model);
     }
+
+    final public function testPurgeAll(): void
+    {
+        // Arrange
+        $this->repositoryMock->expects($this->once())
+            ->method('purgeAll');
+
+        // Act
+        $this->service->purgeAll();
+    }
 }

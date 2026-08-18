@@ -480,39 +480,38 @@ function resetPendingBadges(rows, environmentsToProcess) { // Renamed parameter
 }
 
 // --- LOGIQUE NEW RELIC ---
-document.querySelectorAll('.new-relic-link').forEach(link => {
-    link.addEventListener('click', async function(e) {
-        e.preventDefault();
-        const project = this.getAttribute('data-project');
-        const env = this.getAttribute('data-env');
-        const icon = this.querySelector('i');
+document.addEventListener('click', async function(e) {
+    const link = e.target.closest('.new-relic-link');
+    if (!link) return;
 
-        console.log("icon:", icon);
+    e.preventDefault();
+    const project = link.getAttribute('data-project');
+    const env = link.getAttribute('data-env');
+    const icon = link.querySelector('i');
 
-        // Afficher un spinner
+    // Afficher un spinner
+    if (icon) {
+        icon.className = 'fa-solid fa-spinner fa-spin';
+    }
+
+    try {
+        const response = await fetch(`?action=get_new_relic_url&project=${project}&env=${env}`);
+        const data = await response.json();
+
+        if (data.url) {
+            window.open(data.url, '_blank');
+        } else {
+            alert('Erreur: Impossible de récupérer l\'URL New Relic.');
+        }
+    } catch (error) {
+        console.error('Erreur lors de la récupération de l\'URL New Relic:', error);
+        alert('Une erreur est survenue.');
+    } finally {
+        // Rétablir l'icône initiale
         if (icon) {
-            icon.className = 'fa-solid fa-spinner fa-spin';
+            icon.className = 'fa-solid fa-chart-line text-info';
         }
-
-        try {
-            const response = await fetch(`?action=get_new_relic_url&project=${project}&env=${env}`);
-            const data = await response.json();
-
-            if (data.url) {
-                window.open(data.url, '_blank');
-            } else {
-                alert('Erreur: Impossible de récupérer l\'URL New Relic.');
-            }
-        } catch (error) {
-            console.error('Erreur lors de la récupération de l\'URL New Relic:', error);
-            alert('Une erreur est survenue.');
-        } finally {
-            // Rétablir l'icône initiale
-            if (icon) {
-                icon.className = 'fa-solid fa-chart-line text-info';
-            }
-        }
-    });
+    }
 });
 </script>
 {% endblock body %}

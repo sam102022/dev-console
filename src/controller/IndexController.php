@@ -7,6 +7,7 @@ use App\context\IndexContext;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\service\GitlabService;
+use App\service\NewRelicService;
 use App\util\UtilsLog;
 use App\viewModel\IndexViewModelFactory;
 use Exception;
@@ -38,6 +39,7 @@ class IndexController
      * @param IndexContext $context Le contexte de la session public.
      * @param GitlabService $gitlabService Service gitlab.
      * @param Environment $twig L'environnement Twig pour le rendu des templates.
+     * @param NewRelicService $newRelicService Service New Relic.
      * @param LoggerFactory $loggerFactory Usine pour créer le logger.
      */
     public function __construct(
@@ -45,6 +47,7 @@ class IndexController
         private readonly IndexContext $context,
         private readonly GitlabService $gitlabService,
         private readonly Environment $twig,
+        private readonly NewRelicService $newRelicService,
         LoggerFactory $loggerFactory
     ) {
         $this->logger = $loggerFactory->get(self::class);
@@ -75,6 +78,7 @@ class IndexController
     public function purgeCache(array $messages): void
     {
         $this->gitlabService->purgeCache();
+        $this->newRelicService->purgeAll();
 
         // On force le reload de la page d'accueil avec message
         $messages[MESSAGES_SCAN_RESULTS] = [

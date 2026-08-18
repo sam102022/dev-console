@@ -60,4 +60,12 @@ class NewRelicRepository
         $cache[$entity->getName()][$entity->getEnvironment()->value] = $entity->getUrl();
         $this->repositoryService->save($cache, self::CACHE_FILE);
     }
+
+    /**
+     * Purge le cache des URLs New Relic en supprimant le fichier physique.
+     */
+    public function purgeAll(): void
+    {
+        $this->repositoryService->delete(self::CACHE_FILE);
+    }
 }

@@ -184,4 +184,15 @@ class NewRelicRepositoryTest extends AbstractTestCase
         // Act
         $this->repository->save($entity);
     }
+
+    final public function testPurgeAll(): void
+    {
+        // Arrange
+        $this->repositoryServiceMock->expects($this->once())
+            ->method('delete')
+            ->with('new_relic_urls.json');
+
+        // Act
+        $this->repository->purgeAll();
+    }
 }
