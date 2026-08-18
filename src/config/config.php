@@ -40,6 +40,7 @@ const ACTION_POSTMAN_GET_WORKSPACE_DETAILS = 'getWorkspaceDetails';
 
 const ACTION_MONITORING_GET_DATA = 'getMonitoringData';
 const ACTION_SAVE_COLUMNS_PREFS = 'saveColumnsPrefs';
+const ACTION_GET_DATAGRID_ROWS = 'getDatagridRows';
 
 const THEMES_COLORS = [ //
     'dark' => [ //

@@ -7,6 +7,7 @@ use App\context\IndexContext;
 use App\controller\IndexController;
 use App\exception\TechnicalException;
 use App\service\GitlabService;
+use App\service\NewRelicService;
 use App\tests\AbstractTestCase;
 use App\viewModel\IndexViewModelFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -20,6 +21,7 @@ class IndexControllerTest extends AbstractTestCase
     private IndexViewModelFactory $viewModelFactory;
     private IndexContext $context;
     private GitlabService $gitlabService;
+    private NewRelicService $newRelicService;
     private IndexController $controller;
 
     final protected function setUp(): void
@@ -28,12 +30,14 @@ class IndexControllerTest extends AbstractTestCase
         $this->viewModelFactory = $this->createMock(IndexViewModelFactory::class);
         $this->context = $this->createMock(IndexContext::class);
         $this->gitlabService = $this->createMock(GitlabService::class);
+        $this->newRelicService = $this->createMock(NewRelicService::class);
 
         $this->controller = new IndexController(
             $this->viewModelFactory,
             $this->context,
             $this->gitlabService,
             $this->twigMocked,
+            $this->newRelicService,
             self::$loggerFactory
         );
     }
@@ -96,6 +100,8 @@ class IndexControllerTest extends AbstractTestCase
         // Mock service calls
         $this->gitlabService->expects($this->once())
             ->method('purgeCache');
+        $this->newRelicService->expects($this->once())
+            ->method('purgeAll');
 
         $this->gitlabService->expects($this->once())
             ->method('scan')

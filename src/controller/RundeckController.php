@@ -69,6 +69,7 @@ class RundeckController
             $viewModel = $this->viewModelFactory->build($this->context, $messages);
             $viewModel['current_route'] = self::ROUTE_RUNDECK;
             $viewModel['columns_prefs'] = $this->userPreferencesService->get('rundeck_columns', []);
+            $viewModel['results'] = []; // Vidé initialement pour chargement ultra-rapide
 
             echo $this->twig->render(
                 'rundeck.html.twig',
@@ -92,6 +93,46 @@ class RundeckController
         try {
             http_response_code(200);
             switch ($action) {
+                case ACTION_GET_DATAGRID_ROWS:
+                    $results = $this->rundeckService->findAll();
+                    $this->viewModelFactory->setResults($results);
+                    $viewModel = $this->viewModelFactory->build($this->context, []);
+                    
+                    $filters = [];
+                    foreach ($_REQUEST as $key => $val) {
+                        if (str_starts_with($key, 'filter_')) {
+                            $filters[str_replace('filter_', '', $key)] = $val;
+                        }
+                    }
+                    $sortCol = $_REQUEST['sort_column'] ?? '';
+                    $sortDir = $_REQUEST['sort_dir'] ?? 'asc';
+                    $page = (int)($_REQUEST['p'] ?? 1);
+                    $limit = (int)($_REQUEST['rows_per_page'] ?? 15);
+                    if ($limit === 1000) $limit = 999999;
+                    
+                    $paginated = \App\util\DatagridHelper::process($viewModel['results'], $filters, $sortCol, $sortDir, $page, $limit);
+                    
+                    $html = $this->twig->render('common/_rundeck_rows.html.twig', [
+                        'results' => $paginated['items'],
+                        'offset' => ($page - 1) * $limit
+                    ]);
+                    
+                    $domainFilter = $filters['domain'] ?? 'all';
+                    $allowedSfs = [];
+                    foreach ($viewModel['results'] as $item) {
+                        if (($domainFilter === 'all' || $domainFilter === '' || $item['domain'] === $domainFilter) && !empty($item['sf'])) {
+                            $allowedSfs[] = $item['sf'];
+                        }
+                    }
+                    $allowedSfs = array_values(array_unique($allowedSfs));
+                    
+                    $response = [
+                        'success' => true,
+                        'html' => $html,
+                        'totalRows' => $paginated['totalRows'],
+                        'allowedSfs' => $allowedSfs
+                    ];
+                    break;
                 case ACTION_SAVE_COLUMNS_PREFS:
                     $columns = $input['columns'] ?? [];
                     $this->userPreferencesService->set('rundeck_columns', $columns);

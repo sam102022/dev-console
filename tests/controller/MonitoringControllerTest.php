@@ -148,6 +148,17 @@ class MonitoringControllerTest extends AbstractTestCase
         $this->assertEquals(500, http_response_code());
     }
 
+    final public function testHandleRequestSaveColumnsPrefs(): void
+    {
+        $this->userPreferencesService->expects($this->once())
+            ->method('set')
+            ->with('monitoring_columns', []);
+
+        $response = $this->controller->handleRequest(ACTION_SAVE_COLUMNS_PREFS);
+
+        $this->assertEquals(json_encode(['success' => true]), $response);
+    }
+
     public static function renderExceptionProvider(): array
     {
         return [
