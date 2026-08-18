@@ -11,6 +11,7 @@ use App\context\LocaleContext;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\service\Translator;
+use App\service\IconService;
 use App\util\UtilsLog;
 use App\view\TwigFactory;
 use GuzzleHttp\Client;
@@ -28,39 +29,21 @@ use Monolog\Level;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use ReflectionClass;
-use ReflectionException;
-use ReflectionNamedType;
-use RuntimeException;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Twig\Environment;
 
 /**
  * Classe AbstractContainer
  *
- * Un conteneur d'injection de dépendances (DIC) abstrait avec autowiring.
- * Il gère la création et la résolution des services de l'application.
- * Les services peuvent être enregistrés manuellement ou résolus automatiquement
- * par réflexion (autowiring).
+ * Un conteneur d'injection de dépendances (DIC) basé sur le ContainerBuilder de Symfony.
+ * Il gère la création et la résolution des services avec l'autowiring natif de Symfony.
  */
 abstract class AbstractContainer
 {
-    /**
-     * @var array Stocke les définitions des services (usines de création).
-     */
-    private array $entries = [];
-
-    /**
-     * @var array Stocke les instances des services déjà créés (singletons).
-     */
-    private array $instances = [];
+    protected ContainerBuilder $containerBuilder;
 
     /**
      * Constructeur de la classe AbstractContainer.
-     *
-     * @param string $pathLogs Chemin vers le fichier de log.
-     * @param string $env L'environnement actuel (ex: 'prod', 'dev', 'test').
-     * @param string $pathTemplates Chemin vers le répertoire des templates Twig.
-     * @param Level $levelLogger Le niveau de log minimum pour Monolog.
-     * @param LocaleContext $localeContext Le contexte de la locale.
      */
     public function __construct(
         private readonly string $pathLogs,
@@ -69,17 +52,20 @@ abstract class AbstractContainer
         private readonly Level $levelLogger,
         private readonly LocaleContext $localeContext,
     ) {
+        $this->containerBuilder = new ContainerBuilder();
         $this->registerCore();
+        $this->registerAllClasses();
+        $this->containerBuilder->compile();
     }
 
     /**
      * Enregistre les services principaux de l'application dans le conteneur.
-     * Ces services sont essentiels au fonctionnement de base de l'application.
      */
     protected function registerCore(): void
     {
         $pathTranslations = dirname(__DIR__) . '/translations';
 
+        // Enregistre l'instance pré-construite de LocaleContext
         $this->set(LocaleContext::class, fn() => $this->localeContext);
 
         /**
@@ -112,7 +98,6 @@ abstract class AbstractContainer
          * Twig Environment (moteur de template)
          */
         $this->set(Environment::class, function ($c) {
-
             return TwigFactory::create(
                 $c->get(Translator::class),
                 $this->pathTemplates,
@@ -133,7 +118,7 @@ abstract class AbstractContainer
                     UtilsLog::prefixLog(__CLASS__, __FUNCTION__, __LINE__)
                     . "Erreur lors de l'initialisation de AppConfig: " . $e->getMessage()
                 );
-                throw new TechnicalException("Erreur lors de l'initialisation de l'application", 500, $e); // Rethrow pour que l'application puisse gérer cette erreur critique
+                throw new TechnicalException("Erreur lors de l'initialisation de l'application", 500, $e);
             }
         });
 
@@ -164,81 +149,88 @@ abstract class AbstractContainer
             $c->get(AppConfig::class)->getParamConfig()->getParamNewRelic(),
             $c->get(LoggerFactory::class)
         ));
+
+        /**
+         * IconService (service d'icônes Singleton)
+         */
+        $this->set(IconService::class, function () {
+            return IconService::getInstance();
+        });
     }
 
     /**
-     * Enregistre manuellement un service dans le conteneur.
-     *
-     * @param string $id L'identifiant du service (généralement le nom de la classe).
-     * @param callable $factory Une fonction (closure) qui sait comment créer l'instance du service.
+     * Scanne récursivement le dossier src/ pour enregistrer toutes les classes avec autowiring.
+     */
+    private function registerAllClasses(): void
+    {
+        $dir = dirname(__DIR__) . '/src';
+        if (!is_dir($dir)) {
+            return;
+        }
+
+        $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir));
+        foreach ($it as $file) {
+            if ($file->isDir()) {
+                continue;
+            }
+            $path = str_replace('\\', '/', $file->getPathname());
+
+            // Exclure les fichiers de configuration et d'icônes qui ne sont pas des classes
+            if (str_ends_with($path, '/config/config.php') || str_ends_with($path, '/icons/icons.php')) {
+                continue;
+            }
+
+            if (pathinfo($path, PATHINFO_EXTENSION) === 'php') {
+                $relPath = substr($path, strlen($dir) + 1); // ex: service/GitlabService.php
+                $className = 'App\\' . str_replace('/', '\\', substr($relPath, 0, -4));
+
+                // Exclure les exceptions, les modèles de données, LanguageResolver, LocaleContext, IconService, RepositoryService et Kernel de l'autowiring
+                if (
+                    str_starts_with($className, 'App\\exception\\') ||
+                    str_starts_with($className, 'App\\model\\') ||
+                    $className === 'App\\context\\LocaleContext' ||
+                    $className === 'App\\LanguageResolver' ||
+                    $className === 'App\\service\\IconService' ||
+                    $className === 'App\\service\\RepositoryService' ||
+                    $className === 'App\\Kernel'
+                ) {
+                    continue;
+                }
+
+                if (class_exists($className)) {
+                    $reflection = new ReflectionClass($className);
+                    if (!$reflection->isAbstract() && !$reflection->isInterface() && $className !== self::class) {
+                        // Enregistre seulement si non défini manuellement par registerCore()
+                        if (!$this->containerBuilder->has($className)) {
+                            $this->containerBuilder->register($className, $className)
+                                ->setAutowired(true)
+                                ->setPublic(true);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Enregistre un service avec une usine de création (factory closure).
      */
     public function set(string $id, callable $factory): void
     {
-        $this->entries[$id] = $factory;
+        ServiceFactory::register($id, $factory);
+        $this->containerBuilder->register($id, $id)
+            ->setFactory([ServiceFactory::class, 'create'])
+            ->setArguments([$id, $this])
+            ->setAutowired(true)
+            ->setPublic(true);
     }
 
     /**
-     * Récupère une instance de service depuis le conteneur.
-     *
-     * Si l'instance n'existe pas, elle est créée, mise en cache (singleton) et retournée.
-     * La création se fait via une usine manuelle si elle existe, sinon par autowiring.
-     *
-     * @param string $id L'identifiant du service à récupérer.
-     * @return mixed L'instance du service.
-     * @throws ReflectionException Exception
+     * Récupère une instance de service depuis le conteneur Symfony.
      */
     public function get(string $id): mixed
     {
-        if (isset($this->instances[$id])) {
-            return $this->instances[$id];
-        }
-
-        if (isset($this->entries[$id])) {
-            return $this->instances[$id] = ($this->entries[$id])($this);
-        }
-
-        return $this->instances[$id] = $this->autowire($id);
-    }
-
-    /**
-     * Crée automatiquement une instance de classe en résolvant ses dépendances.
-     *
-     * Utilise la réflexion pour inspecter le constructeur de la classe, puis demande
-     * récursivement au conteneur de fournir chaque dépendance.
-     *
-     * @param string $class Le nom de la classe à instancier.
-     * @return object L'instance de la classe créée.
-     * @throws RuntimeException|ReflectionException Si une dépendance ne peut pas être résolue.
-     */
-    private function autowire(string $class): object
-    {
-        if (!class_exists($class)) {
-            throw new RuntimeException("La classe $class n'existe pas.");
-        }
-
-        $reflection = new ReflectionClass($class);
-        $constructor = $reflection->getConstructor();
-
-        if (!$constructor) {
-            return new $class();
-        }
-
-        $dependencies = [];
-
-        foreach ($constructor->getParameters() as $parameter) {
-            $type = $parameter->getType();
-
-            // Les types scalaires (string, int, etc.) ne peuvent pas être autowirés.
-            if (!$type instanceof ReflectionNamedType || $type->isBuiltin()) {
-                throw new RuntimeException(
-                    "Impossible d'autowire le paramètre \${$parameter->getName()} de la classe $class"
-                );
-            }
-
-            $dependencies[] = $this->get($type->getName());
-        }
-
-        return $reflection->newInstanceArgs($dependencies);
+        return $this->containerBuilder->get($id);
     }
 
     private function createLogHandler(): StreamHandler
@@ -307,11 +299,9 @@ abstract class AbstractContainer
         ));
 
         return new Client([
-            //'read_timeout' => 300,
             'timeout' => 0,
             'connect_timeout' => 30,
             'verify' => false, // DÉSACTIVATION DE LA VÉRIFICATION SSL
-            //'stream' => true,
             'headers' => [
                 'User-Agent' => 'Mozilla/4.0 (compatible; MSIE 5.00; Windows 98)',
             ],
