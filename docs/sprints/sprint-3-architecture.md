@@ -4,7 +4,8 @@
 Moderniser les fondations de l'application, résoudre les problèmes d'encodage et augmenter la fiabilité grâce à de meilleurs tests.
 
 ## 📝 Contexte
-L'application utilise un framework MVC "maison" (Kernel, Container d'Injection de Dépendances manuel, Routeur personnalisé). Bien qu'efficace, ce choix limite l'intégration d'outils standards de l'écosystème PHP et rend la courbe d'apprentissage plus complexe pour un nouveau développeur. 
+L'application utilise un framework MVC "maison" (Kernel, Container d'Injection de Dépendances manuel, Routeur personnalisé). 
+Bien qu'efficace, ce choix limite l'intégration d'outils standards de l'écosystème PHP et rend la courbe d'apprentissage plus complexe pour un nouveau développeur. 
 
 ## 🛠️ Tâches (User Stories)
 
