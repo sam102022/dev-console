@@ -3,36 +3,34 @@ declare(strict_types=1);
 
 namespace App;
 
-use App\context\LocaleContext;
-use Monolog\Level;
-
 /**
  * Classe TestContainer
  *
- * Conteneur d'injection de dépendances pour l'environnement de test.
- * Cette classe étend AbstractContainer et le configure avec les paramètres
- * spécifiques aux tests (fichier de log de test, etc.).
+ * Conteneur d'injection de dépendances pour l'environnement de test,
+ * agissant désormais comme un pont vers le conteneur du Micro-Kernel de Symfony.
  */
-final class TestContainer extends AbstractContainer
+final class TestContainer
 {
+    private $container;
+
     /**
      * Constructeur de la classe TestContainer.
      *
-     * Initialise le conteneur parent avec la configuration de test.
-     * Si aucun contexte de locale n'est fourni, il utilise les valeurs par défaut.
-     *
-     * @param LocaleContext|null $localeContext Le contexte de la locale (langue, région).
+     * Initialise et démarre le Kernel de Symfony en environnement de test.
      */
-    public function __construct(?LocaleContext $localeContext = null)
+    public function __construct()
     {
-        $dirname = dirname(__DIR__);
-        parent::__construct(
-            $dirname . '/' . TEST_LOG_FILE,
-            ENVIRONMENT_TEST,
-            $dirname . '/templates',
-            Level::Debug,
-            $localeContext ?? new LocaleContext(Kernel::LOCALE_DEFAULT, Kernel::LANGUAGE_DEFAULT)
-        );
+        $_SERVER['APP_ENV'] = 'test';
+        $kernel = new Kernel();
+        $kernel->boot();
+        $this->container = $kernel->getContainer();
     }
 
+    /**
+     * Récupère une instance de service depuis le conteneur Symfony.
+     */
+    public function get(string $id): mixed
+    {
+        return $this->container->get($id);
+    }
 }

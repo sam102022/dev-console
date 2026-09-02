@@ -1,0 +1,77 @@
+parameters:
+  kernel.env: '%kernel.environment%'
+
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: true
+
+  # Enregistre toutes les classes de src/ comme services
+  App\:
+    resource: '../*'
+    exclude:
+      - '../config/config.php'
+      - '../icons/icons.php'
+      - '../Kernel.php'
+      - '../AbstractContainer.php'
+      - '../Container.php'
+      - '../ContainerConsole.php'
+      - '../TestContainer.php'
+      - '../ServiceFactory.php'
+      - '../LanguageResolver.php'
+      - '../service/RepositoryService.php'
+      - '../exception/*'
+      - '../model/*'
+
+  # Alias pour pouvoir injecter le conteneur de services dans ConsoleRouter
+  Symfony\Component\DependencyInjection\ContainerInterface:
+    alias: 'service_container'
+
+  # Définitions personnalisées via App\factory\ServiceFactory
+  Monolog\Handler\RotatingFileHandler:
+    factory: ['App\factory\ServiceFactory', 'createRotatingFileHandler']
+    arguments: ['%kernel.environment%']
+
+  App\factory\LoggerFactory:
+    factory: ['App\factory\ServiceFactory', 'createLoggerFactory']
+    arguments: ['@Monolog\Handler\RotatingFileHandler']
+
+  App\context\LocaleContext:
+    arguments:
+      $defaultLocale: 'fr_FR'
+      $defaultLanguage: 'fr'
+
+  App\service\Translator:
+    factory: ['App\factory\ServiceFactory', 'createTranslator']
+    arguments: ['@App\context\LocaleContext']
+
+  Twig\Environment:
+    factory: ['App\factory\ServiceFactory', 'createTwig']
+    arguments: ['@App\service\Translator']
+
+  App\config\AppConfig:
+    factory: ['App\factory\ServiceFactory', 'createAppConfig']
+    arguments: ['%kernel.environment%', '@App\context\LocaleContext']
+
+  GuzzleHttp\ClientInterface:
+    factory: ['App\factory\ServiceFactory', 'createGuzzleClient']
+    arguments: ['@App\factory\LoggerFactory']
+
+  GuzzleHttp\Client:
+    alias: 'GuzzleHttp\ClientInterface'
+
+  App\client\GitLabClient:
+    factory: ['App\factory\ServiceFactory', 'createGitLabClient']
+    arguments: ['@App\config\AppConfig', '@App\factory\LoggerFactory']
+
+  App\client\PostmanClient:
+    factory: ['App\factory\ServiceFactory', 'createPostmanClient']
+    arguments: ['@App\config\AppConfig']
+
+  App\client\NewRelicClient:
+    factory: ['App\factory\ServiceFactory', 'createNewRelicClient']
+    arguments: ['@App\config\AppConfig', '@App\factory\LoggerFactory']
+
+  App\service\IconService:
+    factory: ['App\factory\ServiceFactory', 'createIconService']

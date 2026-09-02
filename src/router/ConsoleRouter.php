@@ -3,11 +3,11 @@ declare(strict_types=1);
 
 namespace App\router;
 
-use App\ContainerConsole;
 use App\command\ScanSymfonyCommand;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Classe ConsoleRouter
@@ -17,7 +17,7 @@ use Symfony\Component\Console\Output\ConsoleOutput;
 class ConsoleRouter
 {
     public function __construct(
-        private readonly ContainerConsole $containerConsole
+        private readonly ContainerInterface $container
     ) {}
 
     /**
@@ -30,8 +30,8 @@ class ConsoleRouter
         $application = new Application('Dev Console CLI', '1.0');
         $application->setAutoExit(false); // Permet d'éviter exit() durant les tests PHPUnit
 
-        // Récupère et ajoute la commande standard Symfony
-        $scanCommand = $this->containerConsole->get(ScanSymfonyCommand::class);
+        // Récupère et ajoute la commande standard Symfony depuis le conteneur
+        $scanCommand = $this->container->get(ScanSymfonyCommand::class);
         $application->add($scanCommand);
 
         $application->run(new ArgvInput($argv), new ConsoleOutput());
