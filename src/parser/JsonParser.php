@@ -13,6 +13,7 @@ class JsonParser
      */
     public static function parse(string $content): false|array
     {
-        return json_decode($content, true);
+        $result = json_decode($content, true);
+        return is_array($result) ? $result : false;
     }
 }
