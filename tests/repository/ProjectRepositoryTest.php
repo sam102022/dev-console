@@ -33,6 +33,12 @@ class ProjectRepositoryTest extends AbstractTestCase
         $property = $reflection->getProperty('repositoryService');
         $property->setAccessible(true);
         $property->setValue($this->repository, $this->repositoryServiceMock);
+
+        $this->repositoryServiceMock->method('findProjectByName')
+            ->willReturnCallback(function(string $name) {
+                $data = $this->repositoryServiceMock->read('javaProjects.json');
+                return array_find($data, fn($item) => ($item['name'] ?? null) === $name);
+            });
     }
 
     final public function testFindAllThrowsExceptionWhenCacheIsEmpty(): void
