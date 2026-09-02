@@ -1,0 +1,21 @@
+# ----------------------------------------------------------------------
+# Fallback Security Rules for Sensitive Directories and Files
+# ----------------------------------------------------------------------
+# In case the DocumentRoot is not correctly set to the public/ directory,
+# we explicitly deny access to sensitive directories and configuration files.
+
+# Block access to directories
+RedirectMatch 403 ^/(data|src|vendor|\.git)(/|$)
+
+# Block access to specific files
+<FilesMatch "^\.env(-test)?$">
+    Require all denied
+</FilesMatch>
+
+# Optional: Fallback for older Apache 2.2 just in case
+<IfModule !mod_authz_core.c>
+    <FilesMatch "^\.env(-test)?$">
+        Order deny,allow
+        Deny from all
+    </FilesMatch>
+</IfModule>
