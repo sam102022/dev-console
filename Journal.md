@@ -1,4 +1,26 @@
 
+## 02/09/2026
+
+✦ Les Sprints 4 (Sécurité) et 5 (Modernisation du Framework) sont maintenant totalement implémentés ! 🛡️🏗️
+
+Voici les réalisations majeures :
+
+1. Sécurité (Sprint 4) :
+   - Ajout d'un fichier `.htaccess` à la racine pour sécuriser par défaut l'accès aux dossiers d'infrastructure (`data/`, `src/`, `vendor/`, `.git/`) et fichiers de configuration (`.env`, `.env-test`).
+   - Rédaction du rapport d'architecture `ADR 004 : Isolation de la racine Web` formalisant la nécessité de configurer le `DocumentRoot` du serveur web sur le sous-dossier `public/`.
+   - Élaboration d'une feuille de route pour le futur avec la création des spécifications pour les Sprints 5 à 9.
+
+2. Modernisation de l'Architecture Applicative (Sprint 5) :
+   - Remplacement de l'AbstractContainer maison par le Micro-Kernel Symfony standard. L'injection de dépendances repose maintenant entièrement sur l'autowiring natif de Symfony configuré via `src/config/services.yaml`.
+   - Création de la fabrique centralisée de services `App\factory\ServiceFactory` gérant proprement l'instanciation personnalisée des clients tiers (Guzzle, GitLab, Postman, New Relic) et du moteur de templates Twig.
+   - Suppression des anciennes classes de conteneurs devenues obsolètes (`AbstractContainer`, `Container`, `ContainerConsole`).
+   - Alignement propre de tous les packages Symfony en version `^8.0` dans `composer.json` pour garantir la compatibilité et la robustesse en PHP 8.4.
+
+3. Fiabilité & Tests :
+   - Correction d'un warning d'index non défini (`serviceName`) survenu dans les fixtures de test via `ProjectMapper.php`.
+   - Protection de `XmlParser.php` avec `libxml_use_internal_errors` pour éliminer de manière élégante et standard les warnings XML lors du passage de tests d'XML invalides.
+   - L'ensemble de la suite de tests unitaires et d'intégration passe à 100% au vert ! (327 tests, 735 assertions).
+
 ## 11/08/2026
 
 ✦ Le Sprint 1 (Optimisation des performances) est maintenant totalement implémenté ! 🚀

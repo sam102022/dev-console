@@ -5,20 +5,22 @@ namespace App;
 
 require_once 'config/config.php';
 
+use Symfony\Component\HttpKernel\Kernel as BaseKernel;
+use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use App\context\LocaleContext;
-use App\exception\TechnicalException;
-use App\router\ConsoleRouter;
 use App\router\IndexRouter;
+use App\router\ConsoleRouter;
 
 /**
  * Classe Kernel
  *
- * Le cœur de l'application. Cette classe est responsable de l'amorçage (boot)
- * de l'application, de l'initialisation du conteneur d'injection de dépendances
- * et de la gestion des différentes routes (web, admin, console, etc.).
+ * Le cœur de l'application, utilisant désormais le Micro-Kernel standard de Symfony.
  */
-final class Kernel
+class Kernel extends BaseKernel
 {
+    use MicroKernelTrait;
+
     /**
      * Langue par défaut de l'application.
      */
@@ -29,20 +31,53 @@ final class Kernel
      */
     public const LOCALE_DEFAULT = 'fr_FR';
 
-    /**
-     * Amorce le conteneur de dépendances pour les contextes web.
-     */
-    public function boot(): Container
+    public function __construct()
     {
-        return new Container(new LocaleContext($this->getLocale(), $this->getLang()));
+        $env = $_SERVER['APP_ENV'] ?? getenv('APP_ENV') ?: 'prod';
+        $debug = ($env !== 'prod');
+        parent::__construct($env, $debug);
     }
 
     /**
-     * Amorce le conteneur de dépendances pour le contexte de la console.
+     * Enregistre les bundles requis pour l'application.
      */
-    public function bootConsole(): ContainerConsole
+    public function registerBundles(): iterable
     {
-        return new ContainerConsole(new LocaleContext($this->getLocale(), $this->getLang()));
+        return [
+            new \Symfony\Bundle\FrameworkBundle\FrameworkBundle(),
+        ];
+    }
+
+    /**
+     * Configure le conteneur de services et les extensions de framework.
+     */
+    protected function configureContainer(ContainerConfigurator $container): void
+    {
+        $container->extension('framework', [
+            'secret' => 'S0ME_SEC&ET',
+            'http_method_override' => false,
+            'php_errors' => [
+                'log' => true,
+            ],
+        ]);
+
+        $container->import(__DIR__ . '/config/services.yaml');
+    }
+
+    /**
+     * Personnalise le dossier du cache pour correspondre à notre structure existante.
+     */
+    public function getCacheDir(): string
+    {
+        return $this->getProjectDir() . '/var/cache/' . $this->getEnvironment();
+    }
+
+    /**
+     * Personnalise le dossier des logs.
+     */
+    public function getLogDir(): string
+    {
+        return $this->getProjectDir() . '/var/logs';
     }
 
     /**
@@ -52,35 +87,33 @@ final class Kernel
      */
     public function handleConsole(array $argv): void
     {
-        $router = $this->buildConsoleRouter();
+        $this->boot();
+        $container = $this->getContainer();
+
+        // Configure dynamiquement la locale/langue courante
+        $localeContext = $container->get(LocaleContext::class);
+        $localeContext->setLang($this->getLang());
+        $localeContext->setLocale($this->getLocale());
+
+        $router = $container->get(ConsoleRouter::class);
         $router->dispatch($argv);
     }
 
     /**
-     * Gère les requêtes web AJAX.
-     * Initialise le routeur Ajax et déclenche la distribution de la requête.
-     * @throws TechnicalException
+     * Gère les requêtes web.
      */
     public function handleIndex(): void
     {
-        $router = $this->buildIndexRouter();
+        $this->boot();
+        $container = $this->getContainer();
+
+        // Configure dynamiquement la locale/langue courante
+        $localeContext = $container->get(LocaleContext::class);
+        $localeContext->setLang($this->getLang());
+        $localeContext->setLocale($this->getLocale());
+
+        $router = $container->get(IndexRouter::class);
         $router->dispatch();
-    }
-
-    /**
-     * Construit le routeur pour la console.
-     */
-    private function buildConsoleRouter(): ConsoleRouter
-    {
-        return $this->bootConsole()->get(ConsoleRouter::class);
-    }
-
-    /**
-     * Construit le routeur pour la section public.
-     */
-    private function buildIndexRouter(): IndexRouter
-    {
-        return $this->boot()->get(IndexRouter::class);
     }
 
     /**
@@ -104,11 +137,6 @@ final class Kernel
      */
     private function getLocale(): string
     {
-        /*$locale = match ($this->getLang()) {
-            'en' => 'en_US',
-            default => self::LOCALE_DEFAULT,
-        };*/
-
         $locale = $_SESSION['locale'] ?? self::LOCALE_DEFAULT;
         if (isset($_GET['locale'])) {
             $locale = $_GET['locale'];

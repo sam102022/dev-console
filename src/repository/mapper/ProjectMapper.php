@@ -12,7 +12,7 @@ class ProjectMapper
     {
         $projectEntity = new ProjectEntity();
         $projectEntity->setName($data['name']);
-        $projectEntity->setServiceName($data['serviceName']);
+        $projectEntity->setServiceName($data['serviceName'] ?? null);
         $projectEntity->setDomain($data['domain'] ?? '');
         $projectEntity->setDomainName($data['domainName'] ?? '');
         $projectEntity->setSf($data['sf'] ?? '');

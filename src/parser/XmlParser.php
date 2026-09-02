@@ -15,6 +15,10 @@ class XmlParser
      */
     public static function parse(string $xml): false|SimpleXMLElement
     {
-        return simplexml_load_string($xml);
+        $useErrors = libxml_use_internal_errors(true);
+        $result = simplexml_load_string($xml);
+        libxml_clear_errors();
+        libxml_use_internal_errors($useErrors);
+        return $result;
     }
 }
