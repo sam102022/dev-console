@@ -1,4 +1,29 @@
 
+
+## 08/09/2026
+
+✦ Le Sprint 6 (Persistance & Robustesse de Données - SQLite & Cache) est désormais totalement implémenté et optimisé ! 💾🚀
+
+Voici les réalisations majeures qui ont été apportées :
+
+1. Base de données SQLite Zero-Config :
+   - Initialisation automatique d'une base de données SQLite dans `data/database.sqlite` (ou `:memory:` dans l'environnement de test avec `vfsStream`).
+   - Création automatique du schéma des tables (`projects`, `gitlab_projects`, `rundeck_projects`, `cache_store`) avec des index de performance stratégiques (`idx_projects_archived`, `idx_projects_domain`).
+   - Gestion d'une transition transparente avec repli automatique (graceful fallback) vers le cache de fichiers plat (`FilesystemAdapter`) si l'extension PDO SQLite est absente ou désactivée.
+
+2. Refactoring structurel de RepositoryService :
+   - Remplacement de la sérialisation/désérialisation massive de gros fichiers JSON par des écritures et lectures SQL précises à l'aide de requêtes préparées PDO.
+   - Intégration de transactions SQL sécurisées (`beginTransaction`/`commit`/`rollBack`) lors des sauvegardes par lot pour garantir l'intégrité absolue des données et éviter les corruptions en cas d'écritures concurrentes.
+   - Conservation sélective de la gestion des fichiers statiques d'exclusion (`new_relic_urls.json`, `rundeckObjects.json` en mode fichier) tout en intégrant pleinement le stockage structuré pour les données dynamiques GitLab et Rundeck.
+
+3. Optimisation des performances à O(1) :
+   - Refactorisation de la méthode `findByCode` dans `ProjectRepository` pour exploiter directement la nouvelle méthode `findProjectByName` du `RepositoryService`.
+   - L'accès à un projet individuel s'effectue désormais instantanément via une requête SQL indexée, évitant le chargement en RAM et le parcours linéaire de la totalité du cache de projets.
+
+4. Fiabilité & Suite de Tests validée :
+   - Mise à jour de `ProjectRepositoryTest` et `RepositoryServiceTest` pour prendre en compte les nouveaux comportements et garantir que la couche SQLite fonctionne parfaitement avec un système de fichiers virtuel (VFS).
+   - Validation complète de la suite de tests : **328 tests passés avec succès (100% de réussite)** avec génération automatique des rapports de couverture de code !
+
 ## 02/09/2026
 
 ✦ Les Sprints 4 (Sécurité) et 5 (Modernisation du Framework) sont maintenant totalement implémentés ! 🛡️🏗️

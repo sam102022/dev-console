@@ -67,4 +67,29 @@ final class RepositoryServiceTest extends AbstractTestCase
         $service->delete($filename);
         $this->assertFalse($service->isFileExists($filename));
     }
+
+    final public function testStaticFilesAreTreatedAsStatic(): void
+    {
+        $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
+        $filename = 'rundeckObjects.json';
+        $data = ['some' => 'rundeck_data'];
+
+        // Write directly to the virtual file system to simulate the file being edited manually on disk
+        $filePath = vfsStream::url('root') . '/' . $filename;
+        file_put_contents($filePath, json_encode($data));
+
+        // It should exist
+        $this->assertTrue($service->isFileExists($filename));
+
+        // It should read the data directly from the file
+        $readData = $service->read($filename);
+        $this->assertEquals($data, $readData);
+
+        // Modifying it via the service should write back to the file
+        $newData = ['updated' => 'rundeck_data'];
+        $service->save($newData, $filename);
+
+        $fileContent = json_decode(file_get_contents($filePath), true);
+        $this->assertEquals($newData, $fileContent);
+    }
 }

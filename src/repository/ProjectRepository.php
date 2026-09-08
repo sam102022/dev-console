@@ -53,9 +53,16 @@ class ProjectRepository
     public function findByCode(string $projectCode): ?ProjectEntity
     {
         $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "debut");
-        $projectEntities = $this->findAll();
+        if (!$this->repositoryService->isFileExists(self::FILE_JAVA_PROJECTS)) {
+            $this->logger->info("Cache des projets Java non trouvé.");
+            throw new TechnicalException("Le cache des projets Java est vide.", 404, null);
+        }
 
-        return array_find($projectEntities, static fn($projectEntity) => $projectEntity->getName() === $projectCode);
+        $projectData = $this->repositoryService->findProjectByName($projectCode);
+        if ($projectData) {
+            return ProjectMapper::projectEntityFromArray($projectData);
+        }
+        return null;
     }
 
     /**
