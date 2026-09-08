@@ -30,7 +30,7 @@
     opacity: 1;
 }
 </style>
-<div class="card shadow rounded mb-4">
+<div class="card shadow rounded mb-4" id="projects-card" x-data="datagrid({ pageName: 'monitoring' })">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">🩺 Monitoring &amp; 🔗 Links</h5>
         <div>
@@ -42,40 +42,40 @@
                     <h6 class="dropdown-header">Afficher/Masquer les colonnes</h6>
                     <div class="px-3 py-2">
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-domain" data-column="domain" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-domain" x-model="columns.domain" data-column="domain">
                             <label class="form-check-label" for="toggle-col-domain">Domaine</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-sf" data-column="sf" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-sf" x-model="columns.sf" data-column="sf">
                             <label class="form-check-label" for="toggle-col-sf">SF</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-techno" data-column="techno" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-techno" x-model="columns.techno" data-column="techno">
                             <label class="form-check-label" for="toggle-col-techno">Techno</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-archived" data-column="archived" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-archived" x-model="columns.archived" data-column="archived">
                             <label class="form-check-label" for="toggle-col-archived">Archivé</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-gcp" data-column="gcp" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-gcp" x-model="columns.gcp" data-column="gcp">
                             <label class="form-check-label" for="toggle-col-gcp">GCP</label>
                         </div>
                         <div class="dropdown-divider"></div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-dev" data-column="dev" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-dev" x-model="columns.dev" data-column="dev">
                             <label class="form-check-label" for="toggle-col-dev">DEV</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-rec" data-column="rec" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-rec" x-model="columns.rec" data-column="rec">
                             <label class="form-check-label" for="toggle-col-rec">REC</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-pp" data-column="pp" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-pp" x-model="columns.pp" data-column="pp">
                             <label class="form-check-label" for="toggle-col-pp">PP</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-prod" data-column="prod" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-prod" x-model="columns.prod" data-column="prod">
                             <label class="form-check-label" for="toggle-col-prod">PROD</label>
                         </div>
                     </div>
@@ -90,16 +90,16 @@
                 <thead class="thead-dark">
                     <tr>
                         <th class="text-center" style="width: 30px;">
-                            <input type="checkbox" id="check-all" title="Tout cocher/décocher">
+                            <input type="checkbox" @click="toggleAllCheckboxes()" :checked="checkingAll" title="Tout cocher/décocher">
                         </th>
                         <th style="width: 50px;">#</th>
-                        <th data-column="domain"><a class="sortable-header" data-sort="domain">Domaine <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th data-column="sf"><a class="sortable-header" data-sort="sf">SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th><a class="sortable-header" data-sort="name">Nom <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th data-column="techno"><a class="sortable-header" data-sort="techno">Techno <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th data-column="archived"><a class="sortable-header" data-sort="archived">Archivé <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th data-column="gcp"><a class="sortable-header" data-sort="gcp">GCP <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th class="text-center" style="width: 120px;" data-column="dev">
+                        <th data-column="domain" x-show="columns.domain"><a class="sortable-header" @click.prevent="sortBy('domain')">Domaine <i :class="getSortIconClass('domain')" :style="getSortIconStyle('domain')"></i></a></th>
+                        <th data-column="sf" x-show="columns.sf"><a class="sortable-header" @click.prevent="sortBy('sf')">SF <i :class="getSortIconClass('sf')" :style="getSortIconStyle('sf')"></i></a></th>
+                        <th><a class="sortable-header" @click.prevent="sortBy('name')">Nom <i :class="getSortIconClass('name')" :style="getSortIconStyle('name')"></i></a></th>
+                        <th data-column="techno" x-show="columns.techno"><a class="sortable-header" @click.prevent="sortBy('techno')">Techno <i :class="getSortIconClass('techno')" :style="getSortIconStyle('techno')"></i></a></th>
+                        <th data-column="archived" x-show="columns.archived"><a class="sortable-header" @click.prevent="sortBy('archived')">Archivé <i :class="getSortIconClass('archived')" :style="getSortIconStyle('archived')"></i></a></th>
+                        <th data-column="gcp" x-show="columns.gcp"><a class="sortable-header" @click.prevent="sortBy('gcp')">GCP <i :class="getSortIconClass('gcp')" :style="getSortIconStyle('gcp')"></i></a></th>
+                        <th class="text-center" style="width: 120px;" data-column="dev" x-show="columns.dev">
                             <div class="d-flex justify-content-center align-items-center">
                                 <span>DEV</span>
                                 <span class="ml-2" style="cursor: pointer;" data-toggle="collapse" data-target="#legend-row" aria-expanded="false" aria-controls="legend-row">
@@ -107,9 +107,9 @@
                                 </span>
                             </div>
                         </th>
-                        <th class="text-center" style="width: 120px;" data-column="rec">REC</th>
-                        <th class="text-center" style="width: 120px;" data-column="pp">PP</th>
-                        <th class="text-center" style="width: 120px;" data-column="prod">PROD</th>
+                        <th class="text-center" style="width: 120px;" data-column="rec" x-show="columns.rec">REC</th>
+                        <th class="text-center" style="width: 120px;" data-column="pp" x-show="columns.pp">PP</th>
+                        <th class="text-center" style="width: 120px;" data-column="prod" x-show="columns.prod">PROD</th>
                         <th class="text-center" style="width: 80px;">Actions</th>
                     </tr>
                     <tr>
@@ -136,43 +136,43 @@
                     <tr>
                         <th></th>
                         <th></th>
-                        <th data-column="domain">
+                        <th data-column="domain" x-show="columns.domain">
                             <div class="input-group input-group-sm">
-                                <select id="filter_domain" class="form-control custom-select filter-input">
+                                <select id="filter_domain" class="form-control custom-select filter-input" x-model="filters.domain" @change="onFilterChange()">
                                     <option value="all">Tous</option>
                                     {% for key, value in domains %}
                                         <option value="{{ key }}">{{ value }}</option>
                                     {% endfor %}
                                 </select>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_domain').value='all'; document.getElementById('filter_domain').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    <button class="btn btn-outline-secondary" type="button" @click="filters.domain = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                             </div>
                         </th>
-                        <th data-column="sf">
+                        <th data-column="sf" x-show="columns.sf">
                             <div class="input-group input-group-sm">
-                                <select id="filter_sf" class="form-control custom-select filter-input">
+                                <select id="filter_sf" class="form-control custom-select filter-input" x-model="filters.sf" @change="onFilterChange()">
                                     <option value="all">Tous</option>
                                     {% for key, value in sfs %}
                                         <option value="{{ key }}">{{ value }}</option>
                                     {% endfor %}
                                 </select>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_sf').value='all'; document.getElementById('filter_sf').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    <button class="btn btn-outline-secondary" type="button" @click="filters.sf = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                             </div>
                         </th>
                         <th>
                             <div class="input-group input-group-sm">
-                                <input type="text" id="filter_project_name" class="form-control filter-input" placeholder="Filtrer par nom..." aria-label="Filtrer par nom">
+                                <input type="text" id="filter_project_name" class="form-control filter-input" x-model.debounce.300ms="filters.name" @input="onFilterChange()" placeholder="Filtrer par nom..." aria-label="Filtrer par nom">
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_project_name').value=''; document.getElementById('filter_project_name').dispatchEvent(new Event('input'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    <button class="btn btn-outline-secondary" type="button" @click="filters.name = ''; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                             </div>
                         </th>
-                        <th data-column="techno">
+                        <th data-column="techno" x-show="columns.techno">
                             <div class="input-group input-group-sm">
-                                <select id="filter_techno" class="form-control custom-select filter-input">
+                                <select id="filter_techno" class="form-control custom-select filter-input" x-model="filters.techno" @change="onFilterChange()">
                                     <option value="all">Toutes</option>
                                     {% if technos is defined %}
                                         {% for key, value in technos %}
@@ -181,50 +181,50 @@
                                     {% endif %}
                                 </select>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_techno').value='all'; document.getElementById('filter_techno').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    <button class="btn btn-outline-secondary" type="button" @click="filters.techno = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                             </div>
                         </th>
-                        <th data-column="archived">
+                        <th data-column="archived" x-show="columns.archived">
                             <div class="input-group input-group-sm">
-                                <select id="filter_archived" class="form-control custom-select filter-input">
-                                    <option value="all">Tous</option>
-                                    <option value="non" selected>Non</option>
-                                    <option value="oui">Oui</option>
-                                </select>
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_archived').value='all'; document.getElementById('filter_archived').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
-                                </div>
-                            </div>
-                        </th>
-                        <th data-column="gcp">
-                            <div class="input-group input-group-sm">
-                                <select id="filter_gcp" class="form-control custom-select filter-input">
+                                <select id="filter_archived" class="form-control custom-select filter-input" x-model="filters.archived" @change="onFilterChange()">
                                     <option value="all">Tous</option>
                                     <option value="non">Non</option>
                                     <option value="oui">Oui</option>
                                 </select>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_gcp').value='all'; document.getElementById('filter_gcp').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    <button class="btn btn-outline-secondary" type="button" @click="filters.archived = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                             </div>
                         </th>
-                        <th data-column="dev">
+                        <th data-column="gcp" x-show="columns.gcp">
+                            <div class="input-group input-group-sm">
+                                <select id="filter_gcp" class="form-control custom-select filter-input" x-model="filters.gcp" @change="onFilterChange()">
+                                    <option value="all">Tous</option>
+                                    <option value="non">Non</option>
+                                    <option value="oui">Oui</option>
+                                </select>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" @click="filters.gcp = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
                         </th>
-                        <th data-column="rec">
+                        <th data-column="dev" x-show="columns.dev">
                         </th>
-                        <th data-column="pp">
+                        <th data-column="rec" x-show="columns.rec">
                         </th>
-                        <th data-column="prod">
+                        <th data-column="pp" x-show="columns.pp">
+                        </th>
+                        <th data-column="prod" x-show="columns.prod">
                         </th>
                         <th>
-                            <button class="btn btn-outline-light btn-sm mr-2" type="button" id="btn-reset-filters" title="Réinitialiser les filtres"><i class="fa-solid fa-rotate-left"></i></button>
-                            <button id="btn-check-selected" class="btn btn-outline-primary btn-sm mr-2" onclick="checkHealth('selected')" title="Vérifier cochés"><i class="fa-solid fa-rotate"></i></button>
-                            <button id="btn-stop-health" class="btn btn-danger btn-sm d-none" onclick="stopHealthCheck()" title="Arrêter"><i class="fa-solid fa-stop"></i> Arrêter</button>
+                            <button class="btn btn-outline-light btn-sm mr-2" type="button" @click="resetFilters()" title="Réinitialiser les filtres"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="btn btn-outline-primary btn-sm mr-2" @click="checkHealth('selected')" :class="isChecking ? 'd-none' : ''" title="Vérifier cochés"><i class="fa-solid fa-rotate"></i></button>
+                            <button class="btn btn-danger btn-sm" @click="stopHealthCheck()" :class="!isChecking ? 'd-none' : ''" title="Arrêter"><i class="fa-solid fa-stop"></i> Arrêter</button>
                         </th>
                     </tr>
                 </thead>
-                <tbody id="projects-tbody">
+                <tbody id="projects-tbody" x-html="rowsHtml" @change="updateCheckedProjects()">
                     {% include 'common/_monitoring_rows.html.twig' %}
                 </tbody>
             </table>
@@ -233,18 +233,28 @@
 
     <div class="card-footer d-flex justify-content-between align-items-center">
         <div>
-            <select id="rows_per_page" class="form-control form-control-sm d-inline-block w-auto">
+            <select id="rows_per_page" class="form-control form-control-sm d-inline-block w-auto" x-model="rowsPerPage" @change="currentPage = 1; fetchData()">
                 <option value="10">10 par page</option>
-                <option value="15" selected>15 par page</option>
+                <option value="15">15 par page</option>
                 <option value="25">25 par page</option>
                 <option value="50">50 par page</option>
                 <option value="1000">Tout afficher</option>
             </select>
-            <span id="pagination-info" class="ml-2 text-muted small"></span>
+            <span id="pagination-info" class="ml-2 text-muted small" x-text="'Affichage de ' + (totalRows === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1) + ' à ' + Math.min(currentPage * rowsPerPage, totalRows) + ' sur ' + totalRows"></span>
         </div>
-        <nav aria-label="Page navigation">
-            <ul class="pagination pagination-sm mb-0" id="pagination-container">
-                <!-- Les boutons de pagination seront générés ici par JS -->
+        <nav aria-label="Page navigation" x-show="totalPages > 1">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" :class="currentPage === 1 ? 'disabled' : ''">
+                    <a class="page-link" href="#" @click.prevent="setPage(currentPage - 1)">&laquo;</a>
+                </li>
+                <template x-for="p in getPagesToShow()">
+                    <li class="page-item" :class="p === currentPage ? 'active' : (p === '...' ? 'disabled' : '')">
+                        <a class="page-link" href="#" @click.prevent="p !== '...' && setPage(p)" x-text="p"></a>
+                    </li>
+                </template>
+                <li class="page-item" :class="currentPage === totalPages ? 'disabled' : ''">
+                    <a class="page-link" href="#" @click.prevent="setPage(currentPage + 1)">&raquo;</a>
+                </li>
             </ul>
         </nav>
     </div>
@@ -254,264 +264,4 @@
     window.columnsPrefs = {{ columns_prefs|default([])|json_encode|raw }};
 </script>
 <script src="js/datagrid.js"></script>
-<script>
-function checkSingleRow(btn) {
-    const row = btn.closest('.project-row');
-    checkHealth('single', row);
-}
-
-// Function to get currently visible environment columns
-function getVisibleEnvironments() {
-    const visibleEnvs = [];
-    ['dev', 'rec', 'pp', 'prod'].forEach(env => {
-        const toggle = document.getElementById(`toggle-col-${env}`);
-        if (toggle && toggle.checked) {
-            visibleEnvs.push(env);
-        }
-    });
-    return visibleEnvs;
-}
-
-// --- LOGIQUE DE MONITORING ---
-let abortController = null;
-
-async function checkHealth(mode, specificRow = null) {
-    const btnCheckSelected = document.getElementById('btn-check-selected');
-    const btnStop = document.getElementById('btn-stop-health');
-    const singleButtons = document.querySelectorAll('.btn-check-single');
-
-    let targetRows = [];
-    if (mode === 'single') {
-        targetRows = [specificRow];
-    } else if (mode === 'selected') {
-        targetRows = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.closest('.project-row'));
-    }
-
-    if (targetRows.length === 0 && mode === 'selected') {
-        alert("Aucune ligne cochée.");
-        return;
-    }
-
-    btnCheckSelected.classList.add('d-none');
-    btnStop.classList.remove('d-none');
-    singleButtons.forEach(btn => btn.disabled = true);
-
-    abortController = new AbortController();
-    const signal = abortController.signal;
-    const environmentsToProcess = getVisibleEnvironments(); // Get visible environments
-
-    targetRows.forEach(row => {
-        environmentsToProcess.forEach(env => { // Use visible environments
-            const cell = row.querySelector(`.col-${env}`);
-            if(cell) {
-                const urlHealthCheck = cell.getAttribute('data-url-health');
-                const urlActuatorInfo = cell.getAttribute('data-url-actuator-info');
-
-                if (urlHealthCheck && urlHealthCheck !== '') {
-                    const badge = cell.querySelector('.health-badge');
-                    if (badge) {
-                        badge.className = 'health-badge badge badge-warning';
-                        badge.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-                    }
-                }
-                if (urlActuatorInfo && urlActuatorInfo !== '') {
-                    const badge = cell.querySelector('.version-badge');
-                    if (badge) {
-                        badge.className = 'version-badge badge badge-warning';
-                        badge.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-                    }
-                }
-            }
-        });
-    });
-
-    try {
-        // Traitement des lignes
-        for (const row of targetRows) {
-            if (signal.aborted) break;
-
-            const projectName = row.getAttribute('data-project-name');
-            if (!projectName) {
-                updateRowBadgesError(row, environmentsToProcess); // Use visible environments
-                continue;
-            }
-
-            // On lance les requêtes d'environnement pour ce projet via notre backend
-            await Promise.all(
-                environmentsToProcess.map(env => checkEnvironment(row, projectName, env, signal)) // Use visible environments
-            );
-        }
-    } catch (error) {
-        if (error.name !== 'AbortError') console.error("Erreur inattendue:", error);
-    } finally {
-        btnCheckSelected.classList.remove('d-none');
-        btnStop.classList.add('d-none');
-        singleButtons.forEach(btn => btn.disabled = false);
-
-        // S'il y a eu annulation, on remet les badges "En attente" sur ceux qui tournaient encore
-        if (signal.aborted) {
-            resetPendingBadges(targetRows, environmentsToProcess); // Use visible environments
-        }
-        abortController = null;
-    }
-}
-
-function stopHealthCheck() {
-    if (abortController) {
-        abortController.abort(); // Cela déclenche l'exception AbortError dans les fetch en cours
-    }
-}
-
-async function checkEnvironment(row, projectName, env, signal) {
-    const cell = row.querySelector(`.col-${env}`);
-    if(!cell) return;
-
-    const urlHealthCheck = cell.getAttribute('data-url-health');
-    const urlActuatorInfo = cell.getAttribute('data-url-actuator-info');
-    const healthBadge = cell.querySelector('.health-badge');
-    const versionBadge = cell.querySelector('.version-badge');
-
-    if ((!urlHealthCheck || urlHealthCheck === '') && (!urlActuatorInfo || urlActuatorInfo === '')) {
-        if (healthBadge) updateBadge(healthBadge, 'N/A', 'secondary', '#');
-        if (versionBadge) updateVersionBadge(versionBadge, 'N/A', 'secondary', '#');
-        return;
-    }
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); // 10s timeout
-    const combinedSignal = anySignal([signal, controller.signal]);
-
-    try {
-        const actionUrl = `?action=getMonitoringData&project=${encodeURIComponent(projectName)}&env=${encodeURIComponent(env)}`;
-        const response = await fetch(actionUrl, { signal: combinedSignal });
-        clearTimeout(timeoutId);
-        const data = await response.json();
-
-        if (data.success) {
-            if (healthBadge) {
-                if (data.health.status === 'UP') {
-                    updateBadge(healthBadge, '<i class="fa-solid fa-check"></i>', 'success', data.urls.healthCheckUrl);
-                } else {
-                    updateBadge(healthBadge, '<i class="fa-regular fa-thumbs-down"></i>', 'danger', data.urls.healthCheckUrl);
-                }
-            }
-            if (versionBadge) {
-                updateVersionBadge(versionBadge, data.actuatorInfo.version, 'info', data.urls.actuatorInfoUrl);
-            }
-        } else {
-            if (healthBadge) updateBadge(healthBadge, 'ERR', 'danger', urlHealthCheck);
-            if (versionBadge) updateVersionBadge(versionBadge, 'ERR', 'danger', urlActuatorInfo);
-        }
-
-    } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-            if (controller.signal.aborted) { // Timeout
-                if (healthBadge) updateBadge(healthBadge, 'T/O', 'warning', urlHealthCheck);
-                if (versionBadge) updateVersionBadge(versionBadge, 'T/O', 'warning', urlActuatorInfo);
-            } else { // User aborted
-                throw error;
-            }
-        } else {
-            if (healthBadge) updateBadge(healthBadge, 'ERR', 'danger', urlHealthCheck);
-            if (versionBadge) updateVersionBadge(versionBadge, 'ERR', 'danger', urlActuatorInfo);
-        }
-    }
-}
-
-function anySignal(signals) {
-    const controller = new AbortController();
-    for (const signal of signals) {
-        if (signal.aborted) {
-            controller.abort();
-            return controller.signal;
-        }
-        signal.addEventListener('abort', () => controller.abort(), { once: true });
-    }
-    return controller.signal;
-}
-
-function updateBadge(badge, text, type, url) {
-    if (badge) {
-        badge.className = `health-badge badge badge-${type}`;
-        badge.innerHTML = `<a href="${url}" target="_blank" class="text-white text-decoration-none" title="${url}">${text}</a>`;
-    }
-}
-
-function updateVersionBadge(badge, text, type, url) {
-    if (badge) {
-        badge.className = `version-badge badge badge-${type}`;
-        badge.innerHTML = `<a href="${url}" target="_blank" class="text-white text-decoration-none" title="${url}">${text}</a>`;
-    }
-}
-
-function updateRowBadgesError(row, environmentsToProcess) { // Renamed parameter
-    environmentsToProcess.forEach(env => { // Use environmentsToProcess
-        const cell = row.querySelector(`.col-${env}`);
-        if(cell){
-            const urlHealthCheck = cell.getAttribute('data-url-health');
-            const urlActuatorInfo = cell.getAttribute('data-url-actuator-info');
-            const healthBadge = cell.querySelector('.health-badge');
-            const versionBadge = cell.querySelector('.version-badge');
-            if (healthBadge) updateBadge(healthBadge, 'N/A', 'secondary', urlHealthCheck || '#');
-            if (versionBadge) updateVersionBadge(versionBadge, 'N/A', 'secondary', urlActuatorInfo || '#');
-        }
-    });
-}
-
-function resetPendingBadges(rows, environmentsToProcess) { // Renamed parameter
-    rows.forEach(row => {
-        environmentsToProcess.forEach(env => { // Use environmentsToProcess
-            const cell = row.querySelector(`.col-${env}`);
-            if(cell) {
-                const healthBadge = cell.querySelector('.health-badge');
-                const versionBadge = cell.querySelector('.version-badge');
-                if (healthBadge && healthBadge.innerHTML.includes('spinner-border')) {
-                    healthBadge.className = 'health-badge badge badge-secondary';
-                    healthBadge.innerHTML = '<i class="fa-solid fa-ban"></i>';
-                }
-                if (versionBadge && versionBadge.innerHTML.includes('spinner-border')) {
-                    versionBadge.className = 'version-badge badge badge-secondary';
-                    versionBadge.innerHTML = '<i class="fa-solid fa-ban"></i>';
-                }
-            }
-        });
-    });
-}
-
-// --- LOGIQUE NEW RELIC ---
-document.addEventListener('click', async function(e) {
-    const link = e.target.closest('.new-relic-link');
-    if (!link) return;
-
-    e.preventDefault();
-    const project = link.getAttribute('data-project');
-    const env = link.getAttribute('data-env');
-    const icon = link.querySelector('i');
-
-    // Afficher un spinner
-    if (icon) {
-        icon.className = 'fa-solid fa-spinner fa-spin';
-    }
-
-    try {
-        const response = await fetch(`?action=get_new_relic_url&project=${project}&env=${env}`);
-        const data = await response.json();
-
-        if (data.url) {
-            window.open(data.url, '_blank');
-        } else {
-            alert('Erreur: Impossible de récupérer l\'URL New Relic.');
-        }
-    } catch (error) {
-        console.error('Erreur lors de la récupération de l\'URL New Relic:', error);
-        alert('Une erreur est survenue.');
-    } finally {
-        // Rétablir l'icône initiale
-        if (icon) {
-            icon.className = 'fa-solid fa-chart-line text-info';
-        }
-    }
-});
-</script>
 {% endblock body %}

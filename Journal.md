@@ -2,6 +2,26 @@
 
 ## 08/09/2026
 
+✦ Le Sprint 7 (Composantisation & Interactivité Front-end - Alpine.js) est également entièrement implémenté et validé ! 🎨⚡
+
+Cette refonte majeure introduit de la réactivité moderne déclarative et simplifie l'architecture client :
+
+1. Intégration d'Alpine.js (Zéro Compilation) :
+   - Ajout d'Alpine.js (`3.x` via CDN standard de manière asynchrone / deferred) dans `base.html.twig`, garantissant un chargement fluide compatible avec le SSR de Twig.
+   - Création du composant global `datagrid` dans `public/js/datagrid.js` pour encapsuler l'état complet des tableaux, de la pagination, du tri, des filtres, de la visibilité des colonnes et de la sélection.
+
+2. Simplification et réduction drastique de la taille des templates Twig (-50%) :
+   - Extraction de plus de 260 lignes de code JavaScript impératif en dur hors de `templates/monitoring.html.twig`, le rendant hautement maintenable et léger.
+   - Les actions de monitoring (Health Checks périodiques, timeouts de requêtes à 20s, annulations de requêtes via `AbortController`, requêtes d'URL New Relic) sont maintenant totalement logées sous forme de méthodes élégantes dans le composant Alpine de `datagrid.js`.
+
+3. Pagination & Tri 100% Déclaratifs :
+   - Remplacement de la génération lourde d'éléments HTML de pagination en JS par des templates réactifs Twig animés par des directives Alpine (`x-for`, `:class`, `@click.prevent`).
+   - Mise en évidence automatique de la colonne triée et du sens de tri (`asc`/`desc`) grâce à la gestion dynamique de classes CSS et d'icônes FontAwesome réactives.
+
+4. Multi-sélection intelligente :
+   - Liaison bidirectionnelle de l'état de sélection des lignes avec `checkedProjects` d'Alpine.js grâce à la délégation d'événements change (`@change="updateCheckedProjects()"`), fonctionnant nativement avec les lignes HTML rechargées à la volée via AJAX.
+   - Toggling à 100% de la sélection au clic sur le bouton "Tout cocher" et gestion automatique de l'apparition/disparition asynchrone des boutons d'action.
+
 ✦ Le Sprint 6 (Persistance & Robustesse de Données - SQLite & Cache) est désormais totalement implémenté et optimisé ! 💾🚀
 
 Voici les réalisations majeures qui ont été apportées :
