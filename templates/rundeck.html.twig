@@ -23,7 +23,7 @@
     opacity: 1;
 }
 </style>
-<div class="card shadow rounded mb-4">
+<div class="card shadow rounded mb-4" x-data="datagrid({ pageName: 'rundeck' })">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">⚙️ Rundeck</h5>
         <div>
@@ -35,28 +35,28 @@
                     <h6 class="dropdown-header">Afficher/Masquer les colonnes</h6>
                     <div class="px-3 py-2">
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-domain" data-column="domain" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-domain" x-model="columns.domain" data-column="domain">
                             <label class="form-check-label" for="toggle-col-domain">Domaine</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-sf" data-column="sf" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-sf" x-model="columns.sf" data-column="sf">
                             <label class="form-check-label" for="toggle-col-sf">SF</label>
                         </div>
                         <div class="dropdown-divider"></div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-dev" data-column="dev" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-dev" x-model="columns.dev" data-column="dev">
                             <label class="form-check-label" for="toggle-col-dev">DEV</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-rec" data-column="rec" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-rec" x-model="columns.rec" data-column="rec">
                             <label class="form-check-label" for="toggle-col-rec">REC</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-pp" data-column="pp" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-pp" x-model="columns.pp" data-column="pp">
                             <label class="form-check-label" for="toggle-col-pp">PP</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-prod" data-column="prod" checked>
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-col-prod" x-model="columns.prod" data-column="prod">
                             <label class="form-check-label" for="toggle-col-prod">PROD</label>
                         </div>
                     </div>
@@ -71,10 +71,10 @@
                 <thead class="thead-dark">
                     <tr>
                         <th style="width: 50px;">#</th>
-                        <th data-column="domain"><a class="sortable-header" data-sort="domain">Domaine <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th data-column="sf"><a class="sortable-header" data-sort="sf">SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th><a class="sortable-header" data-sort="name">Nom <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                        <th class="text-center" style="width: 120px;" data-column="dev">
+                        <th data-column="domain" x-show="columns.domain"><a class="sortable-header" @click.prevent="sortBy('domain')">Domaine <i :class="getSortIconClass('domain')" :style="getSortIconStyle('domain')"></i></a></th>
+                        <th data-column="sf" x-show="columns.sf"><a class="sortable-header" @click.prevent="sortBy('sf')">SF <i :class="getSortIconClass('sf')" :style="getSortIconStyle('sf')"></i></a></th>
+                        <th><a class="sortable-header" @click.prevent="sortBy('name')">Nom <i :class="getSortIconClass('name')" :style="getSortIconStyle('name')"></i></a></th>
+                        <th class="text-center" style="width: 120px;" data-column="dev" x-show="columns.dev">
                             <div class="d-flex justify-content-center align-items-center">
                                 <span>DEV</span>
                                 <span class="ml-2" style="cursor: pointer;" data-toggle="collapse" data-target="#legend-row" aria-expanded="false" aria-controls="legend-row">
@@ -82,9 +82,9 @@
                                 </span>
                             </div>
                         </th>
-                        <th class="text-center" style="width: 120px;" data-column="rec">REC</th>
-                        <th class="text-center" style="width: 120px;" data-column="pp">PP</th>
-                        <th class="text-center" style="width: 120px;" data-column="prod">PROD</th>
+                        <th class="text-center" style="width: 120px;" data-column="rec" x-show="columns.rec">REC</th>
+                        <th class="text-center" style="width: 120px;" data-column="pp" x-show="columns.pp">PP</th>
+                        <th class="text-center" style="width: 120px;" data-column="prod" x-show="columns.prod">PROD</th>
                         <th class="text-center" style="width: 80px;">Actions</th>
                     </tr>
                     <tr>
@@ -101,54 +101,54 @@
                     </tr>
                     <tr>
                         <th></th>
-                        <th data-column="domain">
+                        <th data-column="domain" x-show="columns.domain">
                             <div class="input-group input-group-sm">
-                                <select id="filter_domain" class="form-control custom-select filter-input">
+                                <select id="filter_domain" class="form-control custom-select filter-input" x-model="filters.domain" @change="onFilterChange()">
                                     <option value="all">Tous</option>
                                     {% for key, value in domains %}
                                         <option value="{{ key }}">{{ value }}</option>
                                     {% endfor %}
                                 </select>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_domain').value='all'; document.getElementById('filter_domain').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    <button class="btn btn-outline-secondary" type="button" @click="filters.domain = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                             </div>
                         </th>
-                        <th data-column="sf">
+                        <th data-column="sf" x-show="columns.sf">
                             <div class="input-group input-group-sm">
-                                <select id="filter_sf" class="form-control custom-select filter-input">
+                                <select id="filter_sf" class="form-control custom-select filter-input" x-model="filters.sf" @change="onFilterChange()">
                                     <option value="all">Tous</option>
                                     {% for key, value in sfs %}
                                         <option value="{{ key }}">{{ value }}</option>
                                     {% endfor %}
                                 </select>
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_sf').value='all'; document.getElementById('filter_sf').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    <button class="btn btn-outline-secondary" type="button" @click="filters.sf = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                             </div>
                         </th>
                         <th>
                             <div class="input-group input-group-sm">
-                                <input type="text" id="filter_project_name" class="form-control filter-input" placeholder="Filtrer par nom..." aria-label="Filtrer par nom">
+                                <input type="text" id="filter_project_name" class="form-control filter-input" x-model.debounce.300ms="filters.name" @input="onFilterChange()" placeholder="Filtrer par nom..." aria-label="Filtrer par nom">
                                 <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_project_name').value=''; document.getElementById('filter_project_name').dispatchEvent(new Event('input'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    <button class="btn btn-outline-secondary" type="button" @click="filters.name = ''; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
                             </div>
                         </th>
-                        <th data-column="dev">
+                        <th data-column="dev" x-show="columns.dev">
                         </th>
-                        <th data-column="rec">
+                        <th data-column="rec" x-show="columns.rec">
                         </th>
-                        <th data-column="pp">
+                        <th data-column="pp" x-show="columns.pp">
                         </th>
-                        <th data-column="prod">
+                        <th data-column="prod" x-show="columns.prod">
                         </th>
                         <th>
-                            <button class="btn btn-outline-light btn-sm mr-2" type="button" id="btn-reset-filters" title="Réinitialiser les filtres"><i class="fa-solid fa-rotate-left"></i></button>
+                            <button class="btn btn-outline-light btn-sm mr-2" type="button" @click="resetFilters()" title="Réinitialiser les filtres"><i class="fa-solid fa-rotate-left"></i></button>
                         </th>
                     </tr>
                 </thead>
-                <tbody id="projects-tbody">
+                <tbody id="projects-tbody" x-html="rowsHtml">
                     {% include 'common/_rundeck_rows.html.twig' %}
                 </tbody>
             </table>
@@ -157,18 +157,28 @@
 
     <div class="card-footer d-flex justify-content-between align-items-center">
         <div>
-            <select id="rows_per_page" class="form-control form-control-sm d-inline-block w-auto">
+            <select id="rows_per_page" class="form-control form-control-sm d-inline-block w-auto" x-model="rowsPerPage" @change="currentPage = 1; fetchData()">
                 <option value="10">10 par page</option>
-                <option value="15" selected>15 par page</option>
+                <option value="15">15 par page</option>
                 <option value="25">25 par page</option>
                 <option value="50">50 par page</option>
                 <option value="1000">Tout afficher</option>
             </select>
-            <span id="pagination-info" class="ml-2 text-muted small"></span>
+            <span id="pagination-info" class="ml-2 text-muted small" x-text="'Affichage de ' + (totalRows === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1) + ' à ' + Math.min(currentPage * rowsPerPage, totalRows) + ' sur ' + totalRows"></span>
         </div>
-        <nav aria-label="Page navigation">
-            <ul class="pagination pagination-sm mb-0" id="pagination-container">
-                <!-- Les boutons de pagination seront générés ici par JS -->
+        <nav aria-label="Page navigation" x-show="totalPages > 1">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" :class="currentPage === 1 ? 'disabled' : ''">
+                    <a class="page-link" href="#" @click.prevent="setPage(currentPage - 1)">&laquo;</a>
+                </li>
+                <template x-for="p in getPagesToShow()">
+                    <li class="page-item" :class="p === currentPage ? 'active' : (p === '...' ? 'disabled' : '')">
+                        <a class="page-link" href="#" @click.prevent="p !== '...' && setPage(p)" x-text="p"></a>
+                    </li>
+                </template>
+                <li class="page-item" :class="currentPage === totalPages ? 'disabled' : ''">
+                    <a class="page-link" href="#" @click.prevent="setPage(currentPage + 1)">&raquo;</a>
+                </li>
             </ul>
         </nav>
     </div>

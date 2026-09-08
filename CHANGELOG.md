@@ -5,6 +5,25 @@ Historique de tous les changements notables du projet dev-console
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
 
+## [1.8.0] - 08/09/2026
+
+### Added
+
+- Intégration globale d'Alpine.js (`3.x` via CDN) pour moderniser l'interactivité de l'interface utilisateur.
+- Création d'un composant de grille dynamique unifié et hautement réactif nommé `datagrid` sous Alpine.js.
+- Implémentation d'une pagination entièrement déclarative et réactive pilotée par l'état d'Alpine, éliminant la génération d'HTML dans le code JS.
+- Support de la multi-sélection des projets pour la page de monitoring avec gestion réactive de l'état "Tout cocher/décocher" (`checkedProjects`).
+
+### Changed
+
+- Refonte complète de `public/js/datagrid.js` pour éliminer l'impératif Vanilla JS au profit de la réactivité déclarative d'Alpine.js.
+- Allègement massif des templates Twig (`monitoring.html.twig` réduit de plus de 50% en taille) en extrayant et encapsulant l'intégralité du JavaScript comportemental (monitoring health checks, timeouts, New Relic url loading) au sein du composant Alpine.
+- Amélioration de la gestion de l'affichage des colonnes : les en-têtes et filtres de colonnes masquées se cachent désormais dynamiquement à l'aide de directives `x-show`.
+
+### Fixed
+
+- Résolution des problèmes de désynchronisation d'état grâce à l'association bidirectionnelle des filtres et contrôles de tri via `x-model`.
+
 ## [1.7.0] - 08/09/2026
 
 ### Added

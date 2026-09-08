@@ -20,7 +20,7 @@
 {% if messageScanResults is defined and messageScanResults %}
     {{ messageScanResults|raw }}
 {% endif %}
-<div class="card shadow rounded">
+<div class="card shadow rounded" x-data="datagrid({ pageName: 'index' })">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">Projets GitLab</h5>
     </div>
@@ -30,74 +30,74 @@
             <thead class="thead-dark">
                 <tr>
                     <th>#</th>
-                    <th><a class="sortable-header" data-sort="domain">Domaine <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                    <th><a class="sortable-header" data-sort="sf">SF <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                    <th><a class="sortable-header" data-sort="name">Projet <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                    <th><a class="sortable-header" data-sort="gcp">GCP <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                    <th><a class="sortable-header" data-sort="sb">Spring Boot <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                    <th><a class="sortable-header" data-sort="java">Java <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                    <th><a class="sortable-header" data-sort="mdm">MDM Workload <i class="fa-solid fa-sort sort-icon"></i></a></th>
-                    <th><a class="sortable-header" data-sort="status">Status <i class="fa-solid fa-sort sort-icon"></i></a></th>
+                    <th><a class="sortable-header" @click.prevent="sortBy('domain')">Domaine <i :class="getSortIconClass('domain')" :style="getSortIconStyle('domain')"></i></a></th>
+                    <th><a class="sortable-header" @click.prevent="sortBy('sf')">SF <i :class="getSortIconClass('sf')" :style="getSortIconStyle('sf')"></i></a></th>
+                    <th><a class="sortable-header" @click.prevent="sortBy('name')">Projet <i :class="getSortIconClass('name')" :style="getSortIconStyle('name')"></i></a></th>
+                    <th><a class="sortable-header" @click.prevent="sortBy('gcp')">GCP <i :class="getSortIconClass('gcp')" :style="getSortIconStyle('gcp')"></i></a></th>
+                    <th><a class="sortable-header" @click.prevent="sortBy('sb')">Spring Boot <i :class="getSortIconClass('sb')" :style="getSortIconStyle('sb')"></i></a></th>
+                    <th><a class="sortable-header" @click.prevent="sortBy('java')">Java <i :class="getSortIconClass('java')" :style="getSortIconStyle('java')"></i></a></th>
+                    <th><a class="sortable-header" @click.prevent="sortBy('mdm')">MDM Workload <i :class="getSortIconClass('mdm')" :style="getSortIconStyle('mdm')"></i></a></th>
+                    <th><a class="sortable-header" @click.prevent="sortBy('status')">Status <i :class="getSortIconClass('status')" :style="getSortIconStyle('status')"></i></a></th>
                 </tr>
                 <tr>
                     <th></th>
                     <th>
                         <div class="input-group input-group-sm">
-                            <select id="filter_domain" class="form-control filter-input">
+                            <select id="filter_domain" class="form-control filter-input" x-model="filters.domain" @change="onFilterChange()">
                                 <option value="all">Tous</option>
                                 {% for key, value in domains %}
                                     <option value="{{ key }}">{{ value }}</option>
                                 {% endfor %}
                             </select>
                             <div class="input-group-append">
-                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_domain').value='all'; document.getElementById('filter_domain').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                <button class="btn btn-outline-secondary" type="button" @click="filters.domain = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                         </div>
                     </th>
                     <th>
                         <div class="input-group input-group-sm">
-                            <select id="filter_sf" class="form-control filter-input">
+                            <select id="filter_sf" class="form-control filter-input" x-model="filters.sf" @change="onFilterChange()">
                                 <option value="all">Tous</option>
                                 {% for key, value in sfs %}
                                     <option value="{{ key }}">{{ value }}</option>
                                 {% endfor %}
                             </select>
                             <div class="input-group-append">
-                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_sf').value='all'; document.getElementById('filter_sf').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                <button class="btn btn-outline-secondary" type="button" @click="filters.sf = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                         </div>
                     </th>
                     <th>
                         <div class="input-group input-group-sm">
-                            <input id="filter_project_name" class="form-control filter-input" value="" placeholder="Filtrer..." />
+                            <input id="filter_project_name" class="form-control filter-input" x-model.debounce.300ms="filters.name" @input="onFilterChange()" placeholder="Filtrer..." />
                             <div class="input-group-append">
-                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_project_name').value=''; document.getElementById('filter_project_name').dispatchEvent(new Event('input'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                <button class="btn btn-outline-secondary" type="button" @click="filters.name = ''; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                         </div>
                     </th>
                     <th>
                         <div class="input-group input-group-sm">
-                            <select id="filter_gcp" class="form-control filter-input">
+                            <select id="filter_gcp" class="form-control filter-input" x-model="filters.gcp" @change="onFilterChange()">
                                 <option value="all">Tous</option>
                                 <option value="non">Non</option>
                                 <option value="oui">Oui</option>
                             </select>
                             <div class="input-group-append">
-                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_gcp').value='all'; document.getElementById('filter_gcp').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                <button class="btn btn-outline-secondary" type="button" @click="filters.gcp = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                         </div>
                     </th>
                     <th>
                         <div class="input-group input-group-sm">
-                            <input id="filter_springboot_version" class="form-control filter-input" value="" placeholder="Filtrer..." />
+                            <input id="filter_springboot_version" class="form-control filter-input" x-model.debounce.300ms="filters.springboot_version" @input="onFilterChange()" placeholder="Filtrer..." />
                             <div class="input-group-append">
-                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_springboot_version').value=''; document.getElementById('filter_springboot_version').dispatchEvent(new Event('input'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                <button class="btn btn-outline-secondary" type="button" @click="filters.springboot_version = ''; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                         </div>
                     </th>
                     <th>
                         <div class="input-group input-group-sm">
-                            <select id="filter_java_version" class="form-control filter-input">
+                            <select id="filter_java_version" class="form-control filter-input" x-model="filters.java_version" @change="onFilterChange()">
                                 <option value="all">Tous</option>
                                 <option value="n/a">N/A</option>
                                 <option value="1.8">1.8</option>
@@ -107,34 +107,34 @@
                                 <option value="25">25</option>
                             </select>
                             <div class="input-group-append">
-                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_java_version').value='all'; document.getElementById('filter_java_version').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                <button class="btn btn-outline-secondary" type="button" @click="filters.java_version = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                         </div>
                     </th>
                     <th>
                         <div class="input-group input-group-sm">
-                            <input id="filter_mdm_version" class="form-control filter-input" value="" placeholder="Filtrer..." />
+                            <input id="filter_mdm_version" class="form-control filter-input" x-model.debounce.300ms="filters.mdm_version" @input="onFilterChange()" placeholder="Filtrer..." />
                             <div class="input-group-append">
-                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_mdm_version').value=''; document.getElementById('filter_mdm_version').dispatchEvent(new Event('input'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                <button class="btn btn-outline-secondary" type="button" @click="filters.mdm_version = ''; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                         </div>
                     </th>
                     <th>
                         <div class="input-group input-group-sm">
-                            <select id="filter_status" class="form-control filter-input">
+                            <select id="filter_status" class="form-control filter-input" x-model="filters.status" @change="onFilterChange()">
                                 <option value="all">Tous</option>
                                 <option value="OK">OK</option>
                                 <option value="Java obsolète">Java obsolète</option>
                                 <option value="Spring Boot ancien">Spring Boot ancien</option>
                             </select>
                             <div class="input-group-append">
-                                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('filter_status').value='all'; document.getElementById('filter_status').dispatchEvent(new Event('change'));" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                <button class="btn btn-outline-secondary" type="button" @click="filters.status = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                             </div>
                         </div>
                     </th>
                 </tr>
             </thead>
-            <tbody id="projects-tbody">
+            <tbody id="projects-tbody" x-html="rowsHtml">
                 {% include 'common/_index_rows.html.twig' %}
             </tbody>
         </table>
@@ -142,18 +142,28 @@
 
     <div class="card-footer d-flex justify-content-between align-items-center">
         <div>
-            <select id="rows_per_page" class="form-control form-control-sm d-inline-block w-auto">
+            <select id="rows_per_page" class="form-control form-control-sm d-inline-block w-auto" x-model="rowsPerPage" @change="currentPage = 1; fetchData()">
                 <option value="10">10 par page</option>
-                <option value="15" selected>15 par page</option>
+                <option value="15">15 par page</option>
                 <option value="25">25 par page</option>
                 <option value="50">50 par page</option>
                 <option value="1000">Tout afficher</option>
             </select>
-            <span id="pagination-info" class="ml-2 text-muted small"></span>
+            <span id="pagination-info" class="ml-2 text-muted small" x-text="'Affichage de ' + (totalRows === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1) + ' à ' + Math.min(currentPage * rowsPerPage, totalRows) + ' sur ' + totalRows"></span>
         </div>
-        <nav aria-label="Page navigation">
-            <ul class="pagination pagination-sm mb-0" id="pagination-container">
-                <!-- Les boutons de pagination seront générés ici par JS -->
+        <nav aria-label="Page navigation" x-show="totalPages > 1">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" :class="currentPage === 1 ? 'disabled' : ''">
+                    <a class="page-link" href="#" @click.prevent="setPage(currentPage - 1)">&laquo;</a>
+                </li>
+                <template x-for="p in getPagesToShow()">
+                    <li class="page-item" :class="p === currentPage ? 'active' : (p === '...' ? 'disabled' : '')">
+                        <a class="page-link" href="#" @click.prevent="p !== '...' && setPage(p)" x-text="p"></a>
+                    </li>
+                </template>
+                <li class="page-item" :class="currentPage === totalPages ? 'disabled' : ''">
+                    <a class="page-link" href="#" @click.prevent="setPage(currentPage + 1)">&raquo;</a>
+                </li>
             </ul>
         </nav>
     </div>
