@@ -5,6 +5,24 @@ Historique de tous les changements notables du projet dev-console
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
 
+## [1.7.0] - 08/09/2026
+
+### Added
+
+- Introduction d'un système de base de données relationnelle SQLite zero-configuration (`data/database.sqlite`), résolvant les problèmes de concurrence et d'empreinte mémoire liés aux fichiers plats JSON.
+- Création automatique du schéma des tables (`projects`, `gitlab_projects`, `rundeck_projects`, `cache_store`) et des index SQL associés.
+- Implémentation d'une nouvelle méthode hautement performante `findProjectByName` dans `RepositoryService` pour une recherche directe indexée.
+
+### Changed
+
+- Refactoring complet du `RepositoryService` pour s'interfacer avec SQLite à l'aide de requêtes préparées PDO sécurisées et de transactions transactionnelles par lot.
+- Optimisation de la récupération individuelle d'un projet dans `ProjectRepository::findByCode` (recherche en $O(1)$) en remplaçant la lecture globale du cache de fichiers JSON par une requête SQL ciblée.
+- Amélioration de l'adaptabilité du `RepositoryService` avec un mécanisme transparent de repli (fallback) sur un cache de fichiers plat (`FilesystemAdapter`) si PDO/SQLite n'est pas disponible.
+
+### Fixed
+
+- Mise à jour et correction de la suite de tests unitaires (`ProjectRepositoryTest` et `RepositoryServiceTest`) pour intégrer proprement le comportement SQLite sur système de fichiers virtuel (vfsStream).
+
 ## [1.6.0] - 02/09/2026
 
 ### Changed
