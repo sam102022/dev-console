@@ -17,7 +17,8 @@ class RepositoryService
     private bool $useSqlite = false;
 
     private const array STATIC_FILES = [
-        'new_relic_urls.json'
+        'new_relic_urls.json',
+        'rundeckObjects.json'
     ];
 
     public function __construct(string $path, LoggerFactory $loggerFactory)
