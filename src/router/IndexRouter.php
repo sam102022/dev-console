@@ -11,6 +11,7 @@ use App\controller\MonitoringController;
 use App\controller\PostmanController;
 use App\controller\RundeckController;
 use App\controller\UserAdminController;
+use App\controller\SettingsController;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\service\UtilsService;
@@ -38,6 +39,7 @@ final class IndexRouter
         private readonly RundeckController    $rundeckController,
         private readonly AuthController       $authController,
         private readonly UserAdminController  $userAdminController,
+        private readonly SettingsController   $settingsController,
         private readonly Environment          $twig,
         private readonly IndexContext         $indexContext,
         LoggerFactory                         $loggerFactory,
@@ -102,6 +104,9 @@ final class IndexRouter
                     return;
                 case AuthController::ACTION_RESET_PASSWORD_SUBMIT:
                     $this->authController->resetPasswordSubmit();
+                    return;
+                case SettingsController::ACTION_SAVE_SETTINGS:
+                    $this->settingsController->save();
                     return;
                 case UserAdminController::ACTION_CREATE_USER:
                 case UserAdminController::ACTION_UPDATE_USER:
@@ -169,6 +174,9 @@ final class IndexRouter
                     break;
                 case AuthController::ROUTE_RESET_PASSWORD:
                     $this->authController->resetPassword();
+                    break;
+                case SettingsController::ROUTE_SETTINGS:
+                    $this->settingsController->index();
                     break;
                 case UserAdminController::ROUTE_USERS:
                     $this->userAdminController->index($messages);

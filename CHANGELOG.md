@@ -5,6 +5,30 @@ Historique de tous les changements notables du projet dev-console
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
 
+## [1.10.0] - 09/09/2026
+
+### Added
+
+- **Interface de Paramètres de Profil ⚙️ :** Ajout de la page `?page=settings` accessible à tous les utilisateurs connectés pour gérer leur profil et informations personnelles.
+- **Clé d'API Postman Personnelle :** Ajout d'une colonne `postman_api_key` en base de données, permettant à chaque utilisateur de configurer sa propre clé d'API Postman.
+- **Résolution dynamique de clé :** Adaptation de la factory `createPostmanClient` pour récupérer dynamiquement la clé de l'utilisateur en session PHP (avec repli transparent sur la clé globale `.env`).
+- **Tests unitaires de filtrage :** Ajout des tests `testProcessGcpFilter` et `testProcessStatusFilter` dans `DatagridHelperTest`.
+
+### Changed
+
+- **Menu Profil navbar "Mon compte" 👤 :** Remplacement de l'affichage statique de l'e-mail par un élégant menu déroulant Bootstrap 4 unifié ("Mon compte") regroupant les informations de profil, l'accès aux paramètres de compte et l'action de déconnexion.
+- **Optimisation et inversion de Debounce :** Correction généralisée des conflits de saisie sur l'ensemble des 6 entrées de texte de recherche de l'application (liaison de modèle instantanée, déclenchement différé du filtre via `@input.debounce.300ms`).
+- **Restructuration réactive de la modale CRUD :** Encapsulation de l'état de la modale d'utilisateurs dans le composant Alpine `usersDatagrid()` pour éradiquer tout décalage d'initialisation et variables non réactives du `x-init`.
+- **Positionnement de la modale :** Déplacement de la modale en dehors de la carte (`#users-card`) pour respecter la spécification Bootstrap (placement au premier niveau du `body`) et éviter les problèmes d'empilement (z-index) et de rognage CSS.
+
+### Fixed
+
+- **Mise à niveau CLI Symfony 8.0 🛠️ :** Remplacement de la méthode obsolète `$application->add()` par `$application->addCommand()` exigée par Symfony Console 8.0, rétablissant le fonctionnement de `scan.bat`.
+- **Rattrapage du mapping GitLab SQLite :** Correction du mapping bidirectionnel des colonnes camelCase de la table SQLite vers le format snake_case attendu par le mapper de l'API de GitLab.
+- **Intégration robuste d'Alpine.js :** Mise en place d'un modèle d'initialisation double et résilient (Dual-Init Pattern) pour parer aux chargements asynchrones ou agressifs du script d'AlpineJS depuis le cache du navigateur.
+- **Conflits de transition d'opacité :** Suppression de la classe `fade` et de la directive `x-transition` sur la modale pour éliminer les conflits CSS, avec ajout d'une surcharge `.modal.show { display: block !important; }`.
+- **Résolution des filtres d'accueil :** Correction et liaison robuste des filtres GCP, Spring Boot, Java et MDM via l'intégration d'attributs `data-filter-column` et de logique de filtrage booléen/statut dynamique dans `DatagridHelper`.
+
 ## [1.9.0] - 08/09/2026
 
 ### Added

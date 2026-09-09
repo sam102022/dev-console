@@ -5,6 +5,7 @@ namespace App\tests\router;
 
 use App\controller\AuthController;
 use App\controller\UserAdminController;
+use App\controller\SettingsController;
 use App\context\IndexContext;
 use App\controller\GitlabController;
 use App\controller\IndexController;
@@ -28,6 +29,7 @@ class IndexRouterTest extends AbstractTestCase
     private AuthController|MockObject $authController;
     private UserAdminController|MockObject $userAdminController;
     private IndexContext|MockObject $indexContext;
+    private SettingsController|MockObject $settingsController;
     private IndexRouter $router;
 
     protected function setUp(): void
@@ -40,6 +42,7 @@ class IndexRouterTest extends AbstractTestCase
         $this->rundeckController = $this->createMock(RundeckController::class);
         $this->authController = $this->createMock(AuthController::class);
         $this->userAdminController = $this->createMock(UserAdminController::class);
+        $this->settingsController = $this->createMock(SettingsController::class);
         $this->indexContext = $this->createMock(IndexContext::class);
         $this->indexContext->method('initMessages')->willReturn([]);
 
@@ -51,6 +54,7 @@ class IndexRouterTest extends AbstractTestCase
             $this->rundeckController,
             $this->authController,
             $this->userAdminController,
+            $this->settingsController,
             $this->twigMocked,
             $this->indexContext,
             self::$loggerFactory

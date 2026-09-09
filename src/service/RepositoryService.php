@@ -122,9 +122,16 @@ class RepositoryService
                 role TEXT NOT NULL DEFAULT 'ROLE_USER',
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 reset_token TEXT,
-                reset_token_expires_at TEXT
+                reset_token_expires_at TEXT,
+                postman_api_key TEXT
             );
         ");
+
+        try {
+            $this->pdo->exec("ALTER TABLE users ADD COLUMN postman_api_key TEXT");
+        } catch (\PDOException $e) {
+            // Column already exists, ignore
+        }
 
         $stmt = $this->pdo->query("SELECT COUNT(*) FROM users");
         if ($stmt && $stmt->fetchColumn() == 0) {
@@ -640,24 +647,26 @@ class RepositoryService
     {
         if (!$this->useSqlite) return 0;
         if (isset($user['id']) && $user['id'] > 0) {
-            $stmt = $this->pdo->prepare("UPDATE users SET email = :email, password_hash = :password_hash, role = :role, reset_token = :reset_token, reset_token_expires_at = :reset_token_expires_at WHERE id = :id");
+            $stmt = $this->pdo->prepare("UPDATE users SET email = :email, password_hash = :password_hash, role = :role, reset_token = :reset_token, reset_token_expires_at = :reset_token_expires_at, postman_api_key = :postman_api_key WHERE id = :id");
             $stmt->execute([
                 'email' => $user['email'],
                 'password_hash' => $user['password_hash'],
                 'role' => $user['role'],
                 'reset_token' => $user['reset_token'] ?? null,
                 'reset_token_expires_at' => $user['reset_token_expires_at'] ?? null,
+                'postman_api_key' => $user['postman_api_key'] ?? null,
                 'id' => $user['id']
             ]);
             return (int)$user['id'];
         } else {
-            $stmt = $this->pdo->prepare("INSERT INTO users (email, password_hash, role, reset_token, reset_token_expires_at) VALUES (:email, :password_hash, :role, :reset_token, :reset_token_expires_at)");
+            $stmt = $this->pdo->prepare("INSERT INTO users (email, password_hash, role, reset_token, reset_token_expires_at, postman_api_key) VALUES (:email, :password_hash, :role, :reset_token, :reset_token_expires_at, :postman_api_key)");
             $stmt->execute([
                 'email' => $user['email'],
                 'password_hash' => $user['password_hash'],
                 'role' => $user['role'],
                 'reset_token' => $user['reset_token'] ?? null,
                 'reset_token_expires_at' => $user['reset_token_expires_at'] ?? null,
+                'postman_api_key' => $user['postman_api_key'] ?? null,
             ]);
             return (int)$this->pdo->lastInsertId();
         }

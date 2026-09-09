@@ -1,0 +1,91 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow rounded mb-4">
+            <div class="card-header bg-dark text-white d-flex align-items-center">
+                <h5 class="mb-0"><i class="fas fa-user-cog mr-2"></i>Paramètres de votre compte</h5>
+            </div>
+            <div class="card-body py-4">
+                {% if success %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle mr-2"></i>{{ success }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endif %}
+
+                {% if error %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endif %}
+
+                <form action="?page=settings&action=saveSettings" method="POST">
+                    <!-- Email Read-Only -->
+                    <div class="form-group mb-4">
+                        <label class="font-weight-bold text-muted small uppercase">Adresse e-mail</label>
+                        <input type="email" class="form-control-plaintext form-control-lg font-weight-bold border-bottom px-2" value="{{ user.email }}" readonly>
+                    </div>
+
+                    <!-- Role Read-Only -->
+                    <div class="form-group mb-4">
+                        <label class="font-weight-bold text-muted small uppercase">Rôle</label>
+                        <div>
+                            <span class="badge {% if user.role == 'ROLE_ADMIN' %}badge-danger{% else %}badge-primary{% endif %} px-3 py-2 font-weight-bold">
+                                {% if user.role == 'ROLE_ADMIN' %}Administrateur{% else %}Utilisateur{% endif %}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="dropdown-divider mb-4"></div>
+
+                    <!-- Postman API Key with toggle show/hide -->
+                    <div class="form-group mb-4">
+                        <label for="postman_api_key" class="font-weight-bold">Clé d'API Postman Personnelle</label>
+                        <small class="form-text text-muted mb-2">
+                            Entrez votre clé d'API Postman personnelle (PMAK) pour gérer vos propres collections. Si vous laissez ce champ vide, la clé globale du serveur sera utilisée par défaut.
+                        </small>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-key"></i></span>
+                            </div>
+                            <input type="password" name="postman_api_key" id="postman_api_key" class="form-control" placeholder="Entrez votre PMAK-..." value="{{ user.postman_api_key|default('') }}">
+                            <div class="input-group-append">
+                                <button class="btn btn-outline-secondary" type="button" id="toggleApiKey" onclick="togglePasswordVisibility()" title="Afficher/Masquer la clé">
+                                    <i class="fas fa-eye" id="eyeIcon"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex justify-content-between align-items-center mt-5">
+                        <a href="?page=index" class="btn btn-link text-muted"><i class="fas fa-arrow-left mr-1"></i> Retour à l'accueil</a>
+                        <button type="submit" class="btn btn-success px-4"><i class="fas fa-save mr-1"></i> Enregistrer les paramètres</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePasswordVisibility() {
+    const input = document.getElementById('postman_api_key');
+    const icon = document.getElementById('eyeIcon');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+</script>
+{% endblock body %}
