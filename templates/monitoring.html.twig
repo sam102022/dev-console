@@ -164,7 +164,7 @@
                         </th>
                         <th>
                             <div class="input-group input-group-sm">
-                                <input type="text" id="filter_project_name" class="form-control filter-input" x-model.debounce.300ms="filters.name" @input="onFilterChange()" placeholder="Filtrer par nom..." aria-label="Filtrer par nom">
+                                <input type="text" id="filter_project_name" class="form-control filter-input" x-model="filters.name" @input.debounce.300ms="onFilterChange()" placeholder="Filtrer par nom..." aria-label="Filtrer par nom">
                                 <div class="input-group-append">
                                     <button class="btn btn-outline-secondary" type="button" @click="filters.name = ''; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                                 </div>
@@ -263,5 +263,5 @@
 <script>
     window.columnsPrefs = {{ columns_prefs|default([])|json_encode|raw }};
 </script>
-<script src="js/datagrid.js"></script>
+<script src="js/datagrid.js?v=1.0.2"></script>
 {% endblock body %}

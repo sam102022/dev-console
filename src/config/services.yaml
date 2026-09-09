@@ -20,7 +20,6 @@ services:
       - '../TestContainer.php'
       - '../ServiceFactory.php'
       - '../LanguageResolver.php'
-      - '../service/RepositoryService.php'
       - '../exception/*'
       - '../model/*'
 
@@ -75,3 +74,7 @@ services:
 
   App\service\IconService:
     factory: ['App\factory\ServiceFactory', 'createIconService']
+
+  App\service\RepositoryService:
+    arguments:
+      $path: '%kernel.project_dir%/data'

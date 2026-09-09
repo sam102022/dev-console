@@ -1,4 +1,5 @@
-document.addEventListener('alpine:init', () => {
+function registerDatagrid() {
+    if (window.datagrid) return;
     // Initialisation des tooltips Bootstrap si disponibles
     if (typeof $ !== 'undefined' && $.fn.tooltip) {
         $(document).ready(function() {
@@ -6,7 +7,7 @@ document.addEventListener('alpine:init', () => {
         });
     }
 
-    Alpine.data('datagrid', (config) => ({
+    window.datagrid = (config) => ({
         pageName: config.pageName,
         currentPage: 1,
         rowsPerPage: 15,
@@ -509,8 +510,15 @@ document.addEventListener('alpine:init', () => {
                 }
             }
         }
-    }));
-});
+    });
+    Alpine.data('datagrid', window.datagrid);
+}
+
+if (window.Alpine) {
+    registerDatagrid();
+} else {
+    document.addEventListener('alpine:init', registerDatagrid);
+}
 
 window.checkSingleRow = function(btn) {
     const row = btn.closest('.project-row');
@@ -520,6 +528,35 @@ window.checkSingleRow = function(btn) {
         const data = Alpine.$data(gridEl);
         if (data && data.checkHealth) {
             data.checkHealth('single', projectName);
+        }
+    }
+};
+
+window.editUser = function(btn) {
+    const row = btn.closest('.user-row');
+    const id = row.getAttribute('data-id');
+    const email = row.getAttribute('data-email');
+    const role = row.getAttribute('data-role');
+
+    const alpineEl = document.getElementById('users-card');
+    if (alpineEl && typeof Alpine !== 'undefined') {
+        const data = Alpine.$data(alpineEl);
+        if (data && data.openEditModal) {
+            data.openEditModal({ id, email, role });
+        }
+    }
+};
+
+window.deleteUser = function(btn) {
+    const row = btn.closest('.user-row');
+    const id = row.getAttribute('data-id');
+    const email = row.getAttribute('data-email');
+
+    const alpineEl = document.getElementById('users-card');
+    if (alpineEl && typeof Alpine !== 'undefined') {
+        const data = Alpine.$data(alpineEl);
+        if (data && data.triggerDeleteUser) {
+            data.triggerDeleteUser(id, email);
         }
     }
 };

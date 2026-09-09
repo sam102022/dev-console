@@ -2,6 +2,36 @@
 
 ## 08/09/2026
 
+✦ Le Sprint 8 (Authentification & Sécurité d'Accès - RBAC / User CRUD & Mot de passe perdu) est désormais totalement implémenté et validé ! 🔐👥
+
+Voici l'ensemble des travaux et améliorations apportés :
+
+1. Authentification & Sécurité des Sessions :
+   - Centralisation de `session_start()` à la racine de l'application dans `public/index.php` avec les paramètres de sécurité optimaux : `cookie_secure` dynamique, `cookie_httponly` activé, et politique de cookie SameSite réglée sur `Strict`.
+   - Création de la page `/login` esthétique avec un formulaire de connexion et gestion des messages d'erreurs d'authentification.
+   - Intégration de l'identifiant, de l'email et du rôle de l'utilisateur connecté en session PHP.
+
+2. Contrôle d'Accès par Rôles (RBAC) en tant que Middleware :
+   - Mise en œuvre d'une couche d'interception et de protection de route au niveau du routeur central (`IndexRouter.php`).
+   - Redirection automatique et sécurisée des requêtes anonymes vers `/login` pour toutes les pages autres que les flux publics (connexion et oubli de mot de passe).
+   - Limitation stricte de l'accès aux pages et endpoints sensibles d'administration (comme le CRUD utilisateur) aux seuls utilisateurs détenant le rôle `ROLE_ADMIN` (renvoie un code de statut HTTP 403 Forbidden).
+
+3. Interface d'Administration CRUD des Utilisateurs :
+   - Ajout d'une table relationnelle `users` dans la base SQLite gérée par le `RepositoryService` avec alimentation automatique (seeding) d'un compte administrateur par défaut (`admin@mdm.com` / `admin`).
+   - Création de `UserAdminController` et des templates Twig associés (`users.html.twig` et `_users_rows.html.twig`) pour piloter l'administration des utilisateurs.
+   - Utilisation de la réactivité d'Alpine.js pour fournir une interface CRUD unifiée s'appuyant sur notre datagrid réactive pour la recherche paginée, ainsi que des formulaires de modification/création d'utilisateurs via des modaux asynchrones asynchrones et fluides.
+
+4. Flux sécurisé de récupération de Mot de Passe Perdu :
+   - Ajout du lien "Mot de passe oublié" et de l'écran de demande `/forgotPassword`.
+   - Génération de jeton cryptographique à usage unique expirable (valable 1 heure) associé au compte utilisateur.
+   - Simulation sécurisée d'envoi d'email avec lien direct de réinitialisation `/resetPassword?token=TOKEN` consigné proprement dans le fichier de logs `var/logs/forgot_password.log`.
+   - Formulaire de réinitialisation sécurisé validant la concordance des saisies et effectuant le hachage robuste du mot de passe final à l'aide de l'algorithme standard robuste de PHP (`password_hash($password, PASSWORD_BCRYPT)`).
+
+5. Maintien de l'autowiring et mise à jour de la Suite de Tests :
+   - Configuration transparente du conteneur de services Symfony (`src/config/services.yaml`) pour intégrer et câbler le `RepositoryService` afin d'autowirer proprement les nouveaux contrôleurs (`AuthController` et `UserAdminController`).
+   - Mise à jour robuste de la classe de tests `IndexRouterTest.php` pour injecter proprement les mocks des contrôleurs et simuler l'état d'une session d'administration active.
+   - Validation finale de l'ensemble de la suite de tests : **328 tests passés avec succès (100% de réussite)** !
+
 ✦ Le Sprint 7 (Composantisation & Interactivité Front-end - Alpine.js) est également entièrement implémenté et validé ! 🎨⚡
 
 Cette refonte majeure introduit de la réactivité moderne déclarative et simplifie l'architecture client :

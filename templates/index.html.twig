@@ -69,7 +69,7 @@
                     </th>
                     <th>
                         <div class="input-group input-group-sm">
-                            <input id="filter_project_name" class="form-control filter-input" x-model.debounce.300ms="filters.name" @input="onFilterChange()" placeholder="Filtrer..." />
+                            <input id="filter_project_name" class="form-control filter-input" x-model="filters.name" @input.debounce.300ms="onFilterChange()" placeholder="Filtrer..." />
                             <div class="input-group-append">
                                 <button class="btn btn-outline-secondary" type="button" @click="filters.name = ''; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                             </div>
@@ -77,7 +77,7 @@
                     </th>
                     <th>
                         <div class="input-group input-group-sm">
-                            <select id="filter_gcp" class="form-control filter-input" x-model="filters.gcp" @change="onFilterChange()">
+                            <select id="filter_gcp" data-filter-column="cloudGCP" class="form-control filter-input" x-model="filters.gcp" @change="onFilterChange()">
                                 <option value="all">Tous</option>
                                 <option value="non">Non</option>
                                 <option value="oui">Oui</option>
@@ -89,7 +89,7 @@
                     </th>
                     <th>
                         <div class="input-group input-group-sm">
-                            <input id="filter_springboot_version" class="form-control filter-input" x-model.debounce.300ms="filters.springboot_version" @input="onFilterChange()" placeholder="Filtrer..." />
+                            <input id="filter_springboot_version" data-filter-column="springBoot" class="form-control filter-input" x-model="filters.springboot_version" @input.debounce.300ms="onFilterChange()" placeholder="Filtrer..." />
                             <div class="input-group-append">
                                 <button class="btn btn-outline-secondary" type="button" @click="filters.springboot_version = ''; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                             </div>
@@ -97,7 +97,7 @@
                     </th>
                     <th>
                         <div class="input-group input-group-sm">
-                            <select id="filter_java_version" class="form-control filter-input" x-model="filters.java_version" @change="onFilterChange()">
+                            <select id="filter_java_version" data-filter-column="java" class="form-control filter-input" x-model="filters.java_version" @change="onFilterChange()">
                                 <option value="all">Tous</option>
                                 <option value="n/a">N/A</option>
                                 <option value="1.8">1.8</option>
@@ -113,7 +113,7 @@
                     </th>
                     <th>
                         <div class="input-group input-group-sm">
-                            <input id="filter_mdm_version" class="form-control filter-input" x-model.debounce.300ms="filters.mdm_version" @input="onFilterChange()" placeholder="Filtrer..." />
+                            <input id="filter_mdm_version" data-filter-column="mdmWorkloadVersion" class="form-control filter-input" x-model="filters.mdm_version" @input.debounce.300ms="onFilterChange()" placeholder="Filtrer..." />
                             <div class="input-group-append">
                                 <button class="btn btn-outline-secondary" type="button" @click="filters.mdm_version = ''; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
                             </div>
@@ -170,5 +170,5 @@
 </div>
 <br />
 
-<script src="js/datagrid.js"></script>
+<script src="js/datagrid.js?v=1.0.2"></script>
 {% endblock body %}

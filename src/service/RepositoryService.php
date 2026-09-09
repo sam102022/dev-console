@@ -114,7 +114,23 @@ class RepositoryService
                 key TEXT PRIMARY KEY,
                 value TEXT
             );
+
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'ROLE_USER',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                reset_token TEXT,
+                reset_token_expires_at TEXT
+            );
         ");
+
+        $stmt = $this->pdo->query("SELECT COUNT(*) FROM users");
+        if ($stmt && $stmt->fetchColumn() == 0) {
+            $hash = password_hash('admin', PASSWORD_BCRYPT);
+            $this->pdo->exec("INSERT INTO users (email, password_hash, role) VALUES ('admin@mdm.com', '$hash', 'ROLE_ADMIN')");
+        }
     }
 
     private function sanitizeKey(string $filename): string
@@ -328,7 +344,7 @@ class RepositoryService
         try {
             $this->pdo->exec("DELETE FROM projects");
             $stmt = $this->pdo->prepare("
-                INSERT INTO projects (
+                INSERT OR REPLACE INTO projects (
                     name, serviceName, domain, domainName, sf, cloudGCP, springBoot, java, techno,
                     subscriptionName, mdmWorkloadVersion, pathLivenessProbe, webUrl, archived,
                     urlHealthCheck, urlActuatorInfo, urlLogs, urlFronts, urlPubsubs, urlsRundeck, urlsDeploymentGcp
@@ -505,13 +521,13 @@ class RepositoryService
                     ':id' => $proj['id'],
                     ':name' => $proj['name'],
                     ':description' => $proj['description'] ?? null,
-                    ':nameWithNamespace' => $proj['nameWithNamespace'],
+                    ':nameWithNamespace' => $proj['name_with_namespace'] ?? $proj['nameWithNamespace'] ?? null,
                     ':path' => $proj['path'],
-                    ':pathWithNamespace' => $proj['pathWithNamespace'],
-                    ':createdAt' => $proj['createdAt'],
-                    ':defaultBranch' => $proj['defaultBranch'],
-                    ':webUrl' => $proj['webUrl'],
-                    ':archived' => $proj['archived'] ? 1 : 0
+                    ':pathWithNamespace' => $proj['path_with_namespace'] ?? $proj['pathWithNamespace'] ?? null,
+                    ':createdAt' => $proj['created_at'] ?? $proj['createdAt'] ?? null,
+                    ':defaultBranch' => $proj['default_branch'] ?? $proj['defaultBranch'] ?? 'main',
+                    ':webUrl' => $proj['web_url'] ?? $proj['webUrl'] ?? '',
+                    ':archived' => ($proj['archived'] ?? false) ? 1 : 0
                 ]);
             }
             $this->pdo->commit();
@@ -532,6 +548,12 @@ class RepositoryService
         $projects = [];
         foreach ($rows as $row) {
             $row['archived'] = (bool) $row['archived'];
+            // Map camelCase columns to snake_case keys expected by GitlabProjectMapper::fromArray
+            $row['name_with_namespace'] = $row['nameWithNamespace'] ?? null;
+            $row['path_with_namespace'] = $row['pathWithNamespace'] ?? null;
+            $row['created_at'] = $row['createdAt'] ?? null;
+            $row['default_branch'] = $row['defaultBranch'] ?? null;
+            $row['web_url'] = $row['webUrl'] ?? null;
             $projects[] = $row;
         }
         return $projects;
@@ -547,7 +569,7 @@ class RepositoryService
         try {
             $this->pdo->exec("DELETE FROM rundeck_projects");
             $stmt = $this->pdo->prepare("
-                INSERT INTO rundeck_projects (
+                INSERT OR REPLACE INTO rundeck_projects (
                     name, domain, sf, category, token, path, projectName
                 ) VALUES (
                     :name, :domain, :sf, :category, :token, :path, :projectName
@@ -585,5 +607,73 @@ class RepositoryService
             $projects[] = $row;
         }
         return $projects;
+    }
+
+    public function findUserByEmail(string $email): ?array
+    {
+        if (!$this->useSqlite) return null;
+        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE email = :email");
+        $stmt->execute(['email' => $email]);
+        $res = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $res ?: null;
+    }
+
+    public function findUserById(int $id): ?array
+    {
+        if (!$this->useSqlite) return null;
+        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE id = :id");
+        $stmt->execute(['id' => $id]);
+        $res = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $res ?: null;
+    }
+
+    public function findUserByResetToken(string $token): ?array
+    {
+        if (!$this->useSqlite) return null;
+        $stmt = $this->pdo->prepare("SELECT * FROM users WHERE reset_token = :token AND reset_token_expires_at > datetime('now')");
+        $stmt->execute(['token' => $token]);
+        $res = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $res ?: null;
+    }
+
+    public function saveUser(array $user): int
+    {
+        if (!$this->useSqlite) return 0;
+        if (isset($user['id']) && $user['id'] > 0) {
+            $stmt = $this->pdo->prepare("UPDATE users SET email = :email, password_hash = :password_hash, role = :role, reset_token = :reset_token, reset_token_expires_at = :reset_token_expires_at WHERE id = :id");
+            $stmt->execute([
+                'email' => $user['email'],
+                'password_hash' => $user['password_hash'],
+                'role' => $user['role'],
+                'reset_token' => $user['reset_token'] ?? null,
+                'reset_token_expires_at' => $user['reset_token_expires_at'] ?? null,
+                'id' => $user['id']
+            ]);
+            return (int)$user['id'];
+        } else {
+            $stmt = $this->pdo->prepare("INSERT INTO users (email, password_hash, role, reset_token, reset_token_expires_at) VALUES (:email, :password_hash, :role, :reset_token, :reset_token_expires_at)");
+            $stmt->execute([
+                'email' => $user['email'],
+                'password_hash' => $user['password_hash'],
+                'role' => $user['role'],
+                'reset_token' => $user['reset_token'] ?? null,
+                'reset_token_expires_at' => $user['reset_token_expires_at'] ?? null,
+            ]);
+            return (int)$this->pdo->lastInsertId();
+        }
+    }
+
+    public function deleteUser(int $id): void
+    {
+        if (!$this->useSqlite) return;
+        $stmt = $this->pdo->prepare("DELETE FROM users WHERE id = :id");
+        $stmt->execute(['id' => $id]);
+    }
+
+    public function getAllUsers(): array
+    {
+        if (!$this->useSqlite) return [];
+        $stmt = $this->pdo->query("SELECT * FROM users ORDER BY created_at DESC");
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 }

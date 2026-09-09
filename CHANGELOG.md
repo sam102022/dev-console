@@ -5,6 +5,26 @@ Historique de tous les changements notables du projet dev-console
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
 
+## [1.9.0] - 08/09/2026
+
+### Added
+
+- Introduction d'un système d'Authentification complet et sécurisé avec page de connexion (`/login`) et gestion sécurisée des sessions.
+- Mise en place du Contrôle d'Accès basé sur les Rôles (RBAC) distinguant `ROLE_USER` (dashboards en lecture seule) et `ROLE_ADMIN` (administration avancée et CRUD utilisateurs).
+- Création d'une interface d'administration complète et réactive de Gestion des Utilisateurs (CRUD) réservée aux administrateurs.
+- Implémentation du flux autonome de récupération de Mot de Passe Perdu avec génération cryptographique de jeton (token) d'entropie élevée (expire après 1 heure) et simulation d'envoi d'email sécurisé (consigné dans les logs `var/logs/forgot_password.log`).
+
+### Changed
+
+- Centralisation et renforcement de l'initialisation des cookies de session PHP (`cookie_secure`, `cookie_httponly` et SameSite `Strict`) au point d'entrée de l'application (`public/index.php`).
+- Mise à jour du routeur central `IndexRouter` pour servir de Middleware de sécurité : interdiction absolue d'accès aux non-authentifiés (redirection automatique) et restriction des routes admins aux seuls `ROLE_ADMIN` (renvoi de statut HTTP 403).
+- Intégration de la table `users` et de l'administrateur par défaut (`admin@mdm.com` / `admin`) au schéma de la base SQLite gérée par le `RepositoryService`.
+- Amélioration de l'en-tête global `base.html.twig` pour masquer la barre de navigation aux utilisateurs anonymes, et afficher l'identité, le rôle de l'utilisateur connecté et un bouton de déconnexion.
+
+### Fixed
+
+- Correction et adaptation des tests unitaires existants (notamment `IndexRouterTest`) pour s'exécuter sous un contexte de session d'administration simulée et d'autowiring conforme.
+
 ## [1.8.0] - 08/09/2026
 
 ### Added
