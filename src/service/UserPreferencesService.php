@@ -9,9 +9,6 @@ class UserPreferencesService
 
     public function __construct()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start(['name' => 'dev-console']);
-        }
     }
 
     public function get(string $key, $default = null)

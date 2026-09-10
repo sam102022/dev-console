@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace App\tests\router;
 
+use App\controller\AuthController;
+use App\controller\UserAdminController;
+use App\controller\SettingsController;
 use App\context\IndexContext;
 use App\controller\GitlabController;
 use App\controller\IndexController;
@@ -23,7 +26,10 @@ class IndexRouterTest extends AbstractTestCase
     private MonitoringController|MockObject $monitoringController;
     private PostmanController|MockObject $postmanController;
     private RundeckController|MockObject $rundeckController;
+    private AuthController|MockObject $authController;
+    private UserAdminController|MockObject $userAdminController;
     private IndexContext|MockObject $indexContext;
+    private SettingsController|MockObject $settingsController;
     private IndexRouter $router;
 
     protected function setUp(): void
@@ -34,6 +40,9 @@ class IndexRouterTest extends AbstractTestCase
         $this->monitoringController = $this->createMock(MonitoringController::class);
         $this->postmanController = $this->createMock(PostmanController::class);
         $this->rundeckController = $this->createMock(RundeckController::class);
+        $this->authController = $this->createMock(AuthController::class);
+        $this->userAdminController = $this->createMock(UserAdminController::class);
+        $this->settingsController = $this->createMock(SettingsController::class);
         $this->indexContext = $this->createMock(IndexContext::class);
         $this->indexContext->method('initMessages')->willReturn([]);
 
@@ -43,12 +52,15 @@ class IndexRouterTest extends AbstractTestCase
             $this->monitoringController,
             $this->postmanController,
             $this->rundeckController,
+            $this->authController,
+            $this->userAdminController,
+            $this->settingsController,
             $this->twigMocked,
             $this->indexContext,
             self::$loggerFactory
         );
 
-        $_SESSION = [];
+        $_SESSION = ['user_id' => 1, 'user_role' => 'ROLE_ADMIN', 'user_email' => 'admin@mdm.com'];
         $_REQUEST = [];
         $_GET = [];
     }

@@ -32,7 +32,7 @@ class ConsoleRouter
 
         // Récupère et ajoute la commande standard Symfony depuis le conteneur
         $scanCommand = $this->container->get(ScanSymfonyCommand::class);
-        $application->add($scanCommand);
+        $application->addCommand($scanCommand);
 
         $application->run(new ArgvInput($argv), new ConsoleOutput());
     }

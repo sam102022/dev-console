@@ -1,0 +1,62 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-lg border-0">
+            <div class="card-header bg-primary text-white text-center py-4">
+                <h4 class="m-0"><i class="fas fa-lock mr-2"></i>Dev Console</h4>
+                <small>Connexion à l'interface d'administration</small>
+            </div>
+            <div class="card-body p-4">
+                {% if error is defined and error %}
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endif %}
+
+                {% if success is defined and success %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="fas fa-check-circle mr-2"></i>{{ success }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endif %}
+
+                <form action="?page=login&action=loginSubmit" method="POST">
+                    <div class="form-group">
+                        <label for="email" class="font-weight-bold">Adresse E-mail</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            </div>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ email ?? '' }}" required placeholder="ex: admin@mdm.com">
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <label for="password" class="font-weight-bold mb-0">Mot de passe</label>
+                            <a href="?page=forgotPassword" class="small text-primary">Mot de passe oublié ?</a>
+                        </div>
+                        <div class="input-group mt-1">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text"><i class="fas fa-key"></i></span>
+                            </div>
+                            <input type="password" class="form-control" id="password" name="password" required placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block btn-lg shadow-sm font-weight-bold">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Se connecter
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

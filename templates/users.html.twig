@@ -1,0 +1,253 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<style>
+.sortable-header {
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+.sortable-header:hover {
+    text-decoration: underline;
+}
+.sort-icon {
+    font-size: 0.8em;
+    margin-left: 5px;
+    opacity: 0.5;
+}
+.modal.show {
+    display: block !important;
+}
+</style>
+
+<div x-data="usersDatagrid()">
+    <div class="card shadow rounded mb-4" id="users-card">
+
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-users-cog mr-2"></i>Gestion des Utilisateurs</h5>
+        <button type="button" class="btn btn-primary btn-sm" @click="openAddModal()"><i class="fas fa-user-plus mr-1"></i> Ajouter un utilisateur</button>
+    </div>
+
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 text-nowrap" id="projects-table">
+                <thead class="thead-dark">
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th><a class="sortable-header" @click.prevent="sortBy('email')">Email <i :class="getSortIconClass('email')" :style="getSortIconStyle('email')"></i></a></th>
+                        <th style="width: 150px;"><a class="sortable-header" @click.prevent="sortBy('role')">Rôle <i :class="getSortIconClass('role')" :style="getSortIconStyle('role')"></i></a></th>
+                        <th style="width: 200px;"><a class="sortable-header" @click.prevent="sortBy('created_at')">Créé le <i :class="getSortIconClass('created_at')" :style="getSortIconStyle('created_at')"></i></a></th>
+                        <th class="text-center" style="width: 150px;">Actions</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th>
+                            <div class="input-group input-group-sm">
+                                <input type="text" id="filter_email" class="form-control filter-input" x-model="filters.email" @input.debounce.300ms="onFilterChange()" placeholder="Filtrer par email..." aria-label="Filtrer par email">
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" @click="filters.email = ''; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                        </th>
+                        <th>
+                            <div class="input-group input-group-sm">
+                                <select id="filter_role" class="form-control custom-select filter-input" x-model="filters.role" @change="onFilterChange()">
+                                    <option value="all">Tous</option>
+                                    <option value="ROLE_ADMIN">Admin</option>
+                                    <option value="ROLE_USER">User</option>
+                                </select>
+                                <div class="input-group-append">
+                                    <button class="btn btn-outline-secondary" type="button" @click="filters.role = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                        </th>
+                        <th></th>
+                        <th>
+                            <button class="btn btn-outline-light btn-sm btn-block" type="button" @click="resetFilters()" title="Réinitialiser les filtres"><i class="fa-solid fa-rotate-left"></i></button>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="projects-tbody" x-html="rowsHtml">
+                    {% include 'common/_users_rows.html.twig' %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card-footer d-flex justify-content-between align-items-center">
+        <div>
+            <select id="rows_per_page" class="form-control form-control-sm d-inline-block w-auto" x-model="rowsPerPage" @change="currentPage = 1; fetchData()">
+                <option value="10">10 par page</option>
+                <option value="15">15 par page</option>
+                <option value="25">25 par page</option>
+                <option value="50">50 par page</option>
+                <option value="1000">Tout afficher</option>
+            </select>
+            <span id="pagination-info" class="ml-2 text-muted small" x-text="'Affichage de ' + (totalRows === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1) + ' à ' + Math.min(currentPage * rowsPerPage, totalRows) + ' sur ' + totalRows"></span>
+        </div>
+        <nav aria-label="Page navigation" x-show="totalPages > 1">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item" :class="currentPage === 1 ? 'disabled' : ''">
+                    <a class="page-link" href="#" @click.prevent="setPage(currentPage - 1)">&laquo;</a>
+                </li>
+                <template x-for="p in getPagesToShow()">
+                    <li class="page-item" :class="p === currentPage ? 'active' : (p === '...' ? 'disabled' : '')">
+                        <a class="page-link" href="#" @click.prevent="p !== '...' && setPage(p)" x-text="p"></a>
+                    </li>
+                </template>
+                <li class="page-item" :class="currentPage === totalPages ? 'disabled' : ''">
+                    <a class="page-link" href="#" @click.prevent="setPage(currentPage + 1)">&raquo;</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    </div> <!-- Closes users-card FIRST -->
+
+    <!-- Bootstrap/Alpine Modal for Creating/Editing Users -->
+    <div class="modal" :class="{ 'show': showModal }" style="background: rgba(0,0,0,0.5);" x-show="showModal" x-cloak>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <span x-show="editingId"><i class="fas fa-user-edit text-info"></i></span>
+                        <span x-show="!editingId"><i class="fas fa-user-plus text-success"></i></span>
+                        <span x-text="editingId ? 'Modifier l\'utilisateur' : 'Ajouter un utilisateur'"></span>
+                    </h5>
+                    <button type="button" class="close" @click="showModal = false">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <form @submit.prevent="submitUser()">
+                    <div class="modal-body">
+                        <template x-if="modalError">
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle mr-2"></i><span x-text="modalError"></span>
+                            </div>
+                        </template>
+
+                        <div class="form-group">
+                            <label class="font-weight-bold">Adresse E-mail</label>
+                            <input type="email" class="form-control" x-model="email" required placeholder="user@mdm.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="font-weight-bold" x-text="editingId ? 'Nouveau mot de passe (optionnel)' : 'Mot de passe'"></label>
+                            <input type="password" class="form-control" x-model="password" :required="!editingId" placeholder="••••••••">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="font-weight-bold">Rôle</label>
+                            <select class="form-control" x-model="role">
+                                <option value="ROLE_USER">User (Lecture seule)</option>
+                                <option value="ROLE_ADMIN">Admin (Accès total)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @click="showModal = false">Annuler</button>
+                        <button type="submit" class="btn btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/datagrid.js?v=1.0.2"></script>
+
+<script>
+window.onerror = function(message, source, lineno, colno, error) {
+    console.log("JS ERROR: " + message + "\nLine: " + lineno + "\nSource: " + source);
+};
+console.error = (function(oldError) {
+    return function() {
+        console.log("CONSOLE ERROR: " + Array.from(arguments).join(" "));
+        oldError.apply(console, arguments);
+    };
+})(console.error);
+function registerUsersDatagrid() {
+    if (typeof window.datagrid !== 'function') {
+        // Retry in 50ms if datagrid.js is not loaded yet
+        setTimeout(registerUsersDatagrid, 50);
+        return;
+    }
+    Alpine.data('usersDatagrid', () => {
+        const base = window.datagrid({ pageName: 'users' });
+        return {
+            ...base,
+            showModal: false,
+            email: '',
+            password: '',
+            role: 'ROLE_USER',
+            editingId: null,
+            modalError: '',
+            openAddModal() {
+                this.editingId = null;
+                this.email = '';
+                this.password = '';
+                this.role = 'ROLE_USER';
+                this.modalError = '';
+                this.showModal = true;
+            },
+            openEditModal(user) {
+                this.editingId = user.id;
+                this.email = user.email;
+                this.password = '';
+                this.role = user.role;
+                this.modalError = '';
+                this.showModal = true;
+            },
+            async submitUser() {
+                const url = this.editingId ? '?page=users&action=updateUser' : '?page=users&action=createUser';
+                const body = {
+                    id: this.editingId,
+                    email: this.email,
+                    password: this.password,
+                    role: this.role
+                };
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body)
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        this.showModal = false;
+                        this.fetchData();
+                    } else {
+                        this.modalError = data.error || 'Une erreur est survenue.';
+                    }
+                } catch (e) {
+                    this.modalError = 'Erreur réseau.';
+                }
+            },
+            async triggerDeleteUser(id, email) {
+                if (confirm('Êtes-vous sûr de vouloir supprimer l\'utilisateur ' + email + ' ?')) {
+                    try {
+                        const response = await fetch('?page=users&action=deleteUser', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: id })
+                        });
+                        const data = await response.json();
+                        if (data.success) {
+                            this.fetchData();
+                        } else {
+                            alert(data.error || 'Erreur lors de la suppression.');
+                        }
+                    } catch (e) {
+                        alert('Erreur réseau.');
+                    }
+                }
+            }
+        };
+    });
+}
+if (window.Alpine) {
+    registerUsersDatagrid();
+} else {
+    document.addEventListener('alpine:init', registerUsersDatagrid);
+}
+</script>
+{% endblock body %}

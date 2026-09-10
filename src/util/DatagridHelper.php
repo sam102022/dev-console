@@ -12,6 +12,48 @@ class DatagridHelper
             foreach ($filters as $key => $val) {
                 if ($val === '' || $val === 'all') continue;
                 $itemVal = self::getPropertyValue($item, $key);
+                if ($key === 'archived') {
+                    $isArchived = (bool) $itemVal;
+                    if ($val === 'oui' && !$isArchived) {
+                        return false;
+                    }
+                    if ($val === 'non' && $isArchived) {
+                        return false;
+                    }
+                    continue;
+                }
+                if ($key === 'cloudGCP') {
+                    $isGcp = (bool) $itemVal;
+                    if ($val === 'oui' && !$isGcp) {
+                        return false;
+                    }
+                    if ($val === 'non' && $isGcp) {
+                        return false;
+                    }
+                    continue;
+                }
+                if ($key === 'status') {
+                    $java = (float)self::getPropertyValue($item, 'java');
+                    $sb = (float)self::getPropertyValue($item, 'springBoot');
+                    
+                    $itemStatus = 'OK';
+                    if ($java < 17 && $java > 0) {
+                        $itemStatus = 'Java obsolète';
+                    } elseif ($sb < 3 && $sb > 0) {
+                        $itemStatus = 'Spring Boot ancien';
+                    }
+
+                    if ($val === 'OK' && $itemStatus !== 'OK') {
+                        return false;
+                    }
+                    if ($val === 'Java obsolète' && $itemStatus !== 'Java obsolète') {
+                        return false;
+                    }
+                    if ($val === 'Spring Boot ancien' && $itemStatus !== 'Spring Boot ancien') {
+                        return false;
+                    }
+                    continue;
+                }
                 if (is_string($itemVal) && stripos($itemVal, (string)$val) === false) {
                     return false;
                 }

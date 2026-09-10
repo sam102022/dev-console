@@ -5,6 +5,39 @@ Historique de tous les changements notables du projet dev-console
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
 
+## [1.9.0] - 09/09/2026
+
+### Added
+- Introduction d'un système d'Authentification complet et sécurisé avec page de connexion (`/login`) et gestion sécurisée des sessions.
+- Mise en place du Contrôle d'Accès basé sur les Rôles (RBAC) distinguant `ROLE_USER` (dashboards en lecture seule) et `ROLE_ADMIN` (administration avancée et CRUD utilisateurs).
+- Création d'une interface d'administration complète et réactive de Gestion des Utilisateurs (CRUD) réservée aux administrateurs.
+- Implémentation du flux autonome de récupération de Mot de Passe Perdu avec génération cryptographique de jeton (token) d'entropie élevée (expire après 1 heure) et simulation d'envoi d'email sécurisé (consigné dans les logs `var/logs/forgot_password.log`).
+- **Interface de Paramètres de Profil ⚙️ :** Ajout de la page `?page=settings` accessible à tous les utilisateurs connectés pour gérer leur profil et informations personnelles.
+- **Clé d'API Postman Personnelle :** Ajout d'une colonne `postman_api_key` en base de données, permettant à chaque utilisateur de configurer sa propre clé d'API Postman.
+- **Résolution dynamique de clé :** Adaptation de la factory `createPostmanClient` pour récupérer dynamiquement la clé de l'utilisateur en session PHP (avec repli transparent sur la clé globale `.env`).
+- **Tests unitaires de filtrage :** Ajout des tests `testProcessGcpFilter` et `testProcessStatusFilter` dans `DatagridHelperTest`.
+
+### Changed
+
+- Centralisation et renforcement de l'initialisation des cookies de session PHP (`cookie_secure`, `cookie_httponly` et SameSite `Strict`) au point d'entrée de l'application (`public/index.php`).
+- Mise à jour du routeur central `IndexRouter` pour servir de Middleware de sécurité : interdiction absolue d'accès aux non-authentifiés (redirection automatique) et restriction des routes admins aux seuls `ROLE_ADMIN` (renvoi de statut HTTP 403).
+- Intégration de la table `users` et de l'administrateur par défaut (`admin@mdm.com` / `admin`) au schéma de la base SQLite gérée par le `RepositoryService`.
+- Amélioration de l'en-tête global `base.html.twig` pour masquer la barre de navigation aux utilisateurs anonymes, et afficher l'identité, le rôle de l'utilisateur connecté et un bouton de déconnexion.
+- **Menu Profil navbar "Mon compte" 👤 :** Remplacement de l'affichage statique de l'e-mail par un élégant menu déroulant Bootstrap 4 unifié ("Mon compte") regroupant les informations de profil, l'accès aux paramètres de compte et l'action de déconnexion.
+- **Optimisation et inversion de Debounce :** Correction généralisée des conflits de saisie sur l'ensemble des 6 entrées de texte de recherche de l'application (liaison de modèle instantanée, déclenchement différé du filtre via `@input.debounce.300ms`).
+- **Restructuration réactive de la modale CRUD :** Encapsulation de l'état de la modale d'utilisateurs dans le composant Alpine `usersDatagrid()` pour éradiquer tout décalage d'initialisation et variables non réactives du `x-init`.
+- **Positionnement de la modale :** Déplacement de la modale en dehors de la carte (`#users-card`) pour respecter la spécification Bootstrap (placement au premier niveau du `body`) et éviter les problèmes d'empilement (z-index) et de rognage CSS.
+
+### Fixed
+
+- Correction et adaptation des tests unitaires existants (notamment `IndexRouterTest`) pour s'exécuter sous un contexte de session d'administration simulée et d'autowiring conforme.
+- **Mise à niveau CLI Symfony 8.0 🛠️ :** Remplacement de la méthode obsolète `$application->add()` par `$application->addCommand()` exigée par Symfony Console 8.0, rétablissant le fonctionnement de `scan.bat`.
+- **Rattrapage du mapping GitLab SQLite :** Correction du mapping bidirectionnel des colonnes camelCase de la table SQLite vers le format snake_case attendu par le mapper de l'API de GitLab.
+- **Intégration robuste d'Alpine.js :** Mise en place d'un modèle d'initialisation double et résilient (Dual-Init Pattern) pour parer aux chargements asynchrones ou agressifs du script d'AlpineJS depuis le cache du navigateur.
+- **Conflits de transition d'opacité :** Suppression de la classe `fade` et de la directive `x-transition` sur la modale pour éliminer les conflits CSS, avec ajout d'une surcharge `.modal.show { display: block !important; }`.
+- **Résolution des filtres d'accueil :** Correction et liaison robuste des filtres GCP, Spring Boot, Java et MDM via l'intégration d'attributs `data-filter-column` et de logique de filtrage booléen/statut dynamique dans `DatagridHelper`.
+
+
 ## [1.8.0] - 08/09/2026
 
 ### Added
