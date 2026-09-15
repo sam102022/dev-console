@@ -1,4 +1,4 @@
-vendor/bin/phpunit --coverage-html build/coverage
+vendor/bin/phpunit
 rem vendor/bin/phpunit -c tests/phpunit.xml --coverage-html build/coverage
 rem vendor/bin/phpunit --testsuite controllerTests
 rem vendor/bin/phpunit --testsuite mapperTests

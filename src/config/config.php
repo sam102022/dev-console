@@ -62,6 +62,3 @@ const THEMES_COLORS = [ //
         'colorText' => 'text-dark' //
     ] //
 ];
-
-// Start the session
-session_start(['name' => 'dev-console']);

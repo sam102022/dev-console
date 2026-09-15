@@ -1,6 +1,68 @@
+## 09/09/2026
+
+✦ Finalisation & Robustesse du Sprint 8 et Intégration de la Gestion de Profil & Paramètres Postman 🔐⚙️
+
+Voici l'ensemble des corrections d'excellence, optimisations et nouvelles fonctionnalités apportées au tableau de bord "Dev Console" :
+
+1. Interface de Paramètres Utilisateur & Clé Postman Personnelle :
+   - Ajout de la colonne `postman_api_key TEXT` dans la table SQLite `users` avec une routine de migration automatique `ALTER TABLE` sécurisée pour préserver les utilisateurs existants.
+   - Création de `SettingsController.php` et de la vue Twig `settings.html.twig` fournissant un formulaire complet d'administration de profil avec champ de clé Postman masqué (type password) et bouton d'affichage interactif (œil).
+   - Modification de la factory `ServiceFactory::createPostmanClient` pour récupérer dynamiquement la clé d'API Postman de l'utilisateur connecté en session PHP, avec un repli transparent sur la clé globale d'environnement (`.env`) si elle est vide.
+
+2. Restructuration de la modale de Gestion des Utilisateurs (Alpine.js) :
+   - Éradication d'une condition de course d'initialisation Alpine.js en encapsulant toutes les variables de formulaires et de modale (comme `showModal`, `email`, `password`) dans un composant Alpine déclaré propre et réactif `usersDatagrid()`.
+   - Correction définitive d'un conflit de transition d'opacité entre la classe `.fade` de Bootstrap 4 et le moteur d'Alpine.js (`x-transition`) en appliquant une règle de surcharge de style `.modal.show { display: block !important; }` et en liant la classe `show` de manière dynamique.
+   - Déplacement de la modale en dehors du composant `.card` (au premier niveau du corps de la page) pour éliminer les problèmes d'empilement (z-index) et de rognage CSS de Bootstrap.
+
+3. Correction de la condition de course de chargement d'AlpineJS (Dual-Init Pattern) :
+   - Mise en œuvre d'un modèle d'initialisation double et résilient dans `public/js/datagrid.js` et `templates/users.html.twig` pour parer aux chargements asynchrones ou agressifs du script d'AlpineJS depuis le cache du navigateur.
+   - Déplacement du script AlpineJS de manière synchrone au bas du `<body>` sans l'attribut `defer` pour garantir un chargement séquentiel parfait après l'exécution de tous les scripts locaux d'enregistrement.
+   - Résolution d'un conflit d'interception d'éléments entre le `MutationObserver` d'Alpine et la conversion SVG de FontAwesome en extrayant les icônes de titre dynamiques vers des balises `<span>` d'affichage saines.
+
+4. Résolution de Bugs de la console CLI Symfony 8.0 & Filtres de Données :
+   - Mise à jour de la signature de routage de la console dans `ConsoleRouter.php` en remplaçant la méthode obsolète `$application->add()` par **`$application->addCommand()`** exigée par Symfony Console 8.0, rétablissant le fonctionnement de `scan.bat`.
+   - Résolution de conflits de debounce de saisie sur l'ensemble des 6 entrées de texte de l'application (en synchronisant instantanément `x-model` et en différant l'événement `@input.debounce.300ms`), rendant la recherche fluide et précise sans perte de caractères.
+   - Restructuration des mappages des filtres d'accueil (GCP, Spring Boot, Java, MDM) via l'intégration d'attributs `data-filter-column` et ajout de la logique de filtrage booléen et de statut dynamique dans `DatagridHelper`.
+
+5. Validation de la Suite de Tests :
+   - Enrichissement de `DatagridHelperTest.php` avec les tests unitaires `testProcessGcpFilter` et `testProcessStatusFilter` validant les filtres de données.
+   - Mise à jour d'`IndexRouterTest.php` pour injecter le nouveau `SettingsController` dans les tests de routage.
+   - L'intégralité des **331 tests unitaires et d'intégration** est au vert à 100% de réussite !
+
+
 
 
 ## 08/09/2026
+
+✦ Le Sprint 8 (Authentification & Sécurité d'Accès - RBAC / User CRUD & Mot de passe perdu) est désormais totalement implémenté et validé ! 🔐👥
+
+Voici l'ensemble des travaux et améliorations apportés :
+
+1. Authentification & Sécurité des Sessions :
+   - Centralisation de `session_start()` à la racine de l'application dans `public/index.php` avec les paramètres de sécurité optimaux : `cookie_secure` dynamique, `cookie_httponly` activé, et politique de cookie SameSite réglée sur `Strict`.
+   - Création de la page `/login` esthétique avec un formulaire de connexion et gestion des messages d'erreurs d'authentification.
+   - Intégration de l'identifiant, de l'email et du rôle de l'utilisateur connecté en session PHP.
+
+2. Contrôle d'Accès par Rôles (RBAC) en tant que Middleware :
+   - Mise en œuvre d'une couche d'interception et de protection de route au niveau du routeur central (`IndexRouter.php`).
+   - Redirection automatique et sécurisée des requêtes anonymes vers `/login` pour toutes les pages autres que les flux publics (connexion et oubli de mot de passe).
+   - Limitation stricte de l'accès aux pages et endpoints sensibles d'administration (comme le CRUD utilisateur) aux seuls utilisateurs détenant le rôle `ROLE_ADMIN` (renvoie un code de statut HTTP 403 Forbidden).
+
+3. Interface d'Administration CRUD des Utilisateurs :
+   - Ajout d'une table relationnelle `users` dans la base SQLite gérée par le `RepositoryService` avec alimentation automatique (seeding) d'un compte administrateur par défaut (`admin@mdm.com` / `admin`).
+   - Création de `UserAdminController` et des templates Twig associés (`users.html.twig` et `_users_rows.html.twig`) pour piloter l'administration des utilisateurs.
+   - Utilisation de la réactivité d'Alpine.js pour fournir une interface CRUD unifiée s'appuyant sur notre datagrid réactive pour la recherche paginée, ainsi que des formulaires de modification/création d'utilisateurs via des modaux asynchrones asynchrones et fluides.
+
+4. Flux sécurisé de récupération de Mot de Passe Perdu :
+   - Ajout du lien "Mot de passe oublié" et de l'écran de demande `/forgotPassword`.
+   - Génération de jeton cryptographique à usage unique expirable (valable 1 heure) associé au compte utilisateur.
+   - Simulation sécurisée d'envoi d'email avec lien direct de réinitialisation `/resetPassword?token=TOKEN` consigné proprement dans le fichier de logs `var/logs/forgot_password.log`.
+   - Formulaire de réinitialisation sécurisé validant la concordance des saisies et effectuant le hachage robuste du mot de passe final à l'aide de l'algorithme standard robuste de PHP (`password_hash($password, PASSWORD_BCRYPT)`).
+
+5. Maintien de l'autowiring et mise à jour de la Suite de Tests :
+   - Configuration transparente du conteneur de services Symfony (`src/config/services.yaml`) pour intégrer et câbler le `RepositoryService` afin d'autowirer proprement les nouveaux contrôleurs (`AuthController` et `UserAdminController`).
+   - Mise à jour robuste de la classe de tests `IndexRouterTest.php` pour injecter proprement les mocks des contrôleurs et simuler l'état d'une session d'administration active.
+   - Validation finale de l'ensemble de la suite de tests : **328 tests passés avec succès (100% de réussite)** !
 
 ✦ Le Sprint 7 (Composantisation & Interactivité Front-end - Alpine.js) est également entièrement implémenté et validé ! 🎨⚡
 

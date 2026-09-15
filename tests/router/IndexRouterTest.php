@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace App\tests\router;
 
+use App\controller\AuthController;
+use App\controller\UserAdminController;
+use App\controller\SettingsController;
 use App\context\IndexContext;
 use App\controller\GitlabController;
 use App\controller\IndexController;
@@ -11,6 +14,7 @@ use App\controller\PostmanController;
 use App\controller\RundeckController;
 use App\exception\TechnicalException;
 use App\router\IndexRouter;
+use App\service\RepositoryService;
 use App\tests\AbstractTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -23,7 +27,11 @@ class IndexRouterTest extends AbstractTestCase
     private MonitoringController|MockObject $monitoringController;
     private PostmanController|MockObject $postmanController;
     private RundeckController|MockObject $rundeckController;
+    private AuthController|MockObject $authController;
+    private UserAdminController|MockObject $userAdminController;
     private IndexContext|MockObject $indexContext;
+    private SettingsController|MockObject $settingsController;
+    private RepositoryService|MockObject $repositoryService;
     private IndexRouter $router;
 
     protected function setUp(): void
@@ -34,8 +42,12 @@ class IndexRouterTest extends AbstractTestCase
         $this->monitoringController = $this->createMock(MonitoringController::class);
         $this->postmanController = $this->createMock(PostmanController::class);
         $this->rundeckController = $this->createMock(RundeckController::class);
+        $this->authController = $this->createMock(AuthController::class);
+        $this->userAdminController = $this->createMock(UserAdminController::class);
+        $this->settingsController = $this->createMock(SettingsController::class);
         $this->indexContext = $this->createMock(IndexContext::class);
         $this->indexContext->method('initMessages')->willReturn([]);
+        $this->repositoryService = $this->createMock(RepositoryService::class);
 
         $this->router = new IndexRouter(
             $this->indexController,
@@ -43,12 +55,16 @@ class IndexRouterTest extends AbstractTestCase
             $this->monitoringController,
             $this->postmanController,
             $this->rundeckController,
+            $this->authController,
+            $this->userAdminController,
+            $this->settingsController,
             $this->twigMocked,
             $this->indexContext,
+            $this->repositoryService,
             self::$loggerFactory
         );
 
-        $_SESSION = [];
+        $_SESSION = ['user_id' => 1, 'user_role' => 'ROLE_ADMIN', 'user_email' => 'admin@mdm.com'];
         $_REQUEST = [];
         $_GET = [];
     }
@@ -225,5 +241,64 @@ class IndexRouterTest extends AbstractTestCase
         $output = ob_get_clean();
 
         $this->assertEquals('{"success":true}', $output);
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testAutoLoginWithValidRememberMeCookie(): void
+    {
+        // Simulate NOT logged in
+        $_SESSION = [];
+        $_COOKIE['remember_me'] = 'valid_token_123';
+
+        // Mock database returning valid user
+        $user = [
+            'id' => 42,
+            'role' => 'ROLE_USER',
+            'email' => 'user@mdm.com'
+        ];
+        $this->repositoryService->expects($this->once())
+            ->method('findUserByRememberToken')
+            ->with('valid_token_123')
+            ->willReturn($user);
+
+        // Expect the request to be routed to default index Controller since they are auto-logged in
+        $this->indexController->expects($this->once())
+            ->method('index')
+            ->with($this->anything());
+
+        $this->router->dispatch();
+
+        // Check if session has been populated
+        $this->assertEquals(42, $_SESSION['user_id']);
+        $this->assertEquals('ROLE_USER', $_SESSION['user_role']);
+        $this->assertEquals('user@mdm.com', $_SESSION['user_email']);
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testAutoLoginWithInvalidRememberMeCookieOnPublicPage(): void
+    {
+        // Simulate NOT logged in
+        $_SESSION = [];
+        $_COOKIE['remember_me'] = 'invalid_token_456';
+        $_REQUEST['page'] = 'login';
+
+        // Mock database returning null (user not found)
+        $this->repositoryService->expects($this->once())
+            ->method('findUserByRememberToken')
+            ->with('invalid_token_456')
+            ->willReturn(null);
+
+        // Expect the request to be routed to the mocked login page
+        $this->authController->expects($this->once())
+            ->method('login');
+
+        $this->router->dispatch();
+
+        // Check if session remains empty
+        $this->assertEmpty($_SESSION['user_id'] ?? null);
     }
 }

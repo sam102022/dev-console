@@ -92,4 +92,52 @@ final class RepositoryServiceTest extends AbstractTestCase
         $fileContent = json_decode(file_get_contents($filePath), true);
         $this->assertEquals($newData, $fileContent);
     }
+
+    final public function testUserRememberMeOperations(): void
+    {
+        $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
+
+        $user = [
+            'email' => 'test@mdm.com',
+            'password_hash' => 'hash',
+            'role' => 'ROLE_USER',
+            'remember_token' => 'secure_random_remember_token_123'
+        ];
+
+        // Save new user
+        $userId = $service->saveUser($user);
+        $this->assertGreaterThan(0, $userId);
+
+        // Find user by email
+        $foundUser = $service->findUserByEmail('test@mdm.com');
+        $this->assertNotNull($foundUser);
+        $this->assertEquals($userId, (int)$foundUser['id']);
+        $this->assertEquals('secure_random_remember_token_123', $foundUser['remember_token']);
+
+        // Find user by id
+        $foundUserById = $service->findUserById($userId);
+        $this->assertNotNull($foundUserById);
+        $this->assertEquals('test@mdm.com', $foundUserById['email']);
+
+        // Find user by remember token
+        $foundUserByToken = $service->findUserByRememberToken('secure_random_remember_token_123');
+        $this->assertNotNull($foundUserByToken);
+        $this->assertEquals($userId, (int)$foundUserByToken['id']);
+
+        // Update user (change token)
+        $foundUserByToken['remember_token'] = 'new_remember_token_456';
+        $service->saveUser($foundUserByToken);
+
+        // Assert old token doesn't find the user anymore
+        $this->assertNull($service->findUserByRememberToken('secure_random_remember_token_123'));
+
+        // Assert new token finds the user
+        $foundUserByNewToken = $service->findUserByRememberToken('new_remember_token_456');
+        $this->assertNotNull($foundUserByNewToken);
+        $this->assertEquals($userId, (int)$foundUserByNewToken['id']);
+
+        // Delete user
+        $service->deleteUser($userId);
+        $this->assertNull($service->findUserById($userId));
+    }
 }

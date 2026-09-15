@@ -1,0 +1,27 @@
+{% set offset = offset|default(0) %}
+{% for r in results %}
+    <tr class="user-row" data-id="{{ r.id }}" data-email="{{ r.email }}" data-role="{{ r.role }}">
+        <td class="col-index text-muted font-weight-bold">{{ loop.index0 + offset + 1 }}</td>
+        <td class="col-email font-weight-bold">{{ r.email }}</td>
+        <td class="col-role">
+            {% if r.role == 'ROLE_ADMIN' %}
+                <span class="badge badge-danger"><i class="fas fa-user-shield mr-1"></i>Admin</span>
+            {% else %}
+                <span class="badge badge-primary"><i class="fas fa-user mr-1"></i>User</span>
+            {% endif %}
+        </td>
+        <td class="col-created-at text-muted small">{{ r.created_at }}</td>
+        <td class="text-center">
+            <button class="btn btn-sm btn-outline-info mr-1" onclick="editUser(this)" title="Modifier"><i class="fa-solid fa-edit"></i></button>
+            {% if session.user_id is defined and session.user_id != r.id %}
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(this)" title="Supprimer"><i class="fa-solid fa-trash"></i></button>
+            {% else %}
+                <button class="btn btn-sm btn-outline-secondary" disabled title="Vous ne pouvez pas vous supprimer"><i class="fa-solid fa-trash"></i></button>
+            {% endif %}
+        </td>
+    </tr>
+{% else %}
+    <tr>
+        <td colspan="5" class="text-center text-muted py-4">Aucun utilisateur trouvé.</td>
+    </tr>
+{% endfor %}

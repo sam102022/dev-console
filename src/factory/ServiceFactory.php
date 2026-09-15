@@ -11,6 +11,7 @@ use App\client\GitLabClient;
 use App\client\PostmanClient;
 use App\client\NewRelicClient;
 use App\service\IconService;
+use App\service\RepositoryService;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\HandlerStack;
@@ -133,13 +134,22 @@ class ServiceFactory
         );
     }
 
-    public static function createPostmanClient(AppConfig $appConfig): PostmanClient
+    public static function createPostmanClient(AppConfig $appConfig, RepositoryService $repositoryService): PostmanClient
     {
+        $apiKey = $appConfig->getParamConfig()->getParamPostman()->getPostmanApiKey();
+
+        if (session_status() === PHP_SESSION_ACTIVE && isset($_SESSION['user_id'])) {
+            $user = $repositoryService->findUserById((int)$_SESSION['user_id']);
+            if ($user && !empty($user['postman_api_key'])) {
+                $apiKey = $user['postman_api_key'];
+            }
+        }
+
         return new PostmanClient(
             new Client([
                 'base_uri' => $appConfig->getParamConfig()->getParamPostman()->getPostmanApiUrl(),
                 'headers' => [
-                    'X-Api-Key' => $appConfig->getParamConfig()->getParamPostman()->getPostmanApiKey(),
+                    'X-Api-Key' => $apiKey,
                     'Content-Type' => 'application/json'
                 ]
             ])
