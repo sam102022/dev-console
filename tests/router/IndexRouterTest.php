@@ -49,20 +49,23 @@ class IndexRouterTest extends AbstractTestCase
         $this->indexContext->method('initMessages')->willReturn([]);
         $this->repositoryService = $this->createMock(RepositoryService::class);
 
-        $this->router = new IndexRouter(
-            $this->indexController,
-            $this->gitlabController,
-            $this->monitoringController,
-            $this->postmanController,
-            $this->rundeckController,
-            $this->authController,
-            $this->userAdminController,
-            $this->settingsController,
-            $this->twigMocked,
-            $this->indexContext,
-            $this->repositoryService,
-            self::$loggerFactory
-        );
+        $this->router = $this->getMockBuilder(IndexRouter::class)
+            ->setConstructorArgs([
+                $this->indexController,
+                $this->gitlabController,
+                $this->monitoringController,
+                $this->postmanController,
+                $this->rundeckController,
+                $this->authController,
+                $this->userAdminController,
+                $this->settingsController,
+                $this->twigMocked,
+                $this->indexContext,
+                $this->repositoryService,
+                self::$loggerFactory
+            ])
+            ->onlyMethods(['redirect', 'terminate'])
+            ->getMock();
 
         $_SESSION = ['user_id' => 1, 'user_role' => 'ROLE_ADMIN', 'user_email' => 'admin@mdm.com'];
         $_REQUEST = [];
@@ -83,6 +86,13 @@ class IndexRouterTest extends AbstractTestCase
             'postman get workspace details' => [ACTION_POSTMAN_GET_WORKSPACE_DETAILS, 'postmanController', 'handleRequest'],
             'monitoring check one' => [ACTION_MONITORING_GET_DATA, 'monitoringController', 'handleRequest'],
             'get datagrid rows' => [ACTION_GET_DATAGRID_ROWS, 'indexController', 'handleRequest'],
+            'login submit' => [AuthController::ACTION_LOGIN_SUBMIT, 'authController', 'loginSubmit'],
+            'forgot password submit' => [AuthController::ACTION_FORGOT_PASSWORD_SUBMIT, 'authController', 'forgotPasswordSubmit'],
+            'reset password submit' => [AuthController::ACTION_RESET_PASSWORD_SUBMIT, 'authController', 'resetPasswordSubmit'],
+            'save settings' => [SettingsController::ACTION_SAVE_SETTINGS, 'settingsController', 'save'],
+            'create user' => [UserAdminController::ACTION_CREATE_USER, 'userAdminController', 'handleRequest'],
+            'update user' => [UserAdminController::ACTION_UPDATE_USER, 'userAdminController', 'handleRequest'],
+            'delete user' => [UserAdminController::ACTION_DELETE_USER, 'userAdminController', 'handleRequest']
         ];
     }
 
@@ -94,7 +104,7 @@ class IndexRouterTest extends AbstractTestCase
     {
         $_REQUEST['action'] = $action;
 
-        $this->{$controllerName}->expects($this->once())->method($methodName)->with($this->anything());
+        $this->{$controllerName}->expects($this->once())->method($methodName);
 
         $this->router->dispatch();
     }
@@ -300,5 +310,136 @@ class IndexRouterTest extends AbstractTestCase
 
         // Check if session remains empty
         $this->assertEmpty($_SESSION['user_id'] ?? null);
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchGetDatagridRowsUsers(): void
+    {
+        $_REQUEST['action'] = ACTION_GET_DATAGRID_ROWS;
+        $_REQUEST['page'] = 'users';
+
+        $this->userAdminController->expects($this->once())
+            ->method('handleRequest')
+            ->with(ACTION_GET_DATAGRID_ROWS)
+            ->willReturn('{"success":true,"html":"users_rows"}');
+
+        ob_start();
+        $this->router->dispatch();
+        $output = ob_get_clean();
+
+        $this->assertEquals('{"success":true,"html":"users_rows"}', $output);
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchNonAdminAccessUsersBlocked(): void
+    {
+        // Logged in as ROLE_USER (non-admin)
+        $_SESSION = ['user_id' => 42, 'user_role' => 'ROLE_USER', 'user_email' => 'user@mdm.com'];
+        $_REQUEST['page'] = 'users';
+
+        // Expect terminate method to be called to prevent execution and return 403
+        $this->router->expects($this->once())
+            ->method('terminate')
+            ->with(403, '403 Forbidden');
+
+        // These should never be called
+        $this->userAdminController->expects($this->never())->method('index');
+
+        $this->router->dispatch();
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchNonLoggedInAccessBlocked(): void
+    {
+        // Unauthenticated visitor trying to access index
+        $_SESSION = [];
+        unset($_COOKIE['remember_me']);
+        $_REQUEST['page'] = 'index';
+
+        // Expect redirect to login page
+        $this->router->expects($this->once())
+            ->method('redirect')
+            ->with('?page=login');
+
+        // indexController should never be reached
+        $this->indexController->expects($this->never())->method('index');
+
+        $this->router->dispatch();
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchPageLogin(): void
+    {
+        $_REQUEST['page'] = 'login';
+        // Non logged-in users are allowed to hit public pages
+        $_SESSION = [];
+
+        $this->authController->expects($this->once())->method('login');
+        $this->router->dispatch();
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchPageLogout(): void
+    {
+        $_REQUEST['page'] = 'logout';
+
+        $this->authController->expects($this->once())->method('logout');
+        $this->router->dispatch();
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchPageForgotPassword(): void
+    {
+        $_REQUEST['page'] = 'forgotPassword';
+        $_SESSION = [];
+
+        $this->authController->expects($this->once())->method('forgotPassword');
+        $this->router->dispatch();
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchPageResetPassword(): void
+    {
+        $_REQUEST['page'] = 'resetPassword';
+        $_SESSION = [];
+
+        $this->authController->expects($this->once())->method('resetPassword');
+        $this->router->dispatch();
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchPageSettings(): void
+    {
+        $_REQUEST['page'] = 'settings';
+
+        $this->settingsController->expects($this->once())->method('index');
+        $this->router->dispatch();
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchPageUsers(): void
+    {
+        $_REQUEST['page'] = 'users';
+
+        $this->userAdminController->expects($this->once())->method('index');
+        $this->router->dispatch();
     }
 }

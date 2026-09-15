@@ -4,6 +4,10 @@ Historique de tous les changements notables du projet dev-console
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [1.10.0] - 15/09/2026
+
+### Added
+ - Implémentation du sprint 9
 
 ## [1.9.0] - 09/09/2026
 
