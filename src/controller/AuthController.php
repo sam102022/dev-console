@@ -35,12 +35,32 @@ class AuthController
     {
         $email = $_POST['email'] ?? '';
         $password = $_POST['password'] ?? '';
+        $rememberMe = isset($_POST['remember_me']);
 
         $user = $this->repositoryService->findUserByEmail($email);
         if ($user && password_verify($password, $user['password_hash'])) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_role'] = $user['role'];
             $_SESSION['user_email'] = $user['email'];
+
+            if ($rememberMe) {
+                $token = bin2hex(random_bytes(32));
+                $user['remember_token'] = $token;
+                $this->repositoryService->saveUser($user);
+
+                setcookie(
+                    'remember_me',
+                    $token,
+                    [
+                        'expires' => time() + 30 * 24 * 60 * 60,
+                        'path' => '/',
+                        'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+                        'httponly' => true,
+                        'samesite' => 'Strict'
+                    ]
+                );
+            }
+
             header('Location: ?page=index');
             exit;
         }
@@ -53,9 +73,30 @@ class AuthController
 
     public function logout(): void
     {
+        if (isset($_SESSION['user_id'])) {
+            $user = $this->repositoryService->findUserById((int)$_SESSION['user_id']);
+            if ($user) {
+                $user['remember_token'] = null;
+                $this->repositoryService->saveUser($user);
+            }
+        }
+
         unset($_SESSION['user_id']);
         unset($_SESSION['user_role']);
         unset($_SESSION['user_email']);
+
+        setcookie(
+            'remember_me',
+            '',
+            [
+                'expires' => time() - 3600,
+                'path' => '/',
+                'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+                'httponly' => true,
+                'samesite' => 'Strict'
+            ]
+        );
+
         header('Location: ?page=login');
         exit;
     }

@@ -185,4 +185,64 @@ class MonitoringControllerTest extends AbstractTestCase
         $this->controller->index([]);
         ob_end_clean();
     }
+
+    final public function testHandleRequestGetDatagridRows(): void
+    {
+        // Mock gitlab scan results
+        $scanResults = ['projects' => ['some_data']];
+        $this->gitlabService->expects($this->once())
+            ->method('scan')
+            ->willReturn($scanResults);
+
+        // Expect setResults on viewModelFactory
+        $this->viewModelFactory->expects($this->once())
+            ->method('setResults')
+            ->with($scanResults);
+
+        // Mock build on viewModelFactory
+        $viewModel = [
+            'results' => [
+                ['name' => 'Project A', 'domain' => 'domain-a', 'sf' => 'sf-a'],
+                ['name' => 'Project B', 'domain' => 'domain-b', 'sf' => 'sf-b']
+            ],
+            'domains' => ['domain-a', 'domain-b'],
+            'sfs' => ['sf-a', 'sf-b'],
+            'technos' => ['java', 'php']
+        ];
+        $this->viewModelFactory->expects($this->once())
+            ->method('build')
+            ->with($this->context, [])
+            ->willReturn($viewModel);
+
+        // Define mock request parameters
+        $_REQUEST = [
+            'filter_domain' => 'domain-a',
+            'sort_column' => 'name',
+            'sort_dir' => 'asc',
+            'p' => '1',
+            'rows_per_page' => '15'
+        ];
+
+        // Expect twig mocked render for rows template
+        $this->twigMocked->expects($this->once())
+            ->method('render')
+            ->with('common/_monitoring_rows.html.twig', $this->callback(function ($subject) {
+                $this->assertCount(1, $subject['results']); // Filtered list only has 1 item matching domain-a
+                $this->assertEquals('Project A', $subject['results'][0]['name']);
+                $this->assertEquals(0, $subject['offset']);
+                $this->assertEquals(['domain-a', 'domain-b'], $subject['domains']);
+                return true;
+            }))
+            ->willReturn('<tr><td>Project A</td></tr>');
+
+        // Execute the handler
+        $response = $this->controller->handleRequest(ACTION_GET_DATAGRID_ROWS);
+
+        // Decode and assert the response JSON
+        $data = json_decode($response, true);
+        $this->assertTrue($data['success']);
+        $this->assertEquals('<tr><td>Project A</td></tr>', $data['html']);
+        $this->assertEquals(1, $data['totalRows']);
+        $this->assertEquals(['sf-a'], $data['allowedSfs']); // Since domain filter is 'domain-a', only 'sf-a' is allowed
+    }
 }

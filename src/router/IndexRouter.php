@@ -14,6 +14,7 @@ use App\controller\UserAdminController;
 use App\controller\SettingsController;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
+use App\service\RepositoryService;
 use App\service\UtilsService;
 use App\util\UtilsLog;
 use Monolog\Logger;
@@ -42,6 +43,7 @@ final class IndexRouter
         private readonly SettingsController   $settingsController,
         private readonly Environment          $twig,
         private readonly IndexContext         $indexContext,
+        private readonly RepositoryService    $repositoryService,
         LoggerFactory                         $loggerFactory,
     )
     {
@@ -68,6 +70,31 @@ final class IndexRouter
         $messages = $this->indexContext->initMessages();
 
         $isLoggedIn = isset($_SESSION['user_id']);
+
+        if (!$isLoggedIn && isset($_COOKIE['remember_me'])) {
+            $token = $_COOKIE['remember_me'];
+            $user = $this->repositoryService->findUserByRememberToken($token);
+            if ($user) {
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_role'] = $user['role'];
+                $_SESSION['user_email'] = $user['email'];
+                $isLoggedIn = true;
+                $this->twig->addGlobal('session', $_SESSION);
+            } else {
+                setcookie(
+                    'remember_me',
+                    '',
+                    [
+                        'expires' => time() - 3600,
+                        'path' => '/',
+                        'secure' => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+                        'httponly' => true,
+                        'samesite' => 'Strict'
+                    ]
+                );
+            }
+        }
+
         $role = $_SESSION['user_role'] ?? 'ROLE_USER';
 
         $page = $_REQUEST['page'] ?? 'index';

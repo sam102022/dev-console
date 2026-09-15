@@ -80,6 +80,7 @@
                     <li class="nav-item">
                         <a class="nav-link {% if current_route is defined and current_route == constant('App\\controller\\PostmanController::ROUTE_POSTMAN') %}active{% endif %}"
                            href="?page=postman">
+                            <i class="fas fa-rocket mr-1"></i>
                             Postman Tools
                         </a>
                     </li>
@@ -87,6 +88,7 @@
                     <li class="nav-item">
                         <a class="nav-link {% if current_route is defined and current_route == constant('App\\controller\\IndexController::ROUTE_INDEX') %}active{% endif %}"
                            href="?page=index">
+                            <i class="fab fa-gitlab mr-1"></i>
                             Projets GitLab
                         </a>
                     </li>
@@ -94,6 +96,7 @@
                     <li class="nav-item">
                         <a class="nav-link {% if current_route is defined and current_route == constant('App\\controller\\MonitoringController::ROUTE_MONITORING') %}active{% endif %}"
                            href="?page=monitoring">
+                            <i class="fas fa-heartbeat mr-1"></i>
                             Monitoring &amp; Liens
                         </a>
                     </li>
@@ -101,6 +104,7 @@
                     <li class="nav-item">
                         <a class="nav-link {% if current_route is defined and current_route == constant('App\\controller\\RundeckController::ROUTE_RUNDECK') %}active{% endif %}"
                            href="?page={{ constant('App\\controller\\RundeckController::ROUTE_RUNDECK') }}">
+                            <i class="fas fa-play mr-1"></i>
                             Rundeck
                         </a>
                     </li>

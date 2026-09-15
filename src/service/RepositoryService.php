@@ -123,12 +123,19 @@ class RepositoryService
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP,
                 reset_token TEXT,
                 reset_token_expires_at TEXT,
-                postman_api_key TEXT
+                postman_api_key TEXT,
+                remember_token TEXT
             );
         ");
 
         try {
             $this->pdo->exec("ALTER TABLE users ADD COLUMN postman_api_key TEXT");
+        } catch (\PDOException $e) {
+            // Column already exists, ignore
+        }
+
+        try {
+            $this->pdo->exec("ALTER TABLE users ADD COLUMN remember_token TEXT");
         } catch (\PDOException $e) {
             // Column already exists, ignore
         }
@@ -643,11 +650,25 @@ class RepositoryService
         return $res ?: null;
     }
 
+    public function findUserByRememberToken(string $token): ?array
+    {
+        if (!$this->useSqlite) return null;
+        try {
+            $stmt = $this->pdo->prepare("SELECT * FROM users WHERE remember_token = :token");
+            $stmt->execute(['token' => $token]);
+            $res = $stmt->fetch(\PDO::FETCH_ASSOC);
+            return $res ?: null;
+        } catch (\PDOException $e) {
+            $this->logger->warning("Impossible de récupérer l'utilisateur par remember_token : " . $e->getMessage());
+            return null;
+        }
+    }
+
     public function saveUser(array $user): int
     {
         if (!$this->useSqlite) return 0;
         if (isset($user['id']) && $user['id'] > 0) {
-            $stmt = $this->pdo->prepare("UPDATE users SET email = :email, password_hash = :password_hash, role = :role, reset_token = :reset_token, reset_token_expires_at = :reset_token_expires_at, postman_api_key = :postman_api_key WHERE id = :id");
+            $stmt = $this->pdo->prepare("UPDATE users SET email = :email, password_hash = :password_hash, role = :role, reset_token = :reset_token, reset_token_expires_at = :reset_token_expires_at, postman_api_key = :postman_api_key, remember_token = :remember_token WHERE id = :id");
             $stmt->execute([
                 'email' => $user['email'],
                 'password_hash' => $user['password_hash'],
@@ -655,11 +676,12 @@ class RepositoryService
                 'reset_token' => $user['reset_token'] ?? null,
                 'reset_token_expires_at' => $user['reset_token_expires_at'] ?? null,
                 'postman_api_key' => $user['postman_api_key'] ?? null,
+                'remember_token' => $user['remember_token'] ?? null,
                 'id' => $user['id']
             ]);
             return (int)$user['id'];
         } else {
-            $stmt = $this->pdo->prepare("INSERT INTO users (email, password_hash, role, reset_token, reset_token_expires_at, postman_api_key) VALUES (:email, :password_hash, :role, :reset_token, :reset_token_expires_at, :postman_api_key)");
+            $stmt = $this->pdo->prepare("INSERT INTO users (email, password_hash, role, reset_token, reset_token_expires_at, postman_api_key, remember_token) VALUES (:email, :password_hash, :role, :reset_token, :reset_token_expires_at, :postman_api_key, :remember_token)");
             $stmt->execute([
                 'email' => $user['email'],
                 'password_hash' => $user['password_hash'],
@@ -667,6 +689,7 @@ class RepositoryService
                 'reset_token' => $user['reset_token'] ?? null,
                 'reset_token_expires_at' => $user['reset_token_expires_at'] ?? null,
                 'postman_api_key' => $user['postman_api_key'] ?? null,
+                'remember_token' => $user['remember_token'] ?? null,
             ]);
             return (int)$this->pdo->lastInsertId();
         }

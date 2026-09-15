@@ -87,4 +87,31 @@ class DatagridHelperTest extends TestCase
         $this->assertEquals(1, $resultSb['totalRows']);
         $this->assertEquals('proj3', $resultSb['items'][0]->name);
     }
+
+    public function testProcessFreeTextCaseInsensitiveFilter(): void
+    {
+        $items = [
+            (object)['name' => 'Project Alpha', 'java' => 17, 'domain' => 'Finance'],
+            (object)['name' => 'project beta', 'java' => 11, 'domain' => 'HR'],
+            (object)['name' => 'PROJECT GAMMA', 'java' => 21, 'domain' => 'finance'],
+        ];
+
+        // Filter name = 'project' (should match all case-insensitively)
+        $resultName = DatagridHelper::process($items, ['name' => 'project'], 'name', 'asc', 1, 10);
+        $this->assertEquals(3, $resultName['totalRows']);
+
+        // Filter name = 'ALPHA' (should match 'Project Alpha')
+        $resultAlpha = DatagridHelper::process($items, ['name' => 'ALPHA'], 'name', 'asc', 1, 10);
+        $this->assertEquals(1, $resultAlpha['totalRows']);
+        $this->assertEquals('Project Alpha', $resultAlpha['items'][0]->name);
+
+        // Filter domain = 'FINANCE' (should match both 'Finance' and 'finance')
+        $resultDomain = DatagridHelper::process($items, ['domain' => 'FINANCE'], 'name', 'asc', 1, 10);
+        $this->assertEquals(2, $resultDomain['totalRows']);
+
+        // Filter java = '17' (should match numeric 17)
+        $resultJava = DatagridHelper::process($items, ['java' => '17'], 'name', 'asc', 1, 10);
+        $this->assertEquals(1, $resultJava['totalRows']);
+        $this->assertEquals('Project Alpha', $resultJava['items'][0]->name);
+    }
 }

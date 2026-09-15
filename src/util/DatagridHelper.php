@@ -54,8 +54,10 @@ class DatagridHelper
                     }
                     continue;
                 }
-                if (is_string($itemVal) && stripos($itemVal, (string)$val) === false) {
-                    return false;
+                if (!is_array($itemVal) && !is_object($itemVal)) {
+                    if (stripos((string)$itemVal, (string)$val) === false) {
+                        return false;
+                    }
                 }
             }
             return true;
