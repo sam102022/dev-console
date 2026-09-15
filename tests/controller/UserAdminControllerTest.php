@@ -19,7 +19,8 @@ class UserAdminControllerTest extends AbstractTestCase
         $this->repositoryService = $this->createMock(RepositoryService::class);
         $this->controller = new UserAdminController(
             $this->repositoryService,
-            $this->twigMocked
+            $this->twigMocked,
+            self::$loggerFactory
         );
 
         // Reset superglobals

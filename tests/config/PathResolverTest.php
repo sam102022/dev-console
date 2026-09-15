@@ -66,7 +66,7 @@ class PathResolverTest extends TestCase
     public function testResolveInvalidPathThrowsException(): void
     {
         $this->expectException(\Throwable::class);
-        // Overly invalid characters or paths on Windows or Linux that can't be created
-        @$this->resolver->resolve('invalid://path/??*invalid');
+        // Using a null byte guarantees an invalid path exception/value error on both Windows and Linux (ext4)
+        @$this->resolver->resolve('invalid' . "\0" . 'path');
     }
 }
