@@ -26,5 +26,8 @@ export default defineConfig({
     url: 'http://127.0.0.1:8000',
     reuseExistingServer: !process.env.CI,
     timeout: 15 * 1000, // Increased timeout for slower CI environments
+    env: {
+      APP_ENV: 'test',
+    },
   },
 });
