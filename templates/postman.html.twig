@@ -34,7 +34,7 @@
                     <div class="card-body">
                         <input id="workspaceName" class="form-control mb-2" placeholder="Nom du workspace">
                         <input id="workspaceDesc" class="form-control mb-3" placeholder="Description">
-                        <button class="btn btn-primary btn-sm" onclick="createWorkspace()">Créer</button>
+                        <button class="btn btn-primary btn-sm" onclick="createWorkspace(this)">Créer</button>
                     </div>
                 </div>
             </div>
@@ -51,7 +51,7 @@
                         <select id="workspaceIdEnv" class="form-control mb-3" placeholder="ID du workspace (optionnel)">
                             <option value="">Aucun workspace</option>
                         </select>
-                        <button class="btn btn-primary btn-sm" onclick="beforeCreateEnvironment()">Créer</button>
+                        <button class="btn btn-primary btn-sm" onclick="beforeCreateEnvironment(this)">Créer</button>
                     </div>
                 </div>
             </div>
@@ -70,7 +70,7 @@
                         <select id="workspaceIdOpenApi" class="form-control mb-3" placeholder="ID du workspace (optionnel)">
                             <option value="">Aucun workspace</option>
                         </select>
-                        <button class="btn btn-primary btn-sm" onclick="importOpenApi()">Importer</button>
+                        <button class="btn btn-primary btn-sm" onclick="importOpenApi(this)">Importer</button>
                     </div>
                     <div class="col-md-4 border-left border-right">
                         <!-- Liste gitlab -->
@@ -105,7 +105,7 @@
         <div class="card">
             <div class="card-header bg-light d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">📂 Workspaces existants</h6>
-                <button class="btn btn-sm btn-outline-secondary" onclick="loadWorkspaces()">🔄 Recharger</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadWorkspaces(this)">🔄 Recharger</button>
             </div>
             <div class="card-body">
                 <div id="workspaceList"></div>
@@ -115,7 +115,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/yamljs@0.3.0/dist/yaml.min.js"></script>
 <script src="js/postman.js"></script>
 <script>
     let currentPath = '';
