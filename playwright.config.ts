@@ -22,7 +22,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'php -S 127.0.0.1:8000 -t public',
+    command: 'php -d xdebug.mode=off -S 127.0.0.1:8000 -t public',
     url: 'http://127.0.0.1:8000',
     reuseExistingServer: !process.env.CI,
     timeout: 15 * 1000, // Increased timeout for slower CI environments
