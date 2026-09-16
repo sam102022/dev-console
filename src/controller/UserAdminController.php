@@ -5,7 +5,14 @@ namespace App\controller;
 
 use App\service\RepositoryService;
 use App\util\DatagridHelper;
+use App\util\UtilsLog;
+use App\exception\TechnicalException;
+use App\factory\LoggerFactory;
 use Twig\Environment;
+use Twig\Error\LoaderError;
+use Twig\Error\RuntimeError;
+use Twig\Error\SyntaxError;
+use Monolog\Logger;
 
 class UserAdminController
 {
@@ -14,10 +21,15 @@ class UserAdminController
     public const string ACTION_UPDATE_USER = 'updateUser';
     public const string ACTION_DELETE_USER = 'deleteUser';
 
+    private readonly Logger $logger;
+
     public function __construct(
         private readonly RepositoryService $repositoryService,
-        private readonly Environment $twig
-    ) {}
+        private readonly Environment $twig,
+        LoggerFactory $loggerFactory
+    ) {
+        $this->logger = $loggerFactory->get(self::class);
+    }
 
     public function index(array &$messages): void
     {

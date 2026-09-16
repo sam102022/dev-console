@@ -1,16 +1,165 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
-<div class="row justify-content-center align-items-center" style="min-height: 80vh;">
-    <div class="col-md-5 col-lg-4">
-        <div class="card shadow-lg border-0">
-            <div class="card-header bg-primary text-white text-center py-4">
-                <h4 class="m-0"><i class="fas fa-lock mr-2"></i>Dev Console</h4>
-                <small>Connexion à l'interface d'administration</small>
+<style>
+    /* Full page style for login container */
+    .login-container {
+        min-height: 75vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 0;
+    }
+
+    .login-card {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .login-header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        padding: 1.15rem 1.5rem 1rem;
+        text-align: center;
+        color: #ffffff;
+        position: relative;
+    }
+
+    .login-title {
+        font-weight: 800;
+        font-size: 1.25rem;
+        letter-spacing: -0.02em;
+    }
+
+    .login-subtitle {
+        color: #94a3b8;
+        font-size: 0.75rem;
+        margin: 0;
+    }
+
+    .login-body {
+        padding: 1.5rem 2rem 1.75rem;
+    }
+
+    /* Style form controls */
+    .form-group label {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+    }
+
+    .input-group {
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid #cbd5e1;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .input-group:focus-within {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+    }
+
+    .input-group-prepend .input-group-text {
+        background-color: #f8fafc;
+        border: none;
+        color: #64748b;
+        padding-left: 1.1rem;
+        padding-right: 0.75rem;
+    }
+
+    .form-control-modern {
+        border: none !important;
+        padding: 0.75rem 1rem 0.75rem 0.25rem;
+        height: auto;
+        font-size: 0.95rem;
+        color: #1e293b;
+        background-color: transparent;
+    }
+
+    .form-control-modern::placeholder {
+        color: #94a3b8;
+    }
+
+    .form-control-modern:focus {
+        outline: none !important;
+        box-shadow: none !important;
+        background-color: transparent !important;
+    }
+
+    /* Modern login button */
+    .btn-login {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        border: none;
+        color: white;
+        padding: 0.85rem 1.5rem;
+        font-size: 0.95rem;
+        font-weight: 700;
+        border-radius: 8px;
+        transition: all 0.2s ease-in-out;
+        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.15), 0 2px 4px -1px rgba(37, 99, 235, 0.1);
+    }
+
+    .btn-login:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.25), 0 4px 6px -2px rgba(37, 99, 235, 0.1);
+        color: white;
+    }
+
+    .btn-login:active {
+        transform: translateY(0);
+    }
+
+    .custom-control-input:checked ~ .custom-control-label::before {
+        background-color: #2563eb;
+        border-color: #2563eb;
+    }
+
+    .link-forgot {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #2563eb;
+        text-decoration: none;
+        transition: color 0.15s ease-in-out;
+    }
+
+    .link-forgot:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
+    }
+
+    .alert-modern {
+        border-radius: 8px;
+        border: none;
+        font-size: 0.875rem;
+        padding: 1rem;
+        font-weight: 500;
+    }
+</style>
+
+<div class="login-container">
+    <div class="col-md-6 col-lg-4 px-2">
+        <div class="login-card">
+            <!-- Header -->
+            <div class="login-header">
+                <div class="d-flex align-items-center justify-content-center mb-1">
+                    <i class="fas fa-terminal mr-2" style="font-size: 1.15rem; color: #38bdf8;"></i>
+                    <h1 class="login-title m-0">Dev Console</h1>
+                </div>
+                <p class="login-subtitle">Connexion à l'interface d'administration</p>
             </div>
-            <div class="card-body p-4">
+
+            <!-- Body -->
+            <div class="login-body">
                 {% if error is defined and error %}
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <div class="alert alert-danger alert-modern alert-dismissible fade show" role="alert">
                         <i class="fas fa-exclamation-circle mr-2"></i>{{ error }}
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
@@ -19,7 +168,7 @@
                 {% endif %}
 
                 {% if success is defined and success %}
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <div class="alert alert-success alert-modern alert-modern alert-dismissible fade show" role="alert">
                         <i class="fas fa-check-circle mr-2"></i>{{ success }}
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
@@ -28,36 +177,40 @@
                 {% endif %}
 
                 <form action="?page=login&action=loginSubmit" method="POST">
-                    <div class="form-group">
-                        <label for="email" class="font-weight-bold">Adresse E-mail</label>
+                    <!-- Email -->
+                    <div class="form-group mb-4">
+                        <label for="email">Adresse E-mail</label>
                         <div class="input-group">
                             <div class="input-group-prepend">
                                 <span class="input-group-text"><i class="fas fa-envelope"></i></span>
                             </div>
-                            <input type="email" class="form-control" id="email" name="email" value="{{ email ?? '' }}" required placeholder="ex: admin@mdm.com">
+                            <input type="email" class="form-control form-control-modern" id="email" name="email" value="{{ email ?? '' }}" required placeholder="nom@exemple.com">
                         </div>
                     </div>
 
+                    <!-- Password -->
                     <div class="form-group mb-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <label for="password" class="font-weight-bold mb-0">Mot de passe</label>
-                            <a href="?page=forgotPassword" class="small text-primary">Mot de passe oublié ?</a>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="password" class="m-0">Mot de passe</label>
+                            <a href="?page=forgotPassword" class="link-forgot">Mot de passe oublié ?</a>
                         </div>
-                        <div class="input-group mt-1">
+                        <div class="input-group">
                             <div class="input-group-prepend">
                                 <span class="input-group-text"><i class="fas fa-key"></i></span>
                             </div>
-                            <input type="password" class="form-control" id="password" name="password" required placeholder="••••••••">
+                            <input type="password" class="form-control form-control-modern" id="password" name="password" required placeholder="••••••••">
                         </div>
                     </div>
 
-                    <div class="form-group form-check mb-4">
-                        <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me">
-                        <label class="form-check-label text-muted small" for="remember_me">Se souvenir de moi</label>
+                    <!-- Remember Me -->
+                    <div class="form-group custom-control custom-checkbox mb-4">
+                        <input type="checkbox" class="custom-control-input" id="remember_me" name="remember_me">
+                        <label class="custom-control-label text-muted small" for="remember_me" style="text-transform: none; font-weight: normal; letter-spacing: normal;">Se souvenir de moi</label>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-block btn-lg shadow-sm font-weight-bold">
-                        <i class="fas fa-sign-in-alt mr-2"></i>Se connecter
+                    <!-- Submit -->
+                    <button type="submit" class="btn btn-login btn-block shadow-sm">
+                        Se connecter <i class="fas fa-arrow-right ml-2 small"></i>
                     </button>
                 </form>
             </div>
