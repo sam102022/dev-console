@@ -120,10 +120,5 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install chromium
 
-      - name: Seed E2E test data from archives
-        run: |
-          mkdir -p data
-          cp archives/* data/
-
       - name: Run Playwright E2E tests
         run: npm run test:e2e
