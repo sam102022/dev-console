@@ -180,6 +180,10 @@ class IndexRouter
                             break;
                     }
                     break;
+                case ACTION_ADD_PROJECT_TAG:
+                case ACTION_REMOVE_PROJECT_TAG:
+                    echo $this->indexController->handleRequest($action);
+                    break;
                 default:
                     $this->notFound($action);
             }

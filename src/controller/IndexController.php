@@ -8,6 +8,7 @@ use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\service\GitlabService;
 use App\service\NewRelicService;
+use App\service\RepositoryService;
 use App\util\UtilsLog;
 use App\viewModel\IndexViewModelFactory;
 use Exception;
@@ -48,7 +49,8 @@ class IndexController
         private readonly GitlabService $gitlabService,
         private readonly Environment $twig,
         private readonly NewRelicService $newRelicService,
-        LoggerFactory $loggerFactory
+        LoggerFactory $loggerFactory,
+        private readonly ?RepositoryService $repositoryService = null
     ) {
         $this->logger = $loggerFactory->get(self::class);
     }
@@ -151,6 +153,48 @@ class IndexController
                         'totalRows' => $paginated['totalRows'],
                         'allowedSfs' => $allowedSfs
                     ];
+                    break;
+
+                case ACTION_ADD_PROJECT_TAG:
+                    if (($_SESSION['user_role'] ?? '') !== 'ROLE_ADMIN') {
+                        http_response_code(403);
+                        return json_encode(['success' => false, 'error' => 'Accès réservé aux administrateurs.']);
+                    }
+                    $data = !empty($input) ? $input : $_POST;
+                    $projectName = trim((string)($data['projectName'] ?? ''));
+                    $tag = trim((string)($data['tag'] ?? ''));
+                    if ($projectName === '' || $tag === '') {
+                        http_response_code(400);
+                        return json_encode(['success' => false, 'error' => 'Paramètres manquants.']);
+                    }
+                    if ($this->repositoryService !== null) {
+                        $this->repositoryService->addProjectTag($projectName, $tag);
+                        $tags = $this->repositoryService->getTagsForProject($projectName);
+                    } else {
+                        $tags = [$tag];
+                    }
+                    $response = ['success' => true, 'tags' => $tags];
+                    break;
+
+                case ACTION_REMOVE_PROJECT_TAG:
+                    if (($_SESSION['user_role'] ?? '') !== 'ROLE_ADMIN') {
+                        http_response_code(403);
+                        return json_encode(['success' => false, 'error' => 'Accès réservé aux administrateurs.']);
+                    }
+                    $data = !empty($input) ? $input : $_POST;
+                    $projectName = trim((string)($data['projectName'] ?? ''));
+                    $tag = trim((string)($data['tag'] ?? ''));
+                    if ($projectName === '' || $tag === '') {
+                        http_response_code(400);
+                        return json_encode(['success' => false, 'error' => 'Paramètres manquants.']);
+                    }
+                    if ($this->repositoryService !== null) {
+                        $this->repositoryService->removeProjectTag($projectName, $tag);
+                        $tags = $this->repositoryService->getTagsForProject($projectName);
+                    } else {
+                        $tags = [];
+                    }
+                    $response = ['success' => true, 'tags' => $tags];
                     break;
 
                 default:

@@ -92,7 +92,9 @@ class IndexRouterTest extends AbstractTestCase
             'save settings' => [SettingsController::ACTION_SAVE_SETTINGS, 'settingsController', 'save'],
             'create user' => [UserAdminController::ACTION_CREATE_USER, 'userAdminController', 'handleRequest'],
             'update user' => [UserAdminController::ACTION_UPDATE_USER, 'userAdminController', 'handleRequest'],
-            'delete user' => [UserAdminController::ACTION_DELETE_USER, 'userAdminController', 'handleRequest']
+            'delete user' => [UserAdminController::ACTION_DELETE_USER, 'userAdminController', 'handleRequest'],
+            'add project tag' => [ACTION_ADD_PROJECT_TAG, 'indexController', 'handleRequest'],
+            'remove project tag' => [ACTION_REMOVE_PROJECT_TAG, 'indexController', 'handleRequest']
         ];
     }
 
