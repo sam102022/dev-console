@@ -24,6 +24,8 @@ function registerDatagrid() {
         checkingAll: false,
         isChecking: false,
         abortController: null,
+        editingProject: null,
+        newTagText: '',
 
         init() {
             // Read initial columns prefs from window or fallback
@@ -509,6 +511,70 @@ function registerDatagrid() {
                     icon.className = 'fa-solid fa-chart-line text-info';
                 }
             }
+        },
+
+        openTagInput(projectName) {
+            this.editingProject = projectName;
+            this.newTagText = '';
+            this.$nextTick(() => {
+                const input = document.querySelector('.tag-input');
+                if (input) input.focus();
+            });
+        },
+
+        closeTagInput() {
+            this.editingProject = null;
+            this.newTagText = '';
+        },
+
+        async saveTag(projectName) {
+            const tag = this.newTagText.trim();
+            if (!tag) {
+                this.closeTagInput();
+                return;
+            }
+            try {
+                const response = await fetch('?action=addProjectTag', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ projectName, tag })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.closeTagInput();
+                    this.fetchData();
+                } else {
+                    alert(data.error || 'Erreur lors de l\'ajout du tag');
+                }
+            } catch (e) {
+                alert('Erreur réseau lors de l\'ajout du tag');
+            }
+        },
+
+        async removeTag(projectName, tag) {
+            if (!confirm(`Supprimer le tag "${tag}" du projet ${projectName} ?`)) {
+                return;
+            }
+            try {
+                const response = await fetch('?action=removeProjectTag', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ projectName, tag })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.fetchData();
+                } else {
+                    alert(data.error || 'Erreur lors de la suppression du tag');
+                }
+            } catch (e) {
+                alert('Erreur réseau lors de la suppression du tag');
+            }
+        },
+
+        filterByTag(tag) {
+            this.filters.name = tag;
+            this.onFilterChange();
         }
     });
     Alpine.data('datagrid', window.datagrid);

@@ -25,6 +25,26 @@
             {% else %}
                 {{ projectName }}
             {% endif %}
+            <div class="project-tags mt-1 d-flex flex-wrap align-items-center" style="gap: 3px;">
+                {% for tag in r.tags|default([]) %}
+                    <span class="badge badge-light border text-secondary tag-badge" style="cursor: pointer; font-size: 0.72rem; padding: 2px 5px;" @click.stop="filterByTag('{{ tag|escape('js') }}')" title="Filtrer par ce tag">
+                        <i class="fa-solid fa-tag mr-1 text-muted" style="font-size: 0.65rem;"></i>{{ tag }}
+                        {% if session.user_role is defined and session.user_role == 'ROLE_ADMIN' %}
+                            <i class="fa-solid fa-xmark ml-1 text-danger delete-tag-btn" style="cursor: pointer;" @click.stop="removeTag('{{ r.name|escape('js') }}', '{{ tag|escape('js') }}')" title="Supprimer ce tag"></i>
+                        {% endif %}
+                    </span>
+                {% endfor %}
+                {% if session.user_role is defined and session.user_role == 'ROLE_ADMIN' %}
+                    <span class="badge badge-light border text-muted add-tag-btn" style="cursor: pointer; font-size: 0.72rem; padding: 2px 5px;" @click.stop="openTagInput('{{ r.name|escape('js') }}')" title="Ajouter un tag" x-show="editingProject !== '{{ r.name|escape('js') }}'">
+                        <i class="fa-solid fa-plus"></i>
+                    </span>
+                    <span x-show="editingProject === '{{ r.name|escape('js') }}'" class="d-inline-flex align-items-center" style="display: none;" @click.stop="">
+                        <input type="text" class="form-control form-control-sm px-1 py-0 tag-input" style="height: 20px; font-size: 0.75rem; width: 90px;" placeholder="Tag..." x-model="newTagText" @keyup.enter="saveTag('{{ r.name|escape('js') }}')" @keyup.escape="closeTagInput()" />
+                        <button class="btn btn-xs btn-link text-success p-0 ml-1" type="button" @click.stop="saveTag('{{ r.name|escape('js') }}')" title="Valider"><i class="fa-solid fa-check"></i></button>
+                        <button class="btn btn-xs btn-link text-muted p-0 ml-1" type="button" @click.stop="closeTagInput()" title="Annuler"><i class="fa-solid fa-xmark"></i></button>
+                    </span>
+                {% endif %}
+            </div>
         </td>
         <td class="col-techno" data-column="techno" data-value="{{ r.techno|default('') }}">
             {% if r.techno is defined and r.techno %}
