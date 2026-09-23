@@ -1,7 +1,7 @@
 # Spécification Technique & Fonctionnelle : Association de Projets par Tags Libres
 
 **Date :** 2026-09-23  
-**Statut :** Validé  
+**Statut :** Validé (avec extension multi-interfaces)  
 **Auteur :** Gemini CLI & Utilisateur  
 
 ---
@@ -11,15 +11,19 @@
 Dans l'application **dev-console**, les utilisateurs doivent pouvoir associer certains projets entre eux via des étiquettes (tags / mots-clés libres) afin de retrouver facilement tous les projets liés à un même domaine fonctionnel, une refonte technique, ou un écosystème applicatif partagé (ex: `paiement`, `omnichannel`, `flux-commandes`, `refonte-2026`).
 
 ### Objectifs principaux :
-1. **Association par tags libres** : possibilité d'associer un ou plusieurs tags à n'importe quel projet.
-2. **Persistance robuste** : les tags doivent être conservés lors des scans GitLab (qui réinitialisent la table `projects`).
-3. **Contrôle d'accès (RBAC)** :
-   - Visibilité : **globale** (tous les utilisateurs connectés voient les tags).
-   - Gestion (ajout/suppression) : réservée aux utilisateurs ayant le rôle **`ROLE_ADMIN`**.
-4. **Expérience utilisateur fluide** :
-   - Affichage sous le nom du projet dans le tableau principal.
+1. **Association par tags libres** : possibilité d'associer un ou plusieurs tags à n'importe quel projet par son nom technique unique (`name` / `projectName`).
+2. **Disponibilité sur 3 interfaces majeures** :
+   - **Page Projets GitLab (`index`)**
+   - **Page Monitoring (`monitoring`)**
+   - **Page Rundeck (`rundeck`)**
+3. **Persistance robuste** : les tags sont conservés lors des scans GitLab ou Rundeck (qui réinitialisent leurs tables de cache respectives).
+4. **Contrôle d'accès (RBAC)** :
+   - Visibilité : **globale** (tous les utilisateurs connectés voient les tags sur les 3 interfaces).
+   - Gestion (ajout/suppression) : réservée aux utilisateurs ayant le rôle **`ROLE_ADMIN`**, disponible directement en *inline* sur les 3 interfaces.
+5. **Expérience utilisateur fluide** :
+   - Affichage sous le nom du projet dans le tableau de chaque interface.
    - Édition *inline* directe pour les administrateurs (champ compact avec validation `Entrée` et suppression par clic sur une croix `×`).
-   - Filtrage instantané : clic direct sur un badge de tag pour filtrer le tableau, et intégration des tags dans le filtre textuel de la colonne "Projet".
+   - Filtrage instantané : clic direct sur un badge de tag pour filtrer le tableau, et intégration des tags dans le filtre textuel de la colonne "Nom / Projet".
 
 ---
 
@@ -40,34 +44,41 @@ CREATE INDEX IF NOT EXISTS idx_project_tags_name ON project_tags(project_name);
 CREATE INDEX IF NOT EXISTS idx_project_tags_tag ON project_tags(tag);
 ```
 
-**Propriété clé :** Cette table est complètement distincte de `projects`. Lors de l'exécution de `ScanCommand` ou du rafraîchissement des projets (`DELETE FROM projects`), la table `project_tags` n'est pas altérée.
+**Propriété clé :** Cette table est complètement découplée des tables `projects`, `gitlab_projects` et `rundeck_projects`. Lors d'un scan ou rafraîchissement de cache, la table `project_tags` n'est jamais purgée.
 
 ### 2.2 Modèles PHP & Mappers
 - **`App\repository\model\ProjectEntity`** :
-  - Ajout de la propriété `private array $tags = [];`
+  - Propriété `private array $tags = [];`
   - Getters / Setters : `getTags(): array`, `setTags(array $tags): self`.
 - **`App\model\Project`** :
-  - Ajout de la propriété `public array $tags = [];`
+  - Propriété `public array $tags = [];`
   - Getters / Setters : `getTags(): array`, `setTags(array $tags): self`.
-- **`App\repository\mapper\ProjectMapper`** :
-  - Prise en charge du champ `tags` lors des conversions `projectEntityFromArray`, `toArray`, `fromEntity`, `projectFromArray`.
-  - Normalisation des tags (suppression des espaces superflus, minuscules, suppression des doublons).
+- **`App\model\RundeckProject`** :
+  - Propriété `private array $tags = [];`
+  - Getters / Setters : `getTags(): array`, `setTags(array $tags): self`.
+- **`App\repository\model\RundeckProjectEntity`** :
+  - Propriété `private array $tags = [];`
+  - Getters / Setters : `getTags(): array`, `setTags(array $tags): self`.
+- **`App\repository\mapper\ProjectMapper` & `RundeckProjectMapper`** :
+  - Prise en charge du champ `tags` lors des conversions array <-> entity <-> model.
+  - Normalisation des tags (trim, minuscules, suppression des doublons).
 
 ### 2.3 Méthodes dans `RepositoryService`
 - `initDatabase()` : exécution de la création de la table `project_tags` et de ses index.
-- `getTagsByProject(): array` : renvoie un tableau associatif `[projectName => [tag1, tag2, ...]]`.
+- `getTagsByProject(): array` : renvoie un dictionnaire `[projectName => [tag1, tag2, ...]]`.
+- `getTagsForProject(string $projectName): array` : renvoie la liste des tags d'un projet donné.
 - `addProjectTag(string $projectName, string $tag): bool` : insère une association `(project_name, tag)` avec `INSERT OR IGNORE`.
 - `removeProjectTag(string $projectName, string $tag): bool` : supprime une association `DELETE FROM project_tags WHERE project_name = :p AND tag = :t`.
 - `getAllTags(): array` : retourne la liste unique de tous les tags existants triés alphabétiquement.
 
-### 2.4 Intégration dans `GitlabService` / `ProjectRepository`
-- Lors de la récupération des projets (`findAll` ou `scan`), les tags sont hydratés en mémoire et injectés dans chaque objet `Project` / `ProjectEntity`.
+### 2.4 Intégration dans `GitlabService` et `RundeckService`
+- Lors de la récupération des projets dans `GitlabService::scan()` et `RundeckService::findAll()`, les tags issus de `project_tags` sont associés à chaque projet retourné.
 
 ---
 
 ## 3. Endpoints API & Sécurité
 
-Deux actions AJAX sont exposées via `IndexController::handleRequest` :
+Deux actions AJAX globales sont exposées (accessibles depuis n'importe quelle page via le routeur / contrôleurs) :
 
 ### 3.1 `ACTION_ADD_PROJECT_TAG` (`add_project_tag`)
 - **Méthode** : POST
@@ -79,11 +90,11 @@ Deux actions AJAX sont exposées via `IndexController::handleRequest` :
   }
   ```
 - **Contrôle de sécurité** :
-  - Vérification de l'authentification et du rôle : `($_SESSION['user_role'] ?? '') === 'ROLE_ADMIN'`.
-  - Si non autorisé : réponse HTTP 403 `{"success": false, "error": "Accès réservé aux administrateurs."}`.
+  - Rôle requis : `($_SESSION['user_role'] ?? '') === 'ROLE_ADMIN'`.
+  - En cas de non-autorisation : HTTP 403 `{"success": false, "error": "Accès réservé aux administrateurs."}`.
 - **Validation** :
   - `projectName` et `tag` non vides.
-  - Normalisation du tag (trim, minuscules, suppression de caractères dangereux, max 50 caractères).
+  - Normalisation : `strtolower(trim($tag))`, suppression des caractères interdits (alphanumérique, tirets, underscores), max 50 caractères.
 - **Réponse succès** :
   ```json
   {
@@ -102,7 +113,7 @@ Deux actions AJAX sont exposées via `IndexController::handleRequest` :
   }
   ```
 - **Contrôle de sécurité** :
-  - Rôle `ROLE_ADMIN` requis (HTTP 403 en cas d'échec).
+  - Rôle `ROLE_ADMIN` requis (HTTP 403 si absent).
 - **Réponse succès** :
   ```json
   {
@@ -115,55 +126,36 @@ Deux actions AJAX sont exposées via `IndexController::handleRequest` :
 
 ## 4. Interface Utilisateur & Intégration Datagrid
 
-### 4.1 Affichage sous le nom du projet (`templates/common/_index_rows.html.twig`)
-Dans la cellule de la colonne **Projet** :
-- Le lien vers le projet GitLab est maintenu.
-- Juste en dessous, un conteneur `<div class="project-tags mt-1">` affiche :
-  - Pour chaque tag : un badge interactif (ex: `badge badge-light border text-secondary mr-1`).
-  - Chaque badge a un événement `@click.stop="filterByTag('{{ tag }}')"` qui place la valeur dans le champ de filtre et déclenche la recherche instantanée.
-  - Si l'utilisateur connecté est administrateur (`user_role == 'ROLE_ADMIN'`) :
-    - Une petite croix `@click.stop="removeTag('{{ r.name }}', '{{ tag }}')"` sur chaque badge.
-    - Un bouton compact `+` ouvrant le champ inline d'ajout de tag.
+### 4.1 Modèles de lignes (`_index_rows.html.twig`, `_monitoring_rows.html.twig`, `_rundeck_rows.html.twig`)
+Dans la colonne **Nom / Projet** de chacune des 3 vues :
+- Affichage du conteneur de tags sous le lien du projet :
+  - Badges de tags existants (`badge badge-light border text-secondary mr-1`).
+  - Clic sur un badge `@click.stop="filterByTag('{{ tag }}')"` : remplit le champ de recherche textuelle du tableau avec le tag et filtre instantanément.
+  - Si l'utilisateur est administrateur (`session.user_role == 'ROLE_ADMIN'`) :
+    - Petite croix de suppression `@click.stop="removeTag('{{ r.name }}', '{{ tag }}')"` sur chaque badge.
+    - Bouton `+` déclenchant le mode d'édition *inline*.
 
-### 4.2 Édition Inline Alpine.js
-- Un composant local ou intégré à `datagrid.js` gère l'état d'édition pour la ligne :
-  - `isEditingTag: false`, `newTagText: ''`.
-  - En mode édition : affichage d'un `<input type="text" class="form-control form-control-xs">` avec :
-    - `@keyup.enter="saveTag(projectName)"`
-    - `@keyup.escape="cancelEdit()"`
-    - `@click.outside="cancelEdit()"`
-- Lors de l'ajout ou du retrait d'un tag, l'appel AJAX met à jour la liste des tags de la ligne de manière réactive.
+### 4.2 Édition Inline Alpine.js (`datagrid.js`)
+- Gestion d'état Alpine.js partagée ou composant dédié pour la saisie :
+  - Champ texte compact affiché directement sous le projet.
+  - Touche `Entrée` : appel AJAX `add_project_tag`, mise à jour immédiate du DOM.
+  - Touche `Échap` / Clic extérieur : annulation de la saisie.
+- La méthode de suppression appelle AJAX `remove_project_tag` et retire le badge sans rechargement de page.
 
-### 4.3 Filtrage et Recherche (`DatagridHelper.php`)
-- La logique de filtrage sur la colonne `name` est étendue :
-  ```php
-  if ($key === 'name') {
-      $matchName = stripos((string)$item['name'], (string)$val) !== false;
-      $tags = $item['tags'] ?? [];
-      $matchTags = false;
-      foreach ($tags as $t) {
-          if (stripos((string)$t, (string)$val) !== false) {
-              $matchTags = true;
-              break;
-          }
-      }
-      if (!$matchName && !$matchTags) {
-          return false;
-      }
-      continue;
-  }
-  ```
-- Ainsi, saisir un nom de projet ou un tag dans le filtre de recherche trouve immédiatement les projets correspondants.
+### 4.3 Filtrage et Recherche multi-vues (`DatagridHelper.php`)
+- Pour les 3 vues (`index`, `monitoring`, `rundeck`), le filtre sur la colonne `name` recherche à la fois :
+  - Dans le nom du projet (`stripos($item['name'], $query) !== false`)
+  - ET dans les tags associés (`in_array / stripos` sur la liste `$item['tags']`).
 
 ---
 
 ## 5. Stratégie de Tests
 
 1. **Tests Unitaires Backend** :
-   - `RepositoryServiceTest` : initialisation de la table `project_tags`, insertion, récupération groupée, suppression d'un tag, unicité `(project_name, tag)`.
-   - `ProjectMapperTest` : sérialisation et désérialisation du champ `tags`.
-   - `DatagridHelperTest` : filtrage d'un projet par nom, filtrage d'un projet par tag existant, non-concordance si aucun tag ne matche.
-   - `IndexControllerTest` : sécurisation des actions AJAX `add_project_tag` et `remove_project_tag` (accès refusé si non connecté ou non-admin, succès si admin).
-2. **Tests d'Intégration / E2E** :
-   - Vérification du bon rendu HTML des badges dans le datagrid.
-   - Non-régression sur le scan GitLab et la persistance des tags après scan.
+   - `RepositoryServiceTest` : initialisation de la table `project_tags`, opérations CRUD sur les tags, unicité `(project_name, tag)`.
+   - `ProjectMapperTest` & `RundeckProjectMapperTest` : sérialisation/désérialisation du champ `tags`.
+   - `DatagridHelperTest` : filtrage de projets par tag pour les différentes vues.
+   - Contrôleurs / API : vérification du contrôle d'accès `ROLE_ADMIN` sur les routes de tags.
+2. **Tests d'Intégration** :
+   - Rendu des 3 templates (`_index_rows`, `_monitoring_rows`, `_rundeck_rows`) avec tags et sans tags.
+   - Vérification du comportement non-admin (badges visibles mais boutons d'édition absents).
