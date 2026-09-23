@@ -160,18 +160,16 @@ class IndexController
                         http_response_code(403);
                         return json_encode(['success' => false, 'error' => 'Accès réservé aux administrateurs.']);
                     }
-                    $data = !empty($input) ? $input : $_POST;
-                    $projectName = trim((string)($data['projectName'] ?? ''));
-                    $tag = trim((string)($data['tag'] ?? ''));
-                    if ($projectName === '' || $tag === '') {
+                    $validated = $this->validateTagInput($input);
+                    if ($validated === null) {
                         http_response_code(400);
                         return json_encode(['success' => false, 'error' => 'Paramètres manquants.']);
                     }
                     if ($this->repositoryService !== null) {
-                        $this->repositoryService->addProjectTag($projectName, $tag);
-                        $tags = $this->repositoryService->getTagsForProject($projectName);
+                        $this->repositoryService->addProjectTag($validated['projectName'], $validated['tag']);
+                        $tags = $this->repositoryService->getTagsForProject($validated['projectName']);
                     } else {
-                        $tags = [$tag];
+                        $tags = [$validated['tag']];
                     }
                     $response = ['success' => true, 'tags' => $tags];
                     break;
@@ -181,16 +179,14 @@ class IndexController
                         http_response_code(403);
                         return json_encode(['success' => false, 'error' => 'Accès réservé aux administrateurs.']);
                     }
-                    $data = !empty($input) ? $input : $_POST;
-                    $projectName = trim((string)($data['projectName'] ?? ''));
-                    $tag = trim((string)($data['tag'] ?? ''));
-                    if ($projectName === '' || $tag === '') {
+                    $validated = $this->validateTagInput($input);
+                    if ($validated === null) {
                         http_response_code(400);
                         return json_encode(['success' => false, 'error' => 'Paramètres manquants.']);
                     }
                     if ($this->repositoryService !== null) {
-                        $this->repositoryService->removeProjectTag($projectName, $tag);
-                        $tags = $this->repositoryService->getTagsForProject($projectName);
+                        $this->repositoryService->removeProjectTag($validated['projectName'], $validated['tag']);
+                        $tags = $this->repositoryService->getTagsForProject($validated['projectName']);
                     } else {
                         $tags = [];
                     }
@@ -209,4 +205,18 @@ class IndexController
         return json_encode($response);
     }
 
+    /**
+     * @param array $input
+     * @return array{projectName: string, tag: string}|null
+     */
+    private function validateTagInput(array $input): ?array
+    {
+        $data = !empty($input) ? $input : $_POST;
+        $projectName = trim((string)($data['projectName'] ?? ''));
+        $tag = trim((string)($data['tag'] ?? ''));
+        if ($projectName === '' || $tag === '') {
+            return null;
+        }
+        return ['projectName' => $projectName, 'tag' => $tag];
+    }
 }
