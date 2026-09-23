@@ -34,10 +34,15 @@ class ProjectRepository
         if ($this->repositoryService->isFileExists(self::FILE_JAVA_PROJECTS)) {
             $this->logger->debug("Lecture du cache des projets Java.");
             $projectsData = $this->repositoryService->read(self::FILE_JAVA_PROJECTS);
+            $tagsByProject = $this->repositoryService->getTagsByProject();
 
             $projects = [];
             foreach ($projectsData as $data) {
-                $projects[] = ProjectMapper::projectEntityFromArray($data);
+                $entity = ProjectMapper::projectEntityFromArray($data);
+                if (isset($tagsByProject[$entity->getName()])) {
+                    $entity->setTags($tagsByProject[$entity->getName()]);
+                }
+                $projects[] = $entity;
             }
             return $projects;
         }
@@ -60,9 +65,31 @@ class ProjectRepository
 
         $projectData = $this->repositoryService->findProjectByName($projectCode);
         if ($projectData) {
-            return ProjectMapper::projectEntityFromArray($projectData);
+            $entity = ProjectMapper::projectEntityFromArray($projectData);
+            $tags = $this->repositoryService->getTagsForProject($projectCode);
+            if (!empty($tags)) {
+                $entity->setTags($tags);
+            }
+            return $entity;
         }
         return null;
+    }
+
+    /**
+     * @return array<string, array<string>>
+     */
+    public function getTagsByProject(): array
+    {
+        return $this->repositoryService->getTagsByProject();
+    }
+
+    /**
+     * @param string $projectName
+     * @return array<string>
+     */
+    public function getTagsForProject(string $projectName): array
+    {
+        return $this->repositoryService->getTagsForProject($projectName);
     }
 
     /**

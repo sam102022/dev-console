@@ -33,15 +33,37 @@ class RundeckRepository
         if ($this->repositoryService->isFileExists(self::FILE_RUNDECK_PROJECTS)) {
             $this->logger->debug("Lecture du cache des projets Rundeck.");
             $data = $this->repositoryService->read(self::FILE_RUNDECK_PROJECTS);
+            $tagsByProject = $this->repositoryService->getTagsByProject();
 
             $entities = [];
             foreach ($data as $projectRundeck) {
-                $entities[] = RundeckProjectMapper::fromArray($projectRundeck);
+                $entity = RundeckProjectMapper::fromArray($projectRundeck);
+                if (isset($tagsByProject[$entity->getName()])) {
+                    $entity->setTags($tagsByProject[$entity->getName()]);
+                }
+                $entities[] = $entity;
             }
             return $entities;
         }
         $this->logger->info("Cache des projets Rundeck non trouvé.");
         return null;
+    }
+
+    /**
+     * @return array<string, array<string>>
+     */
+    public function getTagsByProject(): array
+    {
+        return $this->repositoryService->getTagsByProject();
+    }
+
+    /**
+     * @param string $projectName
+     * @return array<string>
+     */
+    public function getTagsForProject(string $projectName): array
+    {
+        return $this->repositoryService->getTagsForProject($projectName);
     }
 
     /**
