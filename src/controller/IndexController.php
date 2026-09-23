@@ -109,7 +109,11 @@ class IndexController
 
     public function handleRequest(string $action): string
     {
-        $input = json_decode(file_get_contents("php://input"), true) ?? [];
+        $rawInput = file_get_contents("php://input");
+        $input = json_decode($rawInput, true);
+        if (!is_array($input) || empty($input)) {
+            $input = !empty($_POST) ? $_POST : $_REQUEST;
+        }
 
         try {
             http_response_code(200);
