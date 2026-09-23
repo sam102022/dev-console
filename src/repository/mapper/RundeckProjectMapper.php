@@ -29,6 +29,7 @@ class RundeckProjectMapper
         $entity->setProjectName($projectName);
         $entity->setName($name);
         $entity->setDomain($domain);
+        $entity->setTags($data['tags'] ?? []);
         return $entity;
     }
 
@@ -42,6 +43,7 @@ class RundeckProjectMapper
             'projectName' => $entity->getProjectName(),
             'name' => $entity->getName(),
             'domain' => $entity->getDomain(),
+            'tags' => $entity->getTags(),
         ];
     }
 
@@ -55,6 +57,7 @@ class RundeckProjectMapper
         $entity->setToken($project->getToken());
         $entity->setPath($project->getPath());
         $entity->setProjectName($project->getProjectName());
+        $entity->setTags($project->getTags());
         return $entity;
     }
 
@@ -68,6 +71,7 @@ class RundeckProjectMapper
         $model->setToken($entity->getToken());
         $model->setPath($entity->getPath());
         $model->setProjectName($entity->getProjectName());
+        $model->setTags($entity->getTags());
         return $model;
     }
 }

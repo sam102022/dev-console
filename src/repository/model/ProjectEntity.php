@@ -26,6 +26,7 @@ class ProjectEntity
     private array $urlPubsubs = [];
     private array $urlsRundeck = [];
     private array $urlsDeploymentGcp = [];
+    private array $tags = [];
 
     public function getName(): string
     {
@@ -262,6 +263,17 @@ class ProjectEntity
         $this->urlsDeploymentGcp = $urlsDeploymentGcp;
     }
 
+    public function getTags(): array
+    {
+        return $this->tags;
+    }
+
+    public function setTags(array $tags): self
+    {
+        $this->tags = array_values(array_unique(array_filter(array_map('trim', $tags))));
+        return $this;
+    }
+
     public static function build(
         string  $name,
         ?string $serviceName,
@@ -283,7 +295,8 @@ class ProjectEntity
         ?string $mdmWorkloadVersion = null,
         ?string $pathLivenessProbe = null,
         array   $urlsRundeck = [],
-        array   $urlsDeploymentGcp = []
+        array   $urlsDeploymentGcp = [],
+        array   $tags = []
     ): self
     {
         $project = new self();
@@ -308,6 +321,7 @@ class ProjectEntity
         $project->setUrlsDeploymentGcp($urlsDeploymentGcp);
         $project->setWebUrl($webUrl);
         $project->setArchived($archived);
+        $project->setTags($tags);
         return $project;
     }
 }

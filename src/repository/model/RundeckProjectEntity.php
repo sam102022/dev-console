@@ -12,6 +12,7 @@ class RundeckProjectEntity
     private array $token = [];
     private ?string $path = null;
     private ?string $projectName = null;
+    private array $tags = [];
 
     /**
      * @return string
@@ -136,6 +137,17 @@ class RundeckProjectEntity
     public function setProjectName(?string $projectName): self
     {
         $this->projectName = $projectName;
+        return $this;
+    }
+
+    public function getTags(): array
+    {
+        return $this->tags;
+    }
+
+    public function setTags(array $tags): self
+    {
+        $this->tags = array_values(array_unique(array_filter(array_map('trim', $tags))));
         return $this;
     }
 }

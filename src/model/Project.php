@@ -26,6 +26,7 @@ class Project extends AbstractModel
     public array $urlPubsubs = [];
     public array $urlsRundeck = [];
     public array $urlsDeploymentGcp = [];
+    public array $tags = [];
 
     /**
      * @return string
@@ -349,10 +350,22 @@ class Project extends AbstractModel
         return $this;
     }
 
+    public function getTags(): array
+    {
+        return $this->tags;
+    }
+
+    public function setTags(array $tags): self
+    {
+        $this->tags = array_values(array_unique(array_filter(array_map('trim', $tags))));
+        return $this;
+    }
+
     public static function build(string  $name, ?string $serviceName, ?string $domain, ?string $domainName, ?string $sf, bool $cloudGCP,
                                  ?string $springBoot, ?string $java, ?string $techno, ?string $subscriptionName, string $webUrl,
                                  bool    $archived, array $urlHealthCheck, array $urlActuatorInfo, array $urlLogs, array $urlFronts, array $urlPubsubs,
-                                 ?string $mdmWorkloadVersion = null, ?string $pathLivenessProbe = null, array $urlsRundeck = [], array $urlsDeploymentGcp = []): self
+                                 ?string $mdmWorkloadVersion = null, ?string $pathLivenessProbe = null, array $urlsRundeck = [], array $urlsDeploymentGcp = [],
+                                 array   $tags = []): self
     {
         $project = new self();
         $project->setName($name);
@@ -376,6 +389,7 @@ class Project extends AbstractModel
         $project->setUrlPubsubs($urlPubsubs);
         $project->setUrlsRundeck($urlsRundeck);
         $project->setUrlsDeploymentGcp($urlsDeploymentGcp);
+        $project->setTags($tags);
         return $project;
     }
 
