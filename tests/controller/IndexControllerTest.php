@@ -161,4 +161,173 @@ class IndexControllerTest extends AbstractTestCase
         $this->controller->index($messages);
         ob_end_clean();
     }
+
+    /**
+     * Test index scan exception handling (parameterized)
+     */
+    public static function indexScanExceptionProvider(): array
+    {
+        // Define GuzzleException anonymous exception
+        $guzzleException = new class('Guzzle connection timeout') extends \Exception implements \GuzzleHttp\Exception\GuzzleException {};
+
+        return [
+            'standard Exception' => [
+                'exception' => new \Exception('Standard database error')
+            ],
+            'GuzzleException' => [
+                'exception' => $guzzleException
+            ]
+        ];
+    }
+
+    #[DataProvider('indexScanExceptionProvider')]
+    final public function testIndexScanException(\Throwable $exception): void
+    {
+        $messages = [];
+        $expectedErrorMessages = [
+            MESSAGES_SCAN_RESULTS => [
+                LEVEL_LOG_ERROR => [
+                    'Une erreur est survenue lors du scan des projets GitLab.'
+                ]
+            ]
+        ];
+        $viewModel = ['viewModelKey' => 'error_view_model'];
+
+        // Mock scan() to throw the exception
+        $this->gitlabService->expects($this->once())
+            ->method('scan')
+            ->willThrowException($exception);
+
+        // Expect the view model to be built with error messages
+        $this->viewModelFactory->expects($this->once())
+            ->method('build')
+            ->with($this->context, $expectedErrorMessages)
+            ->willReturn($viewModel);
+
+        // Expect twig to render
+        $this->twigMocked->expects($this->once())
+            ->method('render')
+            ->with('index.html.twig', $this->callback(function ($subject) {
+                $this->assertEquals('error_view_model', $subject['viewModelKey']);
+                return true;
+            }))
+            ->willReturn('rendered_error_html');
+
+        ob_start();
+        $this->controller->index($messages);
+        $output = ob_get_clean();
+
+        $this->assertEquals('rendered_error_html', $output);
+    }
+
+    /**
+     * Test handleRequest with various actions and scenarios (parameterized)
+     */
+    public static function handleRequestProvider(): array
+    {
+        return [
+            'getDatagridRows nominal success' => [
+                'action' => 'getDatagridRows',
+                'scanResults' => [
+                    'projects' => [
+                        ['id' => 1, 'name' => 'proj1', 'domain' => 'domain1', 'sf' => 'sf1', 'created_at' => '2026-09-15 10:00:00']
+                    ]
+                ],
+                'viewModel' => [
+                    'results' => [
+                        ['id' => 1, 'name' => 'proj1', 'domain' => 'domain1', 'sf' => 'sf1', 'created_at' => '2026-09-15 10:00:00']
+                    ]
+                ],
+                'requestParams' => [
+                    'filter_domain' => 'domain1',
+                    'sort_column' => 'created_at',
+                    'sort_dir' => 'desc',
+                    'p' => '1',
+                    'rows_per_page' => '15'
+                ],
+                'shouldThrow' => null,
+                'expectedResponse' => [
+                    'success' => true,
+                    'html' => 'rows_rendered_html',
+                    'totalRows' => 1,
+                    'allowedSfs' => ['sf1']
+                ],
+                'expectedTwigRender' => true
+            ],
+            'unknown action 400 error' => [
+                'action' => 'non_existent_action',
+                'scanResults' => [],
+                'viewModel' => [],
+                'requestParams' => [],
+                'shouldThrow' => null,
+                'expectedResponse' => [
+                    'error' => 'Action inconnue'
+                ],
+                'expectedTwigRender' => false
+            ],
+            'throwable caught 500 error' => [
+                'action' => 'getDatagridRows',
+                'scanResults' => [],
+                'viewModel' => [],
+                'requestParams' => [],
+                'shouldThrow' => new \Exception('Scan failure'),
+                'expectedResponse' => [
+                    'error' => 'Scan failure'
+                ],
+                'expectedTwigRender' => false
+            ]
+        ];
+    }
+
+    #[DataProvider('handleRequestProvider')]
+    final public function testHandleRequest(
+        string $action,
+        array $scanResults,
+        array $viewModel,
+        array $requestParams,
+        ?\Throwable $shouldThrow,
+        array $expectedResponse,
+        bool $expectedTwigRender
+    ): void {
+        $_REQUEST = $requestParams;
+
+        if ($shouldThrow !== null) {
+            $this->gitlabService->expects($this->once())
+                ->method('scan')
+                ->willThrowException($shouldThrow);
+        } elseif ($action === 'getDatagridRows') {
+            $this->gitlabService->expects($this->once())
+                ->method('scan')
+                ->willReturn($scanResults);
+
+            $this->viewModelFactory->expects($this->once())
+                ->method('setResults')
+                ->with($scanResults);
+
+            $this->viewModelFactory->expects($this->once())
+                ->method('build')
+                ->with($this->context, [])
+                ->willReturn($viewModel);
+        } else {
+            $this->gitlabService->expects($this->never())->method('scan');
+        }
+
+        if ($expectedTwigRender) {
+            $this->twigMocked->expects($this->once())
+                ->method('render')
+                ->with('common/_index_rows.html.twig', [
+                    'results' => $viewModel['results'],
+                    'offset' => 0
+                ])
+                ->willReturn('rows_rendered_html');
+        } else {
+            $this->twigMocked->expects($this->never())->method('render');
+        }
+
+        $responseJson = $this->controller->handleRequest($action);
+        $response = json_decode($responseJson, true);
+
+        $this->assertEquals($expectedResponse, $response);
+    }
 }
+

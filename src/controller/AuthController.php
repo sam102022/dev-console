@@ -25,8 +25,8 @@ class AuthController
     public function login(): void
     {
         if (isset($_SESSION['user_id'])) {
-            header('Location: ?page=index');
-            exit;
+            $this->redirect('?page=index');
+            return;
         }
         echo $this->twig->render('login.html.twig');
     }
@@ -61,8 +61,8 @@ class AuthController
                 );
             }
 
-            header('Location: ?page=index');
-            exit;
+            $this->redirect('?page=index');
+            return;
         }
 
         echo $this->twig->render('login.html.twig', [
@@ -97,8 +97,8 @@ class AuthController
             ]
         );
 
-        header('Location: ?page=login');
-        exit;
+        $this->redirect('?page=login');
+        return;
     }
 
     public function forgotPassword(): void
@@ -187,5 +187,14 @@ class AuthController
         echo $this->twig->render('login.html.twig', [
             'success' => 'Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.'
         ]);
+    }
+
+    /**
+     * Redirige l'utilisateur et arrête l'exécution.
+     */
+    protected function redirect(string $url): void
+    {
+        header('Location: ' . $url);
+        exit;
     }
 }

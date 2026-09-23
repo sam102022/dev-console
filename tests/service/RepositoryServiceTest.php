@@ -140,4 +140,183 @@ final class RepositoryServiceTest extends AbstractTestCase
         $service->deleteUser($userId);
         $this->assertNull($service->findUserById($userId));
     }
+
+    final public function testProjectOperations(): void
+    {
+        $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
+
+        $projects = [
+            [
+                'name' => 'proj-a',
+                'serviceName' => 'service-a',
+                'domain' => 'domain-a',
+                'domainName' => 'domainName-a',
+                'sf' => 'sf-a',
+                'cloudGCP' => true,
+                'springBoot' => '2.5',
+                'java' => '11',
+                'techno' => 'java',
+                'subscriptionName' => 'sub-a',
+                'mdmWorkloadVersion' => '1.0',
+                'pathLivenessProbe' => '/health',
+                'webUrl' => 'http://url-a',
+                'archived' => false,
+                'urlHealthCheck' => ['dev' => 'http://dev'],
+                'urlActuatorInfo' => ['dev' => 'http://info'],
+                'urlLogs' => ['dev' => 'http://logs'],
+                'urlFronts' => [],
+                'urlPubsubs' => [],
+                'urlsRundeck' => [],
+                'urlsDeploymentGcp' => []
+            ]
+        ];
+
+        // Save projects
+        $service->saveProjects($projects);
+
+        // Get projects back
+        $loadedProjects = $service->getProjects();
+        $this->assertCount(1, $loadedProjects);
+        $this->assertEquals('proj-a', $loadedProjects[0]['name']);
+        $this->assertTrue($loadedProjects[0]['cloudGCP']);
+        $this->assertEquals(['dev' => 'http://dev'], $loadedProjects[0]['urlHealthCheck']);
+
+        // Find single project by name
+        $foundProj = $service->findProjectByName('proj-a');
+        $this->assertNotNull($foundProj);
+        $this->assertEquals('service-a', $foundProj['serviceName']);
+
+        // Find non-existent project
+        $this->assertNull($service->findProjectByName('non-existent'));
+
+        // Save single project (update)
+        $foundProj['serviceName'] = 'updated-service';
+        $foundProj['urlFronts'] = ['prod' => 'http://front'];
+        $service->saveProject($foundProj);
+
+        $reloadedProj = $service->findProjectByName('proj-a');
+        $this->assertEquals('updated-service', $reloadedProj['serviceName']);
+        $this->assertEquals(['prod' => 'http://front'], $reloadedProj['urlFronts']);
+    }
+
+    final public function testGitlabProjectOperations(): void
+    {
+        $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
+
+        $gitlabProjects = [
+            [
+                'id' => 123,
+                'name' => 'gitlab-proj',
+                'description' => 'A gitlab proj',
+                'path' => 'gitlab-path',
+                'web_url' => 'http://gitlab-url',
+                'archived' => true
+            ]
+        ];
+
+        // Save gitlab projects
+        $service->saveGitlabProjects($gitlabProjects);
+
+        // Read gitlab projects back
+        $loadedGitlabProjs = $service->getGitlabProjects();
+        $this->assertCount(1, $loadedGitlabProjs);
+        $this->assertEquals(123, $loadedGitlabProjs[0]['id']);
+        $this->assertEquals('gitlab-proj', $loadedGitlabProjs[0]['name']);
+        $this->assertTrue($loadedGitlabProjs[0]['archived']);
+    }
+
+    final public function testRundeckProjectOperations(): void
+    {
+        $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
+
+        $rundeckProjects = [
+            [
+                'name' => 'rundeck-proj',
+                'domain' => 'domain-a',
+                'sf' => 'sf-a',
+                'category' => 'cat-a',
+                'token' => ['token1', 'token2'],
+                'path' => 'path/to/job',
+                'projectName' => 'rundeck-real-name'
+            ]
+        ];
+
+        // Save rundeck projects
+        $service->saveRundeckProjects($rundeckProjects);
+
+        // Read rundeck projects back
+        $loadedRundeckProjs = $service->getRundeckProjects();
+        $this->assertCount(1, $loadedRundeckProjs);
+        $this->assertEquals('rundeck-proj', $loadedRundeckProjs[0]['name']);
+        $this->assertEquals(['token1', 'token2'], $loadedRundeckProjs[0]['token']);
+        $this->assertEquals('path/to/job', $loadedRundeckProjs[0]['path']);
+    }
+
+    final public function testUserResetTokenAndAllUsers(): void
+    {
+        $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
+
+        $user1 = [
+            'email' => 'user1@mdm.com',
+            'password_hash' => 'hash1',
+            'role' => 'ROLE_USER',
+            'reset_token' => 'token_valid_1',
+            'reset_token_expires_at' => date('Y-m-d H:i:s', strtotime('+2 hours'))
+        ];
+
+        $user2 = [
+            'email' => 'user2@mdm.com',
+            'password_hash' => 'hash2',
+            'role' => 'ROLE_ADMIN',
+            'reset_token' => 'token_expired_2',
+            'reset_token_expires_at' => date('Y-m-d H:i:s', strtotime('-1 hour'))
+        ];
+
+        $service->saveUser($user1);
+        $service->saveUser($user2);
+
+        // Fetch all users and verify count
+        $allUsers = $service->getAllUsers();
+        // Database is pre-populated with an admin, so we expect 3 users total
+        $this->assertCount(3, $allUsers);
+
+        // Find user by valid reset token
+        $foundUser1 = $service->findUserByResetToken('token_valid_1');
+        $this->assertNotNull($foundUser1);
+        $this->assertEquals('user1@mdm.com', $foundUser1['email']);
+
+        // Find user by expired reset token (should return null)
+        $foundUser2 = $service->findUserByResetToken('token_expired_2');
+        $this->assertNull($foundUser2);
+
+        // Find user by non-existent reset token
+        $this->assertNull($service->findUserByResetToken('non-existent'));
+    }
+
+    final public function testFilesystemCacheFallback(): void
+    {
+        $service = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
+
+        // Force SQLite to false to trigger filesystem cache fallback path
+        $reflection = new \ReflectionClass($service);
+        $useSqliteProp = $reflection->getProperty('useSqlite');
+        $useSqliteProp->setValue($service, false);
+
+        $cacheProp = $reflection->getProperty('cache');
+        $cacheProp->setValue($service, new \Symfony\Component\Cache\Adapter\FilesystemAdapter('dev_console_data', 0, vfsStream::url('root')));
+
+        $filename = 'fallback_cache.json';
+        $data = ['fallback' => 'data_value'];
+
+        // Save using fallback filesystem cache
+        $service->save($data, $filename);
+
+        // Read using fallback filesystem cache
+        $readData = $service->read($filename);
+        $this->assertEquals($data, $readData);
+
+        // Delete using fallback filesystem cache
+        $service->delete($filename);
+        $this->assertEquals([], $service->read($filename));
+    }
 }

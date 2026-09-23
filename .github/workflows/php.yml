@@ -16,9 +16,9 @@ env:
 jobs:
 
   # ==========================
-  # UNIT TESTS
+  # STATIC ANALYSIS & UNIT TESTS
   # ==========================
-  unit-tests:
+  static-analysis-and-unit-tests:
     runs-on: ubuntu-24.04
 
     steps:
@@ -28,11 +28,14 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ env.PHP_VERSION }}
-          extensions: mysqli
+          extensions: mysqli, pdo_sqlite
           coverage: none
 
       - name: Install dependencies
         run: composer install --no-interaction --prefer-dist
+
+      - name: Run PHPStan Static Analysis
+        run: vendor/bin/phpstan analyze
 
       - name: Run unit tests
         run: composer test:unit
@@ -64,7 +67,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ env.PHP_VERSION }}
-          extensions: mysqli,pdo_mysql
+          extensions: mysqli, pdo_mysql
           coverage: xdebug
 
       - name: Install dependencies
@@ -85,3 +88,37 @@ jobs:
         env:
           XDEBUG_MODE: coverage
         run: composer test:integration
+
+  # ==========================
+  # E2E TESTS
+  # ==========================
+  e2e-tests:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: pdo_sqlite, curl, json
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Install Playwright Browsers
+        run: npx playwright install chromium
+
+      - name: Run Playwright E2E tests
+        run: npm run test:e2e

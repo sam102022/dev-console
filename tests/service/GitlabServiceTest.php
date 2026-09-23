@@ -17,6 +17,8 @@ use App\tests\AbstractTestCase;
 use App\tests\fixtures\GitlabProjectEntityFixtures;
 use App\tests\fixtures\GitlabProjectFixtures;
 use App\tests\fixtures\ProjectEntityFixtures;
+use App\model\EnumEnvironment;
+use PHPUnit\Framework\Attributes\DataProvider;
 use DateMalformedStringException;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -225,5 +227,51 @@ class GitlabServiceTest extends AbstractTestCase
 
         $result = $this->service->getProjectByCode('project-b');
         $this->assertEquals($expectedProject, $result);
+    }
+
+    /**
+     * Provider for buildNewRelicUrl testing (parameterized)
+     */
+    public static function buildNewRelicUrlProvider(): array
+    {
+        return [
+            'guid found' => [
+                'projectName' => 'project-a',
+                'env' => EnumEnvironment::DEV,
+                'guid' => 'entity-guid-123',
+                'expectedUrl' => 'https://one.newrelic.com/redirect/entity/entity-guid-123'
+            ],
+            'guid not found' => [
+                'projectName' => 'project-a',
+                'env' => EnumEnvironment::PROD,
+                'guid' => null,
+                'expectedUrl' => null
+            ]
+        ];
+    }
+
+    #[DataProvider('buildNewRelicUrlProvider')]
+    final public function testBuildNewRelicUrl(string $projectName, EnumEnvironment $env, ?string $guid, ?string $expectedUrl): void
+    {
+        $projectMock = $this->createMock(\App\model\Project::class);
+        $projectMock->method('getName')->willReturn($projectName);
+
+        $this->newRelicClient->expects($this->once())
+            ->method('getEntityGuid')
+            ->with($projectName, $env)
+            ->willReturn($guid);
+
+        if ($guid !== null) {
+            $this->newRelicClient->expects($this->once())
+                ->method('generateEntityUrl')
+                ->with($guid)
+                ->willReturn($expectedUrl);
+        } else {
+            $this->newRelicClient->expects($this->never())
+                ->method('generateEntityUrl');
+        }
+
+        $result = $this->service->buildNewRelicUrl($projectMock, $env);
+        $this->assertEquals($expectedUrl, $result);
     }
 }

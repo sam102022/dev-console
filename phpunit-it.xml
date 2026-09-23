@@ -21,14 +21,20 @@ bootstrap="tests/bootstrap-it.php" cacheDirectory=".phpunit.cache" executionOrde
       <directory suffix=".php">./</directory>
     </include>
     <exclude>
-      <directory>node_modules</directory>
-      <directory>tests</directory>
-      <directory>vendor</directory>
+      <directory>./node_modules</directory>
+      <directory>./tests</directory>
+      <directory>./vendor</directory>
+      <directory>./scripts</directory>
+      <file>config/config.php</file>
       <file>icons/icons.php</file>
-      <file>admin.php</file>
+      <file>factory/LoggerFactory.php</file>
+      <file>view/TwigFactory.php</file>
       <file>autoload.php</file>
       <file>controller.php</file>
       <file>console.php</file>
+      <file>Kernel.php</file>
+      <file>TestContainer.php</file>
+      <file>LanguageResolver.php</file>
       <file>index.php</file>
     </exclude>
   </source>

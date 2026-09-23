@@ -27,7 +27,7 @@ use Twig\Environment;
  * Il gère l'état de la session, distribue les actions aux contrôleurs
  * et déclenche l'affichage de la page public.
  */
-final class IndexRouter
+class IndexRouter
 {
     private Logger $logger;
     private array $messages;
@@ -104,15 +104,14 @@ final class IndexRouter
         $publicActions = [AuthController::ACTION_LOGIN_SUBMIT, AuthController::ACTION_FORGOT_PASSWORD_SUBMIT, AuthController::ACTION_RESET_PASSWORD_SUBMIT];
 
         if (!$isLoggedIn && !in_array($page, $publicPages) && !in_array($action, $publicActions)) {
-            header('Location: ?page=' . AuthController::ROUTE_LOGIN);
-            exit;
+            $this->redirect('?page=' . AuthController::ROUTE_LOGIN);
+            return;
         }
 
         if ($isLoggedIn && $role !== 'ROLE_ADMIN') {
             if ($page === UserAdminController::ROUTE_USERS || in_array($action, [UserAdminController::ACTION_CREATE_USER, UserAdminController::ACTION_UPDATE_USER, UserAdminController::ACTION_DELETE_USER])) {
-                http_response_code(403);
-                echo "403 Forbidden";
-                exit;
+                $this->terminate(403, '403 Forbidden');
+                return;
             }
         }
 
@@ -241,5 +240,24 @@ final class IndexRouter
                 $msg
             ]
         ]);
+    }
+
+    /**
+     * Redirige l'utilisateur.
+     */
+    protected function redirect(string $url): void
+    {
+        header('Location: ' . $url);
+        exit;
+    }
+
+    /**
+     * Termine l'exécution avec un code HTTP.
+     */
+    protected function terminate(int $code, string $message): void
+    {
+        http_response_code($code);
+        echo $message;
+        exit;
     }
 }

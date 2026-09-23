@@ -6,3 +6,4 @@ build/
 var/logs/
 data/
 var/cache/
+test-results/.last-run.json

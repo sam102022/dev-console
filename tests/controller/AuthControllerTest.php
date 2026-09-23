@@ -18,10 +18,13 @@ class AuthControllerTest extends AbstractTestCase
     {
         parent::setUp();
         $this->repositoryService = $this->createMock(RepositoryService::class);
-        $this->controller = new AuthController(
-            $this->repositoryService,
-            $this->twigMocked
-        );
+        $this->controller = $this->getMockBuilder(AuthController::class)
+            ->setConstructorArgs([
+                $this->repositoryService,
+                $this->twigMocked
+            ])
+            ->onlyMethods(['redirect'])
+            ->getMock();
 
         // Reset superglobals
         $_POST = [];
@@ -83,6 +86,40 @@ class AuthControllerTest extends AbstractTestCase
                     'role' => 'ROLE_ADMIN'
                 ],
                 'expectedError' => 'E-mail ou mot de passe incorrect.'
+            ],
+            'empty email and password' => [
+                'email' => '',
+                'password' => '',
+                'dbUser' => null,
+                'expectedError' => 'E-mail ou mot de passe incorrect.'
+            ],
+            'correct email but empty password' => [
+                'email' => 'admin@mdm.com',
+                'password' => '',
+                'dbUser' => [
+                    'id' => 1,
+                    'email' => 'admin@mdm.com',
+                    'password_hash' => password_hash('correct_password', PASSWORD_BCRYPT),
+                    'role' => 'ROLE_ADMIN'
+                ],
+                'expectedError' => 'E-mail ou mot de passe incorrect.'
+            ],
+            'correct email but space-only password' => [
+                'email' => 'admin@mdm.com',
+                'password' => '    ',
+                'dbUser' => [
+                    'id' => 1,
+                    'email' => 'admin@mdm.com',
+                    'password_hash' => password_hash('correct_password', PASSWORD_BCRYPT),
+                    'role' => 'ROLE_ADMIN'
+                ],
+                'expectedError' => 'E-mail ou mot de passe incorrect.'
+            ],
+            'SQL injection pattern email' => [
+                'email' => "' OR '1'='1",
+                'password' => 'any_pass',
+                'dbUser' => null,
+                'expectedError' => 'E-mail ou mot de passe incorrect.'
             ]
         ];
     }
@@ -133,6 +170,16 @@ class AuthControllerTest extends AbstractTestCase
             ],
             'non-existent user' => [
                 'email' => 'unknown@mdm.com',
+                'dbUser' => null,
+                'userSaved' => false
+            ],
+            'empty email' => [
+                'email' => '',
+                'dbUser' => null,
+                'userSaved' => false
+            ],
+            'email with spaces' => [
+                'email' => '  some@mdm.com  ',
                 'dbUser' => null,
                 'userSaved' => false
             ]
@@ -302,4 +349,213 @@ class AuthControllerTest extends AbstractTestCase
 
         $this->assertEquals('reset_error_rendered_html', $output);
     }
+
+    /**
+     * Test reset password submit success (parameterized)
+     */
+    public static function resetPasswordSubmitSuccessProvider(): array
+    {
+        return [
+            'standard password' => [
+                'token' => 'success_token_123',
+                'password' => 'SecurePassword123!',
+                'dbUser' => [
+                    'id' => 42,
+                    'email' => 'user@example.com',
+                    'reset_token' => 'success_token_123',
+                    'reset_token_expires_at' => '2026-09-15 12:00:00'
+                ]
+            ],
+            'password with special characters' => [
+                'token' => 'success_token_456',
+                'password' => 'Another_Pass_#_2026',
+                'dbUser' => [
+                    'id' => 101,
+                    'email' => 'admin@example.com',
+                    'reset_token' => 'success_token_456',
+                    'reset_token_expires_at' => '2026-09-15 12:00:00'
+                ]
+            ]
+        ];
+    }
+
+    #[DataProvider('resetPasswordSubmitSuccessProvider')]
+    public function testResetPasswordSubmitSuccess(string $token, string $password, array $dbUser): void
+    {
+        $_POST['token'] = $token;
+        $_POST['password'] = $password;
+        $_POST['confirm_password'] = $password;
+
+        $this->repositoryService->expects($this->once())
+            ->method('findUserByResetToken')
+            ->with($token)
+            ->willReturn($dbUser);
+
+        $this->repositoryService->expects($this->once())
+            ->method('saveUser')
+            ->with($this->callback(function ($user) use ($password) {
+                $this->assertNull($user['reset_token']);
+                $this->assertNull($user['reset_token_expires_at']);
+                $this->assertTrue(password_verify($password, $user['password_hash']));
+                return true;
+            }))
+            ->willReturn(1);
+
+        $this->twigMocked->expects($this->once())
+            ->method('render')
+            ->with('login.html.twig', [
+                'success' => 'Votre mot de passe a été réinitialisé avec succès. Vous pouvez maintenant vous connecter.'
+            ])
+            ->willReturn('login_rendered_html');
+
+        ob_start();
+        $this->controller->resetPasswordSubmit();
+        $output = ob_get_clean();
+
+        $this->assertEquals('login_rendered_html', $output);
+    }
+
+    /**
+     * Test successful login submissions (parameterized)
+     */
+    public static function loginSubmitSuccessProvider(): array
+    {
+        return [
+            'login success without remember me' => [
+                'email' => 'admin@mdm.com',
+                'password' => 'password123',
+                'dbUser' => [
+                    'id' => 1,
+                    'email' => 'admin@mdm.com',
+                    'password_hash' => password_hash('password123', PASSWORD_BCRYPT),
+                    'role' => 'ROLE_ADMIN'
+                ],
+                'rememberMe' => false
+            ],
+            'login success with remember me' => [
+                'email' => 'user@mdm.com',
+                'password' => 'userpass',
+                'dbUser' => [
+                    'id' => 2,
+                    'email' => 'user@mdm.com',
+                    'password_hash' => password_hash('userpass', PASSWORD_BCRYPT),
+                    'role' => 'ROLE_USER'
+                ],
+                'rememberMe' => true
+            ]
+        ];
+    }
+
+    #[DataProvider('loginSubmitSuccessProvider')]
+    public function testLoginSubmitSuccess(string $email, string $password, array $dbUser, bool $rememberMe): void
+    {
+        $_POST['email'] = $email;
+        $_POST['password'] = $password;
+        if ($rememberMe) {
+            $_POST['remember_me'] = 'on';
+        }
+
+        $this->repositoryService->expects($this->once())
+            ->method('findUserByEmail')
+            ->with($email)
+            ->willReturn($dbUser);
+
+        if ($rememberMe) {
+            $this->repositoryService->expects($this->once())
+                ->method('saveUser')
+                ->with($this->callback(function ($user) use ($email) {
+                    $this->assertEquals($email, $user['email']);
+                    $this->assertNotNull($user['remember_token']);
+                    return true;
+                }))
+                ->willReturn(1);
+        } else {
+            $this->repositoryService->expects($this->never())
+                ->method('saveUser');
+        }
+
+        // Expect redirect to be called with ?page=index
+        $this->controller->expects($this->once())
+            ->method('redirect')
+            ->with('?page=index');
+
+        $this->controller->loginSubmit();
+
+        $this->assertEquals($dbUser['id'], $_SESSION['user_id']);
+        $this->assertEquals($dbUser['role'], $_SESSION['user_role']);
+        $this->assertEquals($dbUser['email'], $_SESSION['user_email']);
+    }
+
+    /**
+     * Test logout method with various initial session configurations (parameterized)
+     */
+    public static function logoutProvider(): array
+    {
+        return [
+            'logout logged in user found in DB' => [
+                'sessionUserId' => 42,
+                'dbUser' => [
+                    'id' => 42,
+                    'email' => 'user@mdm.com',
+                    'remember_token' => 'old_token'
+                ],
+                'expectSave' => true
+            ],
+            'logout logged in user not found in DB' => [
+                'sessionUserId' => 42,
+                'dbUser' => null,
+                'expectSave' => false
+            ],
+            'logout guest user' => [
+                'sessionUserId' => null,
+                'dbUser' => null,
+                'expectSave' => false
+            ]
+        ];
+    }
+
+    #[DataProvider('logoutProvider')]
+    public function testLogout(?int $sessionUserId, ?array $dbUser, bool $expectSave): void
+    {
+        if ($sessionUserId !== null) {
+            $_SESSION['user_id'] = $sessionUserId;
+            $_SESSION['user_role'] = 'ROLE_USER';
+            $_SESSION['user_email'] = 'user@mdm.com';
+
+            $this->repositoryService->expects($this->once())
+                ->method('findUserById')
+                ->with($sessionUserId)
+                ->willReturn($dbUser);
+
+            if ($expectSave) {
+                $this->repositoryService->expects($this->once())
+                    ->method('saveUser')
+                    ->with($this->callback(function ($user) {
+                        $this->assertNull($user['remember_token']);
+                        return true;
+                    }))
+                    ->willReturn(1);
+            } else {
+                $this->repositoryService->expects($this->never())
+                    ->method('saveUser');
+            }
+        } else {
+            $this->repositoryService->expects($this->never())
+                ->method('findUserById');
+            $this->repositoryService->expects($this->never())
+                ->method('saveUser');
+        }
+
+        // Expect redirect to be called with ?page=login
+        $this->controller->expects($this->once())
+            ->method('redirect')
+            ->with('?page=login');
+
+        $this->controller->logout();
+
+        $this->assertArrayNotHasKey('user_id', $_SESSION);
+        $this->assertArrayNotHasKey('user_role', $_SESSION);
+        $this->assertArrayNotHasKey('user_email', $_SESSION);
+    }
 }
+
