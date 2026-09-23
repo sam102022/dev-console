@@ -73,11 +73,11 @@ class RundeckProjectMapperTest extends AbstractTestCase
     final public function testTagNormalization(): void
     {
         $project = new RundeckProject();
-        $project->setTags([' tag1 ', 'tag2', 'tag1', '  ', 'tag3']);
+        $project->setTags([' Tag1 ', 'TAG2', 'tag1', '  ', 'TAG3']);
         $this->assertEquals(['tag1', 'tag2', 'tag3'], $project->getTags());
 
         $entity = new RundeckProjectEntity();
-        $entity->setTags([' tagA ', 'tagB', 'tagA', '', 'tagC']);
-        $this->assertEquals(['tagA', 'tagB', 'tagC'], $entity->getTags());
+        $entity->setTags([' TagA ', 'TAGB', 'taga', '', 'tagC']);
+        $this->assertEquals(['taga', 'tagb', 'tagc'], $entity->getTags());
     }
 }

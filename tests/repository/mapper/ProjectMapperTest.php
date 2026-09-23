@@ -90,11 +90,11 @@ class ProjectMapperTest extends AbstractTestCase
     final public function testTagNormalization(): void
     {
         $project = new Project();
-        $project->setTags([' tag1 ', 'tag2', 'tag1', '  ', 'tag3']);
+        $project->setTags([' Tag1 ', 'TAG2', 'tag1', '  ', 'tag3']);
         $this->assertEquals(['tag1', 'tag2', 'tag3'], $project->getTags());
 
         $entity = new ProjectEntity();
-        $entity->setTags([' alpha ', 'beta', 'alpha', '', 'gamma']);
+        $entity->setTags([' ALPHA ', 'Beta', 'alpha', '', 'GAMMA']);
         $this->assertEquals(['alpha', 'beta', 'gamma'], $entity->getTags());
     }
 }

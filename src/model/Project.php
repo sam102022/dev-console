@@ -357,7 +357,7 @@ class Project extends AbstractModel
 
     public function setTags(array $tags): self
     {
-        $this->tags = array_values(array_unique(array_filter(array_map('trim', $tags))));
+        $this->tags = array_values(array_unique(array_filter(array_map(fn($t) => strtolower(trim((string)$t)), $tags))));
         return $this;
     }
 
