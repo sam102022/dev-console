@@ -747,6 +747,7 @@ class RepositoryService
         if (!$this->useSqlite) {
             return false;
         }
+        $projectName = trim($projectName);
         $tag = strtolower(trim($tag));
         if ($tag === '' || $projectName === '') {
             return false;
@@ -760,6 +761,7 @@ class RepositoryService
         if (!$this->useSqlite) {
             return false;
         }
+        $projectName = trim($projectName);
         $tag = strtolower(trim($tag));
         $stmt = $this->pdo->prepare("DELETE FROM project_tags WHERE project_name = :project_name AND tag = :tag");
         return $stmt->execute([':project_name' => $projectName, ':tag' => $tag]);
