@@ -7,7 +7,7 @@ use App\tests\AbstractTestCase;
 
 class TagsRowTemplateTest extends AbstractTestCase
 {
-    public function testIndexRowsRendersTagsAndAdminControls(): void
+    public function testIndexRowsRendersTagsWithoutInlineAdminControls(): void
     {
         $results = [
             [
@@ -32,9 +32,10 @@ class TagsRowTemplateTest extends AbstractTestCase
 
         $this->assertStringContainsString('paiement', $htmlAdmin);
         $this->assertStringContainsString('checkout', $htmlAdmin);
-        $this->assertStringContainsString('delete-tag-btn', $htmlAdmin);
-        $this->assertStringContainsString('add-tag-btn', $htmlAdmin);
         $this->assertStringContainsString('tag-badge', $htmlAdmin);
+        $this->assertStringNotContainsString('delete-tag-btn', $htmlAdmin);
+        $this->assertStringNotContainsString('add-tag-btn', $htmlAdmin);
+        $this->assertStringNotContainsString('tag-input-container', $htmlAdmin);
 
         // 2. As ROLE_USER (non admin)
         $htmlUser = self::$twig->render('common/_index_rows.html.twig', [
@@ -45,11 +46,12 @@ class TagsRowTemplateTest extends AbstractTestCase
 
         $this->assertStringContainsString('paiement', $htmlUser);
         $this->assertStringContainsString('checkout', $htmlUser);
+        $this->assertStringContainsString('tag-badge', $htmlUser);
         $this->assertStringNotContainsString('delete-tag-btn', $htmlUser);
         $this->assertStringNotContainsString('add-tag-btn', $htmlUser);
     }
 
-    public function testMonitoringRowsRendersTags(): void
+    public function testMonitoringRowsRendersTagsWithoutInlineAdminControls(): void
     {
         $results = [
             [
@@ -79,11 +81,13 @@ class TagsRowTemplateTest extends AbstractTestCase
 
         $this->assertStringContainsString('supervision', $html);
         $this->assertStringContainsString('core', $html);
-        $this->assertStringContainsString('delete-tag-btn', $html);
-        $this->assertStringContainsString('add-tag-btn', $html);
+        $this->assertStringContainsString('tag-badge', $html);
+        $this->assertStringNotContainsString('delete-tag-btn', $html);
+        $this->assertStringNotContainsString('add-tag-btn', $html);
+        $this->assertStringNotContainsString('tag-input-container', $html);
     }
 
-    public function testRundeckRowsRendersTags(): void
+    public function testRundeckRowsRendersTagsWithoutInlineAdminControls(): void
     {
         $results = [
             [
@@ -105,7 +109,9 @@ class TagsRowTemplateTest extends AbstractTestCase
 
         $this->assertStringContainsString('batch', $html);
         $this->assertStringContainsString('nightly', $html);
-        $this->assertStringContainsString('delete-tag-btn', $html);
-        $this->assertStringContainsString('add-tag-btn', $html);
+        $this->assertStringContainsString('tag-badge', $html);
+        $this->assertStringNotContainsString('delete-tag-btn', $html);
+        $this->assertStringNotContainsString('add-tag-btn', $html);
+        $this->assertStringNotContainsString('tag-input-container', $html);
     }
 }
