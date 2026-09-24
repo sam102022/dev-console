@@ -212,4 +212,134 @@ test.describe('Dev Console Authenticated Admin Flows', () => {
     // Verify user is removed from datagrid
     await expect(tableBody).not.toContainText(uniqueEmail);
   });
+
+  test('Tag Administration Page loads without Alpine errors and allows filtering by domain and SF', async ({ page }) => {
+    const alpineErrors: string[] = [];
+    page.on('pageerror', err => {
+      alpineErrors.push(err.message);
+    });
+    page.on('console', msg => {
+      if (msg.type() === 'error' && msg.text().includes('Alpine Expression Error')) {
+        alpineErrors.push(msg.text());
+      }
+    });
+
+    await page.goto('/?page=tags');
+    await expect(page.locator('#tags-card')).toBeVisible();
+
+    // Verify datagrid headers & rows loaded
+    await expect(page.locator('#projects-tbody')).toBeVisible();
+    await expect(page.locator('#filter_domain')).toBeVisible();
+    await expect(page.locator('#filter_sf')).toBeVisible();
+
+    // Verify options are present in domain filter
+    const domainSelect = page.locator('#filter_domain');
+    const domainOptions = await domainSelect.locator('option').all();
+    expect(domainOptions.length).toBeGreaterThan(1);
+
+    // Get a valid domain option (skip 'all')
+    let targetDomain = '';
+    for (const opt of domainOptions) {
+      const val = await opt.getAttribute('value');
+      if (val && val !== 'all') {
+        targetDomain = val;
+        break;
+      }
+    }
+    expect(targetDomain).not.toBe('');
+
+    // Select domain and wait for datagrid rows AJAX response
+    const domainResponsePromise = page.waitForResponse(
+      resp => resp.url().includes('action=getDatagridRows') && resp.status() === 200
+    );
+    await domainSelect.selectOption(targetDomain);
+    await domainResponsePromise;
+
+    // Verify rendered rows contain the selected domain
+    const firstRowDomain = page.locator('#projects-tbody tr .col-domain').first();
+    await expect(firstRowDomain).toBeVisible();
+    await expect(firstRowDomain).toHaveText(targetDomain);
+
+    // Verify SF dropdown is dynamically updated with allowed SFs
+    const sfSelect = page.locator('#filter_sf');
+    const sfOptions = await sfSelect.locator('option').all();
+    if (sfOptions.length > 1) {
+      let targetSf = '';
+      for (const opt of sfOptions) {
+        const val = await opt.getAttribute('value');
+        if (val && val !== 'all') {
+          targetSf = val;
+          break;
+        }
+      }
+
+      if (targetSf) {
+        const sfResponsePromise = page.waitForResponse(
+          resp => resp.url().includes('action=getDatagridRows') && resp.status() === 200
+        );
+        await sfSelect.selectOption(targetSf);
+        await sfResponsePromise;
+
+        const firstRowSf = page.locator('#projects-tbody tr .col-sf').first();
+        await expect(firstRowSf).toHaveText(targetSf);
+      }
+    }
+
+    // Reset filters
+    const resetBtn = page.locator('button[title="Réinitialiser les filtres"]');
+    const resetResponsePromise = page.waitForResponse(
+      resp => resp.url().includes('action=getDatagridRows') && resp.status() === 200
+    );
+    await resetBtn.click();
+    await resetResponsePromise;
+
+    await expect(domainSelect).toHaveValue('all');
+    await expect(sfSelect).toHaveValue('all');
+
+    // Check that there were no Alpine errors
+    expect(alpineErrors).toEqual([]);
+  });
+
+  test('User can open tag management modal, add a tag, and close it', async ({ page }) => {
+    await page.goto('/?page=tags');
+    const firstRow = page.locator('#projects-tbody tr.project-row').first();
+    await expect(firstRow).toBeVisible();
+
+    const projectName = await firstRow.getAttribute('data-project');
+    expect(projectName).toBeTruthy();
+
+    const manageBtn = firstRow.locator('.btn-manage-tags');
+    await manageBtn.click();
+
+    const modal = page.locator('.modal');
+    await expect(modal).toBeVisible({ timeout: 3000 });
+    await expect(modal.locator('.modal-title')).toContainText(projectName!);
+
+    // Add a unique test tag
+    const testTag = 'e2e-' + Date.now();
+    await modal.locator('input[type="text"]').fill(testTag);
+
+    const addResponsePromise = page.waitForResponse(
+      resp => resp.url().includes('action=addProjectTag') && resp.status() === 200
+    );
+    await modal.locator('button:has-text("Ajouter")').click();
+    await addResponsePromise;
+
+    // Verify tag badge exists in modal
+    await expect(modal.locator(`.tag-interactive-badge:has-text("${testTag}")`)).toBeVisible();
+
+    // Remove the test tag
+    const removeResponsePromise = page.waitForResponse(
+      resp => resp.url().includes('action=removeProjectTag') && resp.status() === 200
+    );
+    await modal.locator(`.tag-interactive-badge:has-text("${testTag}") .remove-icon`).click();
+    await removeResponsePromise;
+
+    // Verify tag badge removed
+    await expect(modal.locator(`.tag-interactive-badge:has-text("${testTag}")`)).not.toBeVisible();
+
+    // Close modal
+    await modal.locator('button:has-text("Fermer")').click();
+    await expect(modal).not.toBeVisible();
+  });
 });

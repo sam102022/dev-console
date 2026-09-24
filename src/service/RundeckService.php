@@ -34,7 +34,11 @@ class RundeckService
         $models = [];
         
         if ($entities !== null) {
+            $tagsByProject = $this->rundeckRepository->getTagsByProject();
             foreach ($entities as $entity) {
+                if (empty($entity->getTags()) && isset($tagsByProject[$entity->getName()])) {
+                    $entity->setTags($tagsByProject[$entity->getName()]);
+                }
                 $models[] = RundeckProjectMapper::toModel($entity);
             }
         }

@@ -114,4 +114,88 @@ class DatagridHelperTest extends TestCase
         $this->assertEquals(1, $resultJava['totalRows']);
         $this->assertEquals('Project Alpha', $resultJava['items'][0]->name);
     }
+
+    public function testProcessFilterByNameAndTags(): void
+    {
+        $items = [
+            [
+                'name' => 'api-orders',
+                'tags' => ['paiement', 'checkout']
+            ],
+            [
+                'name' => 'flow-billing',
+                'tags' => ['facturation', 'paiement']
+            ],
+            [
+                'name' => 'batch-customers',
+                'tags' => ['client']
+            ],
+            [
+                'name' => 'integ-partners',
+                'tags' => []
+            ]
+        ];
+
+        // 1. Filtrer par nom direct
+        $resultOrders = DatagridHelper::process($items, ['name' => 'orders'], 'name', 'asc', 1, 10);
+        $this->assertEquals(1, $resultOrders['totalRows']);
+        $this->assertEquals('api-orders', $resultOrders['items'][0]['name']);
+
+        // 2. Filtrer par tag ("paiement" doit remonter api-orders et flow-billing)
+        $resultTag = DatagridHelper::process($items, ['name' => 'paiement'], 'name', 'asc', 1, 10);
+        $this->assertEquals(2, $resultTag['totalRows']);
+        $names = array_column($resultTag['items'], 'name');
+        $this->assertContains('api-orders', $names);
+        $this->assertContains('flow-billing', $names);
+
+        // 3. Filtrer par tag avec casse différente ("CHECKOUT")
+        $resultCase = DatagridHelper::process($items, ['name' => 'CHECKOUT'], 'name', 'asc', 1, 10);
+        $this->assertEquals(1, $resultCase['totalRows']);
+        $this->assertEquals('api-orders', $resultCase['items'][0]['name']);
+
+        // 4. Filtrer avec un terme inexistant
+        $resultNone = DatagridHelper::process($items, ['name' => 'inconnu'], 'name', 'asc', 1, 10);
+        $this->assertEquals(0, $resultNone['totalRows']);
+        $this->assertEmpty($resultNone['items']);
+    }
+
+    public function testProcessExplicitTagFilter(): void
+    {
+        $items = [
+            [
+                'name' => 'api-orders',
+                'tags' => ['paiement', 'checkout']
+            ],
+            [
+                'name' => 'flow-billing',
+                'tags' => ['facturation', 'paiement']
+            ],
+            [
+                'name' => 'batch-customers',
+                'tags' => ['client']
+            ],
+            [
+                'name' => 'integ-partners',
+                'tags' => []
+            ]
+        ];
+
+        // 1. Filtrer par tag direct "checkout"
+        $resultCheckout = DatagridHelper::process($items, ['tag' => 'checkout'], 'name', 'asc', 1, 10);
+        $this->assertEquals(1, $resultCheckout['totalRows']);
+        $this->assertEquals('api-orders', $resultCheckout['items'][0]['name']);
+
+        // 2. Filtrer par tag "paiement" (doit retourner api-orders et flow-billing)
+        $resultPaiement = DatagridHelper::process($items, ['tag' => 'paiement'], 'name', 'asc', 1, 10);
+        $this->assertEquals(2, $resultPaiement['totalRows']);
+
+        // 3. Filtrer par tag partiel / casse différente ("PAIE")
+        $resultPaie = DatagridHelper::process($items, ['tag' => 'PAIE'], 'name', 'asc', 1, 10);
+        $this->assertEquals(2, $resultPaie['totalRows']);
+
+        // 4. Filtrer par tag inexistant
+        $resultNone = DatagridHelper::process($items, ['tag' => 'inexistant'], 'name', 'asc', 1, 10);
+        $this->assertEquals(0, $resultNone['totalRows']);
+        $this->assertEmpty($resultNone['items']);
+    }
 }

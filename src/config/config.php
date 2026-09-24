@@ -41,6 +41,8 @@ const ACTION_POSTMAN_GET_WORKSPACE_DETAILS = 'getWorkspaceDetails';
 const ACTION_MONITORING_GET_DATA = 'getMonitoringData';
 const ACTION_SAVE_COLUMNS_PREFS = 'saveColumnsPrefs';
 const ACTION_GET_DATAGRID_ROWS = 'getDatagridRows';
+const ACTION_ADD_PROJECT_TAG = 'addProjectTag';
+const ACTION_REMOVE_PROJECT_TAG = 'removeProjectTag';
 
 const THEMES_COLORS = [ //
     'dark' => [ //

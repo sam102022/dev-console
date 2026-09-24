@@ -44,6 +44,7 @@ class RundeckProjectEntityFixtures
             'projectName' => 'batch_click_and_collect_reports',
             'name' => 'Batch Click And Collect Reports',
             'domain' => 'example.com',
+            'tags' => [],
         ];
     }
 

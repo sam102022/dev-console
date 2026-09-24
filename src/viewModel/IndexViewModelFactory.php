@@ -47,6 +47,7 @@ class IndexViewModelFactory
     {
         $theme = $indexContext->getTheme();
         $themesColor = THEMES_COLORS;
+        $theme = isset($themesColor[$theme]) ? $theme : 'light';
 
         // Préparation des données pour la vue
         $domains = [];
@@ -86,6 +87,7 @@ class IndexViewModelFactory
                 'urlPubsubs' => $project->getUrlPubsubs(),
                 'urlsRundeck' => $project->getUrlsRundeck(),
                 'urlsDeploymentGcp' => $project->getUrlsDeploymentGcp(),
+                'tags' => $project->getTags(),
             ];
         }
 

@@ -12,11 +12,13 @@ use org\bovigo\vfs\vfsStreamDirectory;
 final class RepositoryServiceTest extends AbstractTestCase
 {
     private vfsStreamDirectory $root;
+    private RepositoryService $repositoryService;
 
     final protected function setUp(): void
     {
         AbstractTestCase::setUp();
         $this->root = vfsStream::setup();
+        $this->repositoryService = new RepositoryService(vfsStream::url('root'), self::$loggerFactory);
     }
 
     final public function testSaveAndReadFile(): void
@@ -318,5 +320,63 @@ final class RepositoryServiceTest extends AbstractTestCase
         // Delete using fallback filesystem cache
         $service->delete($filename);
         $this->assertEquals([], $service->read($filename));
+    }
+
+    public function testProjectTagsCrud(): void
+    {
+        // 1. Initialement vide
+        $tags = $this->repositoryService->getTagsForProject('api-orders');
+        $this->assertEmpty($tags);
+
+        // 2. Ajout de tags
+        $this->assertTrue($this->repositoryService->addProjectTag('api-orders', 'paiement'));
+        $this->assertTrue($this->repositoryService->addProjectTag('api-orders', 'checkout'));
+        $this->assertTrue($this->repositoryService->addProjectTag('flow-orders', 'paiement'));
+
+        // 3. Récupération par projet
+        $ordersTags = $this->repositoryService->getTagsForProject('api-orders');
+        $this->assertCount(2, $ordersTags);
+        $this->assertContains('paiement', $ordersTags);
+        $this->assertContains('checkout', $ordersTags);
+
+        // 4. Récupération groupée
+        $allGrouped = $this->repositoryService->getTagsByProject();
+        $this->assertArrayHasKey('api-orders', $allGrouped);
+        $this->assertArrayHasKey('flow-orders', $allGrouped);
+        $this->assertContains('paiement', $allGrouped['flow-orders']);
+
+        // 5. Récupération de tous les tags uniques
+        $uniqueTags = $this->repositoryService->getAllTags();
+        $this->assertEquals(['checkout', 'paiement'], $uniqueTags);
+
+        // 6. Suppression d'un tag
+        $this->assertTrue($this->repositoryService->removeProjectTag('api-orders', 'checkout'));
+        $ordersTagsAfter = $this->repositoryService->getTagsForProject('api-orders');
+        $this->assertCount(1, $ordersTagsAfter);
+        $this->assertNotContains('checkout', $ordersTagsAfter);
+
+        // 7. Doublon ignoré (idempotence)
+        $this->assertTrue($this->repositoryService->addProjectTag('api-orders', 'paiement'));
+        $ordersTagsDedup = $this->repositoryService->getTagsForProject('api-orders');
+        $this->assertCount(1, $ordersTagsDedup);
+    }
+
+    public function testProjectTagsEdgeCasesAndFallback(): void
+    {
+        // Edge cases: empty tag and empty project
+        $this->assertFalse($this->repositoryService->addProjectTag('', 'tag'));
+        $this->assertFalse($this->repositoryService->addProjectTag('api-orders', ''));
+        $this->assertFalse($this->repositoryService->addProjectTag('api-orders', '   '));
+
+        // Fallback when SQLite is disabled
+        $reflection = new \ReflectionClass($this->repositoryService);
+        $useSqliteProp = $reflection->getProperty('useSqlite');
+        $useSqliteProp->setValue($this->repositoryService, false);
+
+        $this->assertEquals([], $this->repositoryService->getTagsByProject());
+        $this->assertEquals([], $this->repositoryService->getTagsForProject('api-orders'));
+        $this->assertFalse($this->repositoryService->addProjectTag('api-orders', 'test'));
+        $this->assertFalse($this->repositoryService->removeProjectTag('api-orders', 'test'));
+        $this->assertEquals([], $this->repositoryService->getAllTags());
     }
 }

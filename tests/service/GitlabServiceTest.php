@@ -79,6 +79,31 @@ class GitlabServiceTest extends AbstractTestCase
         $this->assertEquals($expectedProjects, $result);
     }
 
+    final public function testScanHydratesTags(): void
+    {
+        $entity = ProjectEntityFixtures::getProjectAEntity();
+        $this->projectRepository->method('findAll')->willReturn([$entity]);
+        $this->projectRepository->method('getTagsByProject')->willReturn(['project-a' => ['paiement', 'orders']]);
+
+        $projects = $this->service->scan();
+
+        $this->assertNotNull($projects);
+        $this->assertCount(1, $projects);
+        $this->assertEquals(['paiement', 'orders'], $projects[0]->getTags());
+    }
+
+    final public function testGetProjectByCodeHydratesTags(): void
+    {
+        $entity = ProjectEntityFixtures::getProjectAEntity();
+        $this->projectRepository->method('findByCode')->with('project-a')->willReturn($entity);
+        $this->projectRepository->method('getTagsForProject')->with('project-a')->willReturn(['paiement']);
+
+        $project = $this->service->getProjectByCode('project-a');
+
+        $this->assertNotNull($project);
+        $this->assertEquals(['paiement'], $project->getTags());
+    }
+
     /**
      * @throws TechnicalException
      */

@@ -47,6 +47,23 @@ class RundeckServiceTest extends AbstractTestCase
     /**
      * @throws TechnicalException
      */
+    final public function testFindAllHydratesTags(): void
+    {
+        $projectEntity = RundeckProjectEntityFixtures::getRundeckProjectEntity();
+        $this->rundeckRepository->method('findAll')->willReturn([$projectEntity]);
+        $this->rundeckRepository->method('getTagsByProject')->willReturn([
+            'Batch Click And Collect Reports' => ['batch', 'c&c']
+        ]);
+
+        $results = $this->service->findAll();
+
+        $this->assertCount(1, $results);
+        $this->assertEquals(['batch', 'c&c'], $results[0]->getTags());
+    }
+
+    /**
+     * @throws TechnicalException
+     */
     final public function testFindAllReturnsEmptyArrayWhenNull(): void
     {
         $this->rundeckRepository->method('findAll')->willReturn(null);

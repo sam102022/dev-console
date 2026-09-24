@@ -24,6 +24,8 @@ function registerDatagrid() {
         checkingAll: false,
         isChecking: false,
         abortController: null,
+        editingProject: null,
+        newTagText: '',
 
         init() {
             // Read initial columns prefs from window or fallback
@@ -198,6 +200,14 @@ function registerDatagrid() {
             }
 
             return rangeWithDots;
+        },
+
+        get totalRowsText() {
+            return 'Affichage de ' + (this.totalRows === 0 ? 0 : (this.currentPage - 1) * this.rowsPerPage + 1) + ' à ' + Math.min(this.currentPage * this.rowsPerPage, this.totalRows) + ' sur ' + this.totalRows;
+        },
+
+        get paginationHtml() {
+            return '';
         },
 
         sortBy(col) {
@@ -509,6 +519,70 @@ function registerDatagrid() {
                     icon.className = 'fa-solid fa-chart-line text-info';
                 }
             }
+        },
+
+        openTagInput(projectName) {
+            this.editingProject = projectName;
+            this.newTagText = '';
+            this.$nextTick(() => {
+                const input = document.querySelector('.tag-input');
+                if (input) input.focus();
+            });
+        },
+
+        closeTagInput() {
+            this.editingProject = null;
+            this.newTagText = '';
+        },
+
+        async saveTag(projectName) {
+            const tag = this.newTagText.trim();
+            if (!tag) {
+                this.closeTagInput();
+                return;
+            }
+            try {
+                const response = await fetch('?action=addProjectTag', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ projectName, tag })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.closeTagInput();
+                    this.fetchData();
+                } else {
+                    alert(data.error || 'Erreur lors de l\'ajout du tag');
+                }
+            } catch (e) {
+                alert('Erreur réseau lors de l\'ajout du tag');
+            }
+        },
+
+        async removeTag(projectName, tag) {
+            if (!confirm(`Supprimer le tag "${tag}" du projet ${projectName} ?`)) {
+                return;
+            }
+            try {
+                const response = await fetch('?action=removeProjectTag', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ projectName, tag })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    this.fetchData();
+                } else {
+                    alert(data.error || 'Erreur lors de la suppression du tag');
+                }
+            } catch (e) {
+                alert('Erreur réseau lors de la suppression du tag');
+            }
+        },
+
+        filterByTag(tag) {
+            this.filters.name = tag;
+            this.onFilterChange();
         }
     });
     Alpine.data('datagrid', window.datagrid);
@@ -560,3 +634,276 @@ window.deleteUser = function(btn) {
         }
     }
 };
+
+window.openTagInput = function(btn, projectName) {
+    document.querySelectorAll('.tag-input-container.d-inline-flex').forEach(container => {
+        container.classList.remove('d-inline-flex');
+        container.classList.add('d-none');
+        const prevBtn = container.previousElementSibling;
+        if (prevBtn && prevBtn.classList.contains('add-tag-btn')) {
+            prevBtn.classList.remove('d-none');
+        }
+    });
+
+    const container = btn.nextElementSibling;
+    if (!container) return;
+
+    btn.classList.add('d-none');
+    container.classList.remove('d-none');
+    container.classList.add('d-inline-flex');
+
+    const input = container.querySelector('.tag-input');
+    if (input) {
+        input.value = '';
+        input.focus();
+    }
+};
+
+window.closeTagInput = function(el) {
+    const container = el.closest('.tag-input-container');
+    if (!container) return;
+
+    container.classList.remove('d-inline-flex');
+    container.classList.add('d-none');
+
+    const btn = container.previousElementSibling;
+    if (btn && btn.classList.contains('add-tag-btn')) {
+        btn.classList.remove('d-none');
+    }
+};
+
+window.saveTag = async function(el, projectName) {
+    const container = el.closest('.tag-input-container');
+    const input = container ? container.querySelector('.tag-input') : null;
+    const tag = input ? input.value.trim() : '';
+
+    if (!tag) {
+        if (container) window.closeTagInput(container);
+        return;
+    }
+
+    try {
+        const response = await fetch('?action=addProjectTag', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectName, tag })
+        });
+        const data = await response.json();
+        if (data.success) {
+            if (container) window.closeTagInput(container);
+            const cardEl = document.getElementById('projects-card') || document.querySelector('[x-data*="datagrid"]');
+            if (cardEl && typeof Alpine !== 'undefined') {
+                const alpineData = Alpine.$data(cardEl);
+                if (alpineData && alpineData.fetchData) {
+                    alpineData.fetchData();
+                }
+            }
+        } else {
+            alert(data.error || 'Erreur lors de l\'ajout du tag');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Erreur réseau lors de l\'ajout du tag');
+    }
+};
+
+window.removeTag = async function(projectName, tag) {
+    if (!confirm(`Supprimer le tag "${tag}" du projet ${projectName} ?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('?action=removeProjectTag', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ projectName, tag })
+        });
+        const data = await response.json();
+        if (data.success) {
+            const cardEl = document.getElementById('projects-card') || document.querySelector('[x-data*="datagrid"]');
+            if (cardEl && typeof Alpine !== 'undefined') {
+                const alpineData = Alpine.$data(cardEl);
+                if (alpineData && alpineData.fetchData) {
+                    alpineData.fetchData();
+                }
+            }
+        } else {
+            alert(data.error || 'Erreur lors de la suppression du tag');
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Erreur réseau lors de la suppression du tag');
+    }
+};
+
+window.filterByTag = function(tag) {
+    const cardEl = document.getElementById('projects-card') || document.querySelector('[x-data*="datagrid"]');
+    if (cardEl && typeof Alpine !== 'undefined') {
+        const alpineData = Alpine.$data(cardEl);
+        if (alpineData) {
+            alpineData.filters.name = tag;
+            alpineData.onFilterChange();
+        }
+    }
+};
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.tag-input-container') && !e.target.closest('.add-tag-btn')) {
+        document.querySelectorAll('.tag-input-container.d-inline-flex').forEach(container => {
+            window.closeTagInput(container);
+        });
+    }
+});
+
+function registerTagsDatagrid() {
+    if (typeof window.datagrid !== 'function') {
+        setTimeout(registerTagsDatagrid, 50);
+        return;
+    }
+    Alpine.data('tagsDatagrid', () => {
+        const base = window.datagrid({ pageName: 'tags' });
+        return {
+            ...base,
+            showModal: false,
+            selectedProject: '',
+            currentTags: [],
+            newTagInput: '',
+            modalError: '',
+            modalSuccess: '',
+
+            openManageModal(projectName, tags) {
+                this.selectedProject = projectName;
+                this.currentTags = Array.isArray(tags) ? [...tags] : [];
+                this.newTagInput = '';
+                this.modalError = '';
+                this.modalSuccess = '';
+                this.showModal = true;
+            },
+
+            closeModal() {
+                this.showModal = false;
+                this.fetchData();
+            },
+
+            async addTag() {
+                const tag = this.newTagInput.trim();
+                if (!tag) return;
+
+                if (tag.length < 3 || tag.length > 50) {
+                    this.modalError = 'Le tag doit contenir entre 3 et 50 caractères.';
+                    return;
+                }
+
+                this.modalError = '';
+                this.modalSuccess = '';
+
+                try {
+                    const response = await fetch('?page=tags&action=addProjectTag', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ projectName: this.selectedProject, tag })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        this.currentTags = data.tags;
+                        this.newTagInput = '';
+                        this.modalSuccess = `Tag "${tag}" ajouté avec succès.`;
+                        setTimeout(() => { this.modalSuccess = ''; }, 3000);
+                        this.updateRowTagsDom(this.selectedProject, this.currentTags);
+                    } else {
+                        this.modalError = data.error || 'Erreur lors de l\'ajout du tag';
+                    }
+                } catch (e) {
+                    this.modalError = 'Erreur réseau lors de l\'ajout du tag.';
+                }
+            },
+
+            async removeTag(tag) {
+                this.modalError = '';
+                this.modalSuccess = '';
+
+                try {
+                    const response = await fetch('?page=tags&action=removeProjectTag', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ projectName: this.selectedProject, tag })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        this.currentTags = data.tags;
+                        this.modalSuccess = `Tag "${tag}" supprimé.`;
+                        setTimeout(() => { this.modalSuccess = ''; }, 3000);
+                        this.updateRowTagsDom(this.selectedProject, this.currentTags);
+                    } else {
+                        this.modalError = data.error || 'Erreur lors de la suppression du tag';
+                    }
+                } catch (e) {
+                    this.modalError = 'Erreur réseau lors de la suppression du tag.';
+                }
+            },
+
+            updateRowTagsDom(projectName, tags) {
+                const row = document.querySelector(`.project-row[data-project="${projectName}"]`);
+                if (!row) return;
+
+                row.setAttribute('data-tags', JSON.stringify(tags || []));
+
+                const tagsContainer = row.querySelector('.project-tags');
+                if (tagsContainer) {
+                    tagsContainer.innerHTML = '';
+                    if (!tags || tags.length === 0) {
+                        const emptySpan = document.createElement('span');
+                        emptySpan.className = 'text-muted font-italic small no-tags-placeholder';
+                        emptySpan.textContent = 'Aucun tag';
+                        tagsContainer.appendChild(emptySpan);
+                    } else {
+                        tags.forEach(t => {
+                            const badge = document.createElement('span');
+                            badge.className = 'badge badge-light border text-secondary';
+                            badge.style.fontSize = '0.75rem';
+                            badge.style.padding = '3px 6px';
+                            badge.style.marginRight = '4px';
+
+                            const icon = document.createElement('i');
+                            icon.className = 'fa-solid fa-tag mr-1 text-muted';
+                            badge.appendChild(icon);
+
+                            const text = document.createTextNode(t);
+                            badge.appendChild(text);
+
+                            tagsContainer.appendChild(badge);
+                        });
+                    }
+                }
+            }
+        };
+    });
+}
+
+window.manageProjectTags = function(btn) {
+    const row = btn.closest('.project-row');
+    if (!row) return;
+    const projectName = row.getAttribute('data-project');
+    const tagsAttr = row.getAttribute('data-tags');
+    let tags = [];
+    try {
+        tags = JSON.parse(tagsAttr) || [];
+    } catch (e) {
+        tags = [];
+    }
+
+    const gridEl = document.getElementById('tags-card');
+    if (gridEl && typeof Alpine !== 'undefined') {
+        const data = Alpine.$data(gridEl);
+        if (data && data.openManageModal) {
+            data.openManageModal(projectName, tags);
+        }
+    }
+};
+
+if (window.Alpine) {
+    registerTagsDatagrid();
+} else {
+    document.addEventListener('alpine:init', registerTagsDatagrid);
+}
+

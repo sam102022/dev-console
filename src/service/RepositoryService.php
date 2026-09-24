@@ -126,6 +126,15 @@ class RepositoryService
                 postman_api_key TEXT,
                 remember_token TEXT
             );
+
+            CREATE TABLE IF NOT EXISTS project_tags (
+                project_name TEXT NOT NULL,
+                tag TEXT NOT NULL,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (project_name, tag)
+            );
+            CREATE INDEX IF NOT EXISTS idx_project_tags_name ON project_tags(project_name);
+            CREATE INDEX IF NOT EXISTS idx_project_tags_tag ON project_tags(tag);
         ");
 
         try {
@@ -707,5 +716,63 @@ class RepositoryService
         if (!$this->useSqlite) return [];
         $stmt = $this->pdo->query("SELECT * FROM users ORDER BY created_at DESC");
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
+    public function getTagsByProject(): array
+    {
+        if (!$this->useSqlite) {
+            return [];
+        }
+        $stmt = $this->pdo->query("SELECT project_name, tag FROM project_tags ORDER BY tag ASC");
+        $rows = $stmt->fetchAll();
+        $grouped = [];
+        foreach ($rows as $row) {
+            $grouped[$row['project_name']][] = $row['tag'];
+        }
+        return $grouped;
+    }
+
+    public function getTagsForProject(string $projectName): array
+    {
+        if (!$this->useSqlite) {
+            return [];
+        }
+        $stmt = $this->pdo->prepare("SELECT tag FROM project_tags WHERE project_name = :project_name ORDER BY tag ASC");
+        $stmt->execute([':project_name' => $projectName]);
+        return $stmt->fetchAll(\PDO::FETCH_COLUMN) ?: [];
+    }
+
+    public function addProjectTag(string $projectName, string $tag): bool
+    {
+        if (!$this->useSqlite) {
+            return false;
+        }
+        $projectName = trim($projectName);
+        $tag = strtolower(trim($tag));
+        if ($tag === '' || $projectName === '') {
+            return false;
+        }
+        $stmt = $this->pdo->prepare("INSERT OR IGNORE INTO project_tags (project_name, tag) VALUES (:project_name, :tag)");
+        return $stmt->execute([':project_name' => $projectName, ':tag' => $tag]);
+    }
+
+    public function removeProjectTag(string $projectName, string $tag): bool
+    {
+        if (!$this->useSqlite) {
+            return false;
+        }
+        $projectName = trim($projectName);
+        $tag = strtolower(trim($tag));
+        $stmt = $this->pdo->prepare("DELETE FROM project_tags WHERE project_name = :project_name AND tag = :tag");
+        return $stmt->execute([':project_name' => $projectName, ':tag' => $tag]);
+    }
+
+    public function getAllTags(): array
+    {
+        if (!$this->useSqlite) {
+            return [];
+        }
+        $stmt = $this->pdo->query("SELECT DISTINCT tag FROM project_tags ORDER BY tag ASC");
+        return $stmt->fetchAll(\PDO::FETCH_COLUMN) ?: [];
     }
 }

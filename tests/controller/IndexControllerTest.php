@@ -119,7 +119,7 @@ class IndexControllerTest extends AbstractTestCase
         // Expect twig to render
         $this->twigMocked->expects($this->once())
             ->method('render')
-            ->with('index.html.twig', $this->callback(function ($subject) use ($viewModel) {
+            ->with('index.html.twig', $this->callback(function ($subject) {
                 $this->assertEquals('refreshedValue', $subject['viewModelKey']);
                 return true;
             }))
@@ -328,6 +328,96 @@ class IndexControllerTest extends AbstractTestCase
         $response = json_decode($responseJson, true);
 
         $this->assertEquals($expectedResponse, $response);
+    }
+
+    final public function testHandleRequestAddProjectTagForbiddenForNonAdmin(): void
+    {
+        $_SESSION['user_role'] = 'ROLE_USER';
+        $_POST = ['projectName' => 'api-orders', 'tag' => 'paiement'];
+
+        $responseJson = $this->controller->handleRequest(ACTION_ADD_PROJECT_TAG);
+        $response = json_decode($responseJson, true);
+
+        $this->assertEquals(403, http_response_code());
+        $this->assertFalse($response['success']);
+        $this->assertEquals('Accès réservé aux administrateurs.', $response['error']);
+    }
+
+    final public function testHandleRequestAddProjectTagMissingParams(): void
+    {
+        $_SESSION['user_role'] = 'ROLE_ADMIN';
+        $_POST = ['projectName' => '', 'tag' => ''];
+
+        $responseJson = $this->controller->handleRequest(ACTION_ADD_PROJECT_TAG);
+        $response = json_decode($responseJson, true);
+
+        $this->assertEquals(400, http_response_code());
+        $this->assertFalse($response['success']);
+        $this->assertEquals('Paramètres manquants.', $response['error']);
+    }
+
+    final public function testHandleRequestAddProjectTagSuccessForAdmin(): void
+    {
+        $_SESSION['user_role'] = 'ROLE_ADMIN';
+        $_POST = ['projectName' => 'api-orders', 'tag' => 'paiement'];
+
+        $repoMock = $this->createMock(\App\service\RepositoryService::class);
+        $repoMock->expects($this->once())
+            ->method('addProjectTag')
+            ->with('api-orders', 'paiement')
+            ->willReturn(true);
+        $repoMock->expects($this->once())
+            ->method('getTagsForProject')
+            ->with('api-orders')
+            ->willReturn(['paiement']);
+
+        $controller = new IndexController(
+            $this->viewModelFactory,
+            $this->context,
+            $this->gitlabService,
+            $this->twigMocked,
+            $this->newRelicService,
+            self::$loggerFactory,
+            $repoMock
+        );
+
+        $responseJson = $controller->handleRequest(ACTION_ADD_PROJECT_TAG);
+        $response = json_decode($responseJson, true);
+
+        $this->assertTrue($response['success']);
+        $this->assertEquals(['paiement'], $response['tags']);
+    }
+
+    final public function testHandleRequestRemoveProjectTagSuccessForAdmin(): void
+    {
+        $_SESSION['user_role'] = 'ROLE_ADMIN';
+        $_POST = ['projectName' => 'api-orders', 'tag' => 'paiement'];
+
+        $repoMock = $this->createMock(\App\service\RepositoryService::class);
+        $repoMock->expects($this->once())
+            ->method('removeProjectTag')
+            ->with('api-orders', 'paiement')
+            ->willReturn(true);
+        $repoMock->expects($this->once())
+            ->method('getTagsForProject')
+            ->with('api-orders')
+            ->willReturn([]);
+
+        $controller = new IndexController(
+            $this->viewModelFactory,
+            $this->context,
+            $this->gitlabService,
+            $this->twigMocked,
+            $this->newRelicService,
+            self::$loggerFactory,
+            $repoMock
+        );
+
+        $responseJson = $controller->handleRequest(ACTION_REMOVE_PROJECT_TAG);
+        $response = json_decode($responseJson, true);
+
+        $this->assertTrue($response['success']);
+        $this->assertEquals([], $response['tags']);
     }
 }
 

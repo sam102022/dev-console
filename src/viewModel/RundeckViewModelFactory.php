@@ -55,6 +55,7 @@ class RundeckViewModelFactory
     {
         $theme = $indexContext->getTheme();
         $themesColor = THEMES_COLORS;
+        $theme = isset($themesColor[$theme]) ? $theme : 'light';
 
         // Préparation des données pour la vue
         $domains = [];
@@ -88,7 +89,8 @@ class RundeckViewModelFactory
                 'sf' => $rundeckProject->getSf(),
                 'category' => $rundeckProject->getCategory(),
                 'urlsRundeck' => $urlsRundeck,
-                'webUrl' => $webUrl
+                'webUrl' => $webUrl,
+                'tags' => $rundeckProject->getTags(),
             ];
         }
 

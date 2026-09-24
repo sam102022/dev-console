@@ -103,7 +103,12 @@ class GitlabService
         try {
             $projectEntity = $this->projectRepository->findByCode($projectCode);
             if ($projectEntity !== null) {
-                return ProjectMapper::fromEntity($projectEntity);
+                $project = ProjectMapper::fromEntity($projectEntity);
+                $tags = $this->projectRepository->getTagsForProject($projectCode);
+                if (!empty($tags)) {
+                    $project->setTags($tags);
+                }
+                return $project;
             }
             return null;
         } catch (TechnicalException $e) {
@@ -113,7 +118,12 @@ class GitlabService
                 $this->projectRepository->updateAll($projectEntities);
                 $projectEntity = array_find($projectEntities, static fn($result) => $result->getName() === $projectCode);
                 if ($projectEntity) {
-                    return ProjectMapper::fromEntity($projectEntity);
+                    $project = ProjectMapper::fromEntity($projectEntity);
+                    $tags = $this->projectRepository->getTagsForProject($projectCode);
+                    if (!empty($tags)) {
+                        $project->setTags($tags);
+                    }
+                    return $project;
                 }
                 return null;
             } catch (TechnicalException $e) {
@@ -141,9 +151,14 @@ class GitlabService
             $this->projectRepository->updateAll($projectEntities);
         }
 
+        $tagsByProject = $this->projectRepository->getTagsByProject();
         $projects = [];
         foreach ($projectEntities as $projectEntity) {
-            $projects[] = ProjectMapper::fromEntity($projectEntity);
+            $proj = ProjectMapper::fromEntity($projectEntity);
+            if (empty($proj->getTags()) && isset($tagsByProject[$proj->getName()])) {
+                $proj->setTags($tagsByProject[$proj->getName()]);
+            }
+            $projects[] = $proj;
         }
 
         return $projects;

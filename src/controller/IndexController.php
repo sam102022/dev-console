@@ -8,6 +8,7 @@ use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\service\GitlabService;
 use App\service\NewRelicService;
+use App\service\RepositoryService;
 use App\util\UtilsLog;
 use App\viewModel\IndexViewModelFactory;
 use Exception;
@@ -48,7 +49,8 @@ class IndexController
         private readonly GitlabService $gitlabService,
         private readonly Environment $twig,
         private readonly NewRelicService $newRelicService,
-        LoggerFactory $loggerFactory
+        LoggerFactory $loggerFactory,
+        private readonly ?RepositoryService $repositoryService = null
     ) {
         $this->logger = $loggerFactory->get(self::class);
     }
@@ -107,7 +109,11 @@ class IndexController
 
     public function handleRequest(string $action): string
     {
-        $input = json_decode(file_get_contents("php://input"), true) ?? [];
+        $rawInput = file_get_contents("php://input");
+        $input = json_decode($rawInput, true);
+        if (!is_array($input) || empty($input)) {
+            $input = !empty($_POST) ? $_POST : $_REQUEST;
+        }
 
         try {
             http_response_code(200);
@@ -153,6 +159,44 @@ class IndexController
                     ];
                     break;
 
+                case ACTION_ADD_PROJECT_TAG:
+                    if (($_SESSION['user_role'] ?? '') !== 'ROLE_ADMIN') {
+                        http_response_code(403);
+                        return json_encode(['success' => false, 'error' => 'Accès réservé aux administrateurs.']);
+                    }
+                    $validated = $this->validateTagInput($input);
+                    if ($validated === null) {
+                        http_response_code(400);
+                        return json_encode(['success' => false, 'error' => 'Paramètres manquants.']);
+                    }
+                    if ($this->repositoryService !== null) {
+                        $this->repositoryService->addProjectTag($validated['projectName'], $validated['tag']);
+                        $tags = $this->repositoryService->getTagsForProject($validated['projectName']);
+                    } else {
+                        $tags = [$validated['tag']];
+                    }
+                    $response = ['success' => true, 'tags' => $tags];
+                    break;
+
+                case ACTION_REMOVE_PROJECT_TAG:
+                    if (($_SESSION['user_role'] ?? '') !== 'ROLE_ADMIN') {
+                        http_response_code(403);
+                        return json_encode(['success' => false, 'error' => 'Accès réservé aux administrateurs.']);
+                    }
+                    $validated = $this->validateTagInput($input);
+                    if ($validated === null) {
+                        http_response_code(400);
+                        return json_encode(['success' => false, 'error' => 'Paramètres manquants.']);
+                    }
+                    if ($this->repositoryService !== null) {
+                        $this->repositoryService->removeProjectTag($validated['projectName'], $validated['tag']);
+                        $tags = $this->repositoryService->getTagsForProject($validated['projectName']);
+                    } else {
+                        $tags = [];
+                    }
+                    $response = ['success' => true, 'tags' => $tags];
+                    break;
+
                 default:
                     http_response_code(400);
                     $response = ['error' => 'Action inconnue'];
@@ -165,4 +209,18 @@ class IndexController
         return json_encode($response);
     }
 
+    /**
+     * @param array $input
+     * @return array{projectName: string, tag: string}|null
+     */
+    private function validateTagInput(array $input): ?array
+    {
+        $data = !empty($input) ? $input : $_POST;
+        $projectName = trim((string)($data['projectName'] ?? ''));
+        $tag = trim((string)($data['tag'] ?? ''));
+        if ($projectName === '' || $tag === '') {
+            return null;
+        }
+        return ['projectName' => $projectName, 'tag' => $tag];
+    }
 }

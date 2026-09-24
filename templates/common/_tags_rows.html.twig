@@ -1,0 +1,33 @@
+{% for r in results %}
+    <tr class="project-row" data-project="{{ r.name }}" data-tags="{{ (r.tags|default([]))|json_encode|e('html_attr') }}">
+        <td class="text-muted" style="width: 50px;">{{ offset + loop.index }}</td>
+        <td class="col-domain">{{ r.domain|default('') }}</td>
+        <td class="col-sf">{{ r.sf|default('') }}</td>
+        <td>
+            <strong>{{ r.name }}</strong>
+        </td>
+        <td>
+            <div class="project-tags d-flex flex-wrap align-items-center" style="gap: 4px;" data-project="{{ r.name }}">
+                {% for tag in r.tags|default([]) %}
+                    <span class="badge badge-light border text-secondary" style="font-size: 0.75rem; padding: 3px 6px;">
+                        <i class="fa-solid fa-tag mr-1 text-muted"></i>{{ tag }}
+                    </span>
+                {% else %}
+                    <span class="text-muted font-italic small no-tags-placeholder">Aucun tag</span>
+                {% endfor %}
+            </div>
+        </td>
+        <td class="text-center" style="width: 160px;">
+            <button type="button" class="btn btn-outline-primary btn-sm btn-manage-tags"
+                    onclick="manageProjectTags(this)">
+                <i class="fas fa-tags mr-1"></i> Gérer les tags
+            </button>
+        </td>
+    </tr>
+{% else %}
+    <tr>
+        <td colspan="6" class="text-center text-muted py-4">
+            <i class="fas fa-info-circle mr-1"></i> Aucun projet trouvé.
+        </td>
+    </tr>
+{% endfor %}

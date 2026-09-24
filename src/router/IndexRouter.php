@@ -10,6 +10,7 @@ use App\controller\IndexController;
 use App\controller\MonitoringController;
 use App\controller\PostmanController;
 use App\controller\RundeckController;
+use App\controller\TagAdminController;
 use App\controller\UserAdminController;
 use App\controller\SettingsController;
 use App\exception\TechnicalException;
@@ -40,6 +41,7 @@ class IndexRouter
         private readonly RundeckController    $rundeckController,
         private readonly AuthController       $authController,
         private readonly UserAdminController  $userAdminController,
+        private readonly TagAdminController   $tagAdminController,
         private readonly SettingsController   $settingsController,
         private readonly Environment          $twig,
         private readonly IndexContext         $indexContext,
@@ -109,7 +111,15 @@ class IndexRouter
         }
 
         if ($isLoggedIn && $role !== 'ROLE_ADMIN') {
-            if ($page === UserAdminController::ROUTE_USERS || in_array($action, [UserAdminController::ACTION_CREATE_USER, UserAdminController::ACTION_UPDATE_USER, UserAdminController::ACTION_DELETE_USER])) {
+            if ($page === UserAdminController::ROUTE_USERS
+                || $page === TagAdminController::ROUTE_TAGS
+                || in_array($action, [
+                    UserAdminController::ACTION_CREATE_USER,
+                    UserAdminController::ACTION_UPDATE_USER,
+                    UserAdminController::ACTION_DELETE_USER,
+                    TagAdminController::ACTION_ADD_PROJECT_TAG,
+                    TagAdminController::ACTION_REMOVE_PROJECT_TAG
+                ], true)) {
                 $this->terminate(403, '403 Forbidden');
                 return;
             }
@@ -138,6 +148,10 @@ class IndexRouter
                 case UserAdminController::ACTION_UPDATE_USER:
                 case UserAdminController::ACTION_DELETE_USER:
                     echo $this->userAdminController->handleRequest($action);
+                    return;
+                case TagAdminController::ACTION_ADD_PROJECT_TAG:
+                case TagAdminController::ACTION_REMOVE_PROJECT_TAG:
+                    echo $this->tagAdminController->handleRequest($action);
                     return;
                 case ACTION_GITLAB_FILE:
                 case ACTION_GITLAB_SCAN:
@@ -175,6 +189,9 @@ class IndexRouter
                         case UserAdminController::ROUTE_USERS:
                             echo $this->userAdminController->handleRequest($action);
                             break;
+                        case TagAdminController::ROUTE_TAGS:
+                            echo $this->tagAdminController->handleRequest($action);
+                            break;
                         default:
                             echo $this->indexController->handleRequest($action);
                             break;
@@ -206,6 +223,9 @@ class IndexRouter
                     break;
                 case UserAdminController::ROUTE_USERS:
                     $this->userAdminController->index($messages);
+                    break;
+                case TagAdminController::ROUTE_TAGS:
+                    $this->tagAdminController->index($messages);
                     break;
                 case MonitoringController::ROUTE_MONITORING:
                     $this->monitoringController->index($messages);

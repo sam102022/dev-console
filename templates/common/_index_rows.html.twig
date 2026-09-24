@@ -15,6 +15,13 @@
             {% else %}
                 {{ r.name }}
             {% endif %}
+            <div class="project-tags mt-1 d-flex flex-wrap align-items-center" style="gap: 3px;" data-project="{{ r.name }}">
+                {% for tag in r.tags|default([]) %}
+                    <span class="badge badge-light border text-secondary tag-badge" style="cursor: pointer; font-size: 0.72rem; padding: 2px 5px;" onclick="filterByTag('{{ tag|escape('js') }}')" title="Filtrer par ce tag">
+                        <i class="fa-solid fa-tag mr-1 text-muted" style="font-size: 0.65rem;"></i>{{ tag }}
+                    </span>
+                {% endfor %}
+            </div>
         </td>
         <td class="col-gcp" data-value="{% if r.cloudGCP == 1 %}oui{% else %}non{% endif %}">
             {% if r.cloudGCP == 1 %}<i class="fa-brands fa-google text-primary"></i>{% else %}-{% endif %}

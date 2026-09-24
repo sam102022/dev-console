@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\tests\router;
 
 use App\controller\AuthController;
+use App\controller\TagAdminController;
 use App\controller\UserAdminController;
 use App\controller\SettingsController;
 use App\context\IndexContext;
@@ -29,6 +30,7 @@ class IndexRouterTest extends AbstractTestCase
     private RundeckController|MockObject $rundeckController;
     private AuthController|MockObject $authController;
     private UserAdminController|MockObject $userAdminController;
+    private TagAdminController|MockObject $tagAdminController;
     private IndexContext|MockObject $indexContext;
     private SettingsController|MockObject $settingsController;
     private RepositoryService|MockObject $repositoryService;
@@ -44,6 +46,7 @@ class IndexRouterTest extends AbstractTestCase
         $this->rundeckController = $this->createMock(RundeckController::class);
         $this->authController = $this->createMock(AuthController::class);
         $this->userAdminController = $this->createMock(UserAdminController::class);
+        $this->tagAdminController = $this->createMock(TagAdminController::class);
         $this->settingsController = $this->createMock(SettingsController::class);
         $this->indexContext = $this->createMock(IndexContext::class);
         $this->indexContext->method('initMessages')->willReturn([]);
@@ -58,6 +61,7 @@ class IndexRouterTest extends AbstractTestCase
                 $this->rundeckController,
                 $this->authController,
                 $this->userAdminController,
+                $this->tagAdminController,
                 $this->settingsController,
                 $this->twigMocked,
                 $this->indexContext,
@@ -92,7 +96,9 @@ class IndexRouterTest extends AbstractTestCase
             'save settings' => [SettingsController::ACTION_SAVE_SETTINGS, 'settingsController', 'save'],
             'create user' => [UserAdminController::ACTION_CREATE_USER, 'userAdminController', 'handleRequest'],
             'update user' => [UserAdminController::ACTION_UPDATE_USER, 'userAdminController', 'handleRequest'],
-            'delete user' => [UserAdminController::ACTION_DELETE_USER, 'userAdminController', 'handleRequest']
+            'delete user' => [UserAdminController::ACTION_DELETE_USER, 'userAdminController', 'handleRequest'],
+            'add project tag' => [TagAdminController::ACTION_ADD_PROJECT_TAG, 'tagAdminController', 'handleRequest'],
+            'remove project tag' => [TagAdminController::ACTION_REMOVE_PROJECT_TAG, 'tagAdminController', 'handleRequest']
         ];
     }
 
@@ -115,6 +121,7 @@ class IndexRouterTest extends AbstractTestCase
             'monitoring page' => ['monitoring', 'monitoringController'],
             'postman page' => ['postman', 'postmanController'],
             'rundeck page' => ['rundeck', 'rundeckController'],
+            'tags page' => ['tags', 'tagAdminController'],
             'default page' => ['any_other_page', 'indexController'],
         ];
     }
@@ -440,6 +447,73 @@ class IndexRouterTest extends AbstractTestCase
         $_REQUEST['page'] = 'users';
 
         $this->userAdminController->expects($this->once())->method('index');
+        $this->router->dispatch();
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchPageTags(): void
+    {
+        $_REQUEST['page'] = 'tags';
+
+        $this->tagAdminController->expects($this->once())->method('index');
+        $this->router->dispatch();
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchGetDatagridRowsTags(): void
+    {
+        $_REQUEST['action'] = ACTION_GET_DATAGRID_ROWS;
+        $_REQUEST['page'] = 'tags';
+
+        $this->tagAdminController->expects($this->once())
+            ->method('handleRequest')
+            ->with(ACTION_GET_DATAGRID_ROWS)
+            ->willReturn('{"success":true,"html":"tags_rows"}');
+
+        ob_start();
+        $this->router->dispatch();
+        $output = ob_get_clean();
+
+        $this->assertEquals('{"success":true,"html":"tags_rows"}', $output);
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchNonAdminAccessTagsBlocked(): void
+    {
+        // Logged in as ROLE_USER (non-admin)
+        $_SESSION = ['user_id' => 42, 'user_role' => 'ROLE_USER', 'user_email' => 'user@mdm.com'];
+        $_REQUEST['page'] = 'tags';
+
+        $this->router->expects($this->once())
+            ->method('terminate')
+            ->with(403, '403 Forbidden');
+
+        $this->tagAdminController->expects($this->never())->method('index');
+
+        $this->router->dispatch();
+    }
+
+    /**
+     * @throws TechnicalException
+     */
+    public function testDispatchNonAdminAccessTagActionsBlocked(): void
+    {
+        // Logged in as ROLE_USER (non-admin)
+        $_SESSION = ['user_id' => 42, 'user_role' => 'ROLE_USER', 'user_email' => 'user@mdm.com'];
+        $_REQUEST['action'] = TagAdminController::ACTION_ADD_PROJECT_TAG;
+
+        $this->router->expects($this->once())
+            ->method('terminate')
+            ->with(403, '403 Forbidden');
+
+        $this->tagAdminController->expects($this->never())->method('handleRequest');
+
         $this->router->dispatch();
     }
 }
