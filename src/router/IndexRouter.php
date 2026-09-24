@@ -119,7 +119,7 @@ class IndexRouter
                     UserAdminController::ACTION_DELETE_USER,
                     TagAdminController::ACTION_ADD_PROJECT_TAG,
                     TagAdminController::ACTION_REMOVE_PROJECT_TAG
-                ])) {
+                ], true)) {
                 $this->terminate(403, '403 Forbidden');
                 return;
             }
