@@ -746,3 +746,121 @@ document.addEventListener('click', (e) => {
         });
     }
 });
+
+function registerTagsDatagrid() {
+    if (typeof window.datagrid !== 'function') {
+        setTimeout(registerTagsDatagrid, 50);
+        return;
+    }
+    Alpine.data('tagsDatagrid', () => {
+        const base = window.datagrid({ pageName: 'tags' });
+        return {
+            ...base,
+            showModal: false,
+            selectedProject: '',
+            currentTags: [],
+            newTagInput: '',
+            modalError: '',
+            modalSuccess: '',
+
+            openManageModal(projectName, tags) {
+                this.selectedProject = projectName;
+                this.currentTags = Array.isArray(tags) ? [...tags] : [];
+                this.newTagInput = '';
+                this.modalError = '';
+                this.modalSuccess = '';
+                this.showModal = true;
+            },
+
+            closeModal() {
+                this.showModal = false;
+                this.fetchData();
+            },
+
+            async addTag() {
+                const tag = this.newTagInput.trim();
+                if (!tag) return;
+
+                if (tag.length < 3 || tag.length > 50) {
+                    this.modalError = 'Le tag doit contenir entre 3 et 50 caractères.';
+                    return;
+                }
+
+                this.modalError = '';
+                this.modalSuccess = '';
+
+                try {
+                    const response = await fetch('?page=tags&action=addProjectTag', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ projectName: this.selectedProject, tag })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        this.currentTags = data.tags;
+                        this.newTagInput = '';
+                        this.modalSuccess = `Tag "${tag}" ajouté avec succès.`;
+                        setTimeout(() => { this.modalSuccess = ''; }, 3000);
+                        this.updateRowTagsDom(this.selectedProject, this.currentTags);
+                    } else {
+                        this.modalError = data.error || 'Erreur lors de l\'ajout du tag';
+                    }
+                } catch (e) {
+                    this.modalError = 'Erreur réseau lors de l\'ajout du tag.';
+                }
+            },
+
+            async removeTag(tag) {
+                this.modalError = '';
+                this.modalSuccess = '';
+
+                try {
+                    const response = await fetch('?page=tags&action=removeProjectTag', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ projectName: this.selectedProject, tag })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        this.currentTags = data.tags;
+                        this.modalSuccess = `Tag "${tag}" supprimé.`;
+                        setTimeout(() => { this.modalSuccess = ''; }, 3000);
+                        this.updateRowTagsDom(this.selectedProject, this.currentTags);
+                    } else {
+                        this.modalError = data.error || 'Erreur lors de la suppression du tag';
+                    }
+                } catch (e) {
+                    this.modalError = 'Erreur réseau lors de la suppression du tag.';
+                }
+            },
+
+            updateRowTagsDom(projectName, tags) {
+                const row = document.querySelector(`.project-row[data-project="${projectName}"]`);
+                if (!row) return;
+
+                const tagsContainer = row.querySelector('.project-tags');
+                if (tagsContainer) {
+                    if (!tags || tags.length === 0) {
+                        tagsContainer.innerHTML = '<span class="text-muted font-italic small no-tags-placeholder">Aucun tag</span>';
+                    } else {
+                        tagsContainer.innerHTML = tags.map(t =>
+                            `<span class="badge badge-light border text-secondary" style="font-size: 0.75rem; padding: 3px 6px;"><i class="fa-solid fa-tag mr-1 text-muted"></i>${t}</span>`
+                        ).join(' ');
+                    }
+                }
+
+                const btn = row.querySelector('.btn-manage-tags');
+                if (btn) {
+                    btn.setAttribute('@click', `openManageModal('${projectName}', ${JSON.stringify(tags)})`);
+                }
+            }
+        };
+    });
+}
+
+if (window.Alpine) {
+    registerTagsDatagrid();
+} else {
+    document.addEventListener('alpine:init', registerTagsDatagrid);
+}
+

@@ -1,0 +1,155 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Tags - MDM Dev Console{% endblock %}
+
+{% block body %}
+<style>
+.tag-interactive-badge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.82rem;
+    padding: 4px 8px;
+    margin: 2px;
+    border-radius: 4px;
+}
+.tag-interactive-badge .remove-icon {
+    margin-left: 6px;
+    cursor: pointer;
+}
+.tag-interactive-badge .remove-icon:hover {
+    color: #dc3545 !important;
+}
+</style>
+
+<div x-data="tagsDatagrid()">
+    <div class="card shadow rounded mb-4" id="tags-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-tags mr-2" style="color: #17a2b8;"></i>Gestion des Tags</h5>
+            <span class="badge badge-info">{{ allTags|length }} tag(s) existant(s)</span>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 text-nowrap" id="projects-table">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th><a class="sortable-header" @click.prevent="sortBy('name')">Projet <i :class="getSortIconClass('name')" :style="getSortIconStyle('name')"></i></a></th>
+                            <th>Tags associés</th>
+                            <th class="text-center" style="width: 160px;">Actions</th>
+                        </tr>
+                        <tr>
+                            <th></th>
+                            <th>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="filter_name" class="form-control filter-input" x-model="filters.name" @input.debounce.300ms="onFilterChange()" placeholder="Filtrer par projet..." aria-label="Filtrer par projet">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" @click="filters.name = ''; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="filter_tag" class="form-control filter-input" x-model="filters.tag" @input.debounce.300ms="onFilterChange()" placeholder="Filtrer par tag..." aria-label="Filtrer par tag">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" @click="filters.tag = ''; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                <button class="btn btn-outline-light btn-sm btn-block" type="button" @click="resetFilters()" title="Réinitialiser les filtres"><i class="fa-solid fa-rotate-left"></i></button>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="projects-tbody" x-html="rowsHtml">
+                        {% include 'common/_tags_rows.html.twig' with { results: [], offset: 0 } %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <div>
+                <select id="rows_per_page" class="form-control form-control-sm d-inline-block w-auto" x-model="rowsPerPage" @change="currentPage = 1; fetchData()">
+                    <option value="10">10 par page</option>
+                    <option value="25">25 par page</option>
+                    <option value="50">50 par page</option>
+                    <option value="1000">Tous</option>
+                </select>
+                <span class="text-muted ml-2 small" x-text="totalRowsText"></span>
+            </div>
+            <div>
+                <ul class="pagination pagination-sm mb-0" x-html="paginationHtml"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale de gestion des tags du projet sélectionné -->
+    <div class="modal" :class="{ 'show': showModal }" style="background: rgba(0,0,0,0.5);" x-show="showModal" x-cloak>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-tags text-info mr-2"></i>Gérer les tags : <strong class="text-primary" x-text="selectedProject"></strong>
+                    </h5>
+                    <button type="button" class="close" @click="closeModal()">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <template x-if="modalError">
+                        <div class="alert alert-danger py-2 small mb-3">
+                            <i class="fas fa-exclamation-circle mr-1"></i><span x-text="modalError"></span>
+                        </div>
+                    </template>
+                    <template x-if="modalSuccess">
+                        <div class="alert alert-success py-2 small mb-3">
+                            <i class="fas fa-check-circle mr-1"></i><span x-text="modalSuccess"></span>
+                        </div>
+                    </template>
+
+                    <label class="font-weight-bold small text-muted text-uppercase mb-2">Tags actuels du projet</label>
+                    <div class="d-flex flex-wrap align-items-center mb-3 p-2 bg-light border rounded" style="min-height: 48px;">
+                        <template x-for="tag in currentTags" :key="tag">
+                            <span class="badge badge-primary tag-interactive-badge">
+                                <i class="fa-solid fa-tag mr-1 text-light small"></i>
+                                <span x-text="tag"></span>
+                                <i class="fa-solid fa-xmark remove-icon text-light" @click="removeTag(tag)" title="Supprimer ce tag"></i>
+                            </span>
+                        </template>
+                        <template x-if="currentTags.length === 0">
+                            <span class="text-muted font-italic small">Aucun tag associé à ce projet.</span>
+                        </template>
+                    </div>
+
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold small text-muted text-uppercase">Ajouter un tag</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" list="existing-tags-datalist"
+                                   x-model="newTagInput"
+                                   @keyup.enter="addTag()"
+                                   placeholder="Ex: paiement, batch, gcp...">
+                            <datalist id="existing-tags-datalist">
+                                {% for t in allTags|default([]) %}
+                                    <option value="{{ t }}"></option>
+                                {% endfor %}
+                            </datalist>
+                            <div class="input-group-append">
+                                <button class="btn btn-success" type="button" @click="addTag()" :disabled="!newTagInput.trim()">
+                                    <i class="fas fa-plus mr-1"></i> Ajouter
+                                </button>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">Longueur de 3 à 50 caractères alphanumériques et tirets.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" @click="closeModal()">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/datagrid.js?v=1.0.3"></script>
+{% endblock %}
