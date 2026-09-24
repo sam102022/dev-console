@@ -232,17 +232,69 @@ test.describe('Dev Console Authenticated Admin Flows', () => {
     await expect(page.locator('#filter_domain')).toBeVisible();
     await expect(page.locator('#filter_sf')).toBeVisible();
 
-    // Select domain filter if options are present
-    const domainOptionsCount = await page.locator('#filter_domain option').count();
-    if (domainOptionsCount > 1) {
-      const secondDomainValue = await page.locator('#filter_domain option').nth(1).getAttribute('value');
-      if (secondDomainValue && secondDomainValue !== 'all') {
-        await page.locator('#filter_domain').selectOption(secondDomainValue);
-        await page.waitForTimeout(500);
-        // Verify datagrid updated
-        await expect(page.locator('#projects-tbody')).toBeVisible();
+    // Verify options are present in domain filter
+    const domainSelect = page.locator('#filter_domain');
+    const domainOptions = await domainSelect.locator('option').all();
+    expect(domainOptions.length).toBeGreaterThan(1);
+
+    // Get a valid domain option (skip 'all')
+    let targetDomain = '';
+    for (const opt of domainOptions) {
+      const val = await opt.getAttribute('value');
+      if (val && val !== 'all') {
+        targetDomain = val;
+        break;
       }
     }
+    expect(targetDomain).not.toBe('');
+
+    // Select domain and wait for datagrid rows AJAX response
+    const domainResponsePromise = page.waitForResponse(
+      resp => resp.url().includes('action=getDatagridRows') && resp.status() === 200
+    );
+    await domainSelect.selectOption(targetDomain);
+    await domainResponsePromise;
+
+    // Verify rendered rows contain the selected domain
+    const firstRowDomain = page.locator('#projects-tbody tr .col-domain').first();
+    await expect(firstRowDomain).toBeVisible();
+    await expect(firstRowDomain).toHaveText(targetDomain);
+
+    // Verify SF dropdown is dynamically updated with allowed SFs
+    const sfSelect = page.locator('#filter_sf');
+    const sfOptions = await sfSelect.locator('option').all();
+    if (sfOptions.length > 1) {
+      let targetSf = '';
+      for (const opt of sfOptions) {
+        const val = await opt.getAttribute('value');
+        if (val && val !== 'all') {
+          targetSf = val;
+          break;
+        }
+      }
+
+      if (targetSf) {
+        const sfResponsePromise = page.waitForResponse(
+          resp => resp.url().includes('action=getDatagridRows') && resp.status() === 200
+        );
+        await sfSelect.selectOption(targetSf);
+        await sfResponsePromise;
+
+        const firstRowSf = page.locator('#projects-tbody tr .col-sf').first();
+        await expect(firstRowSf).toHaveText(targetSf);
+      }
+    }
+
+    // Reset filters
+    const resetBtn = page.locator('button[title="Réinitialiser les filtres"]');
+    const resetResponsePromise = page.waitForResponse(
+      resp => resp.url().includes('action=getDatagridRows') && resp.status() === 200
+    );
+    await resetBtn.click();
+    await resetResponsePromise;
+
+    await expect(domainSelect).toHaveValue('all');
+    await expect(sfSelect).toHaveValue('all');
 
     // Check that there were no Alpine errors
     expect(alpineErrors).toEqual([]);
