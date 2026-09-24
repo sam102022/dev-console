@@ -5,14 +5,14 @@ namespace App\model;
 
 class Project extends AbstractModel
 {
-    public string $name;
+    public string $name = '';
     public ?string $serviceName = null;
-    public ?string $domain;
-    public ?string $domainName;
-    public ?string $sf;
-    public bool $cloudGCP;
-    public ?string $springBoot;
-    public ?string $java;
+    public ?string $domain = null;
+    public ?string $domainName = null;
+    public ?string $sf = null;
+    public bool $cloudGCP = false;
+    public ?string $springBoot = null;
+    public ?string $java = null;
     public ?string $techno = null;
     public ?string $subscriptionName = null;
     public ?string $mdmWorkloadVersion = null;

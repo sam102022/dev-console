@@ -39,9 +39,31 @@ class TagAdminController
     public function index(array &$messages): void
     {
         try {
+            try {
+                $projects = $this->gitlabService->scan() ?? [];
+            } catch (TechnicalException $e) {
+                $this->logger->error(UtilsLog::prefixLog(self::class, __FUNCTION__, __LINE__) . $e->getMessage());
+                $projects = [];
+            }
+
+            $domains = [];
+            $sfs = [];
+            foreach ($projects as $project) {
+                if ($project->getDomain()) {
+                    $domains[$project->getDomain()] = $project->getDomainName() ?: $project->getDomain();
+                }
+                if ($project->getSf()) {
+                    $sfs[$project->getSf()] = $project->getSf();
+                }
+            }
+            ksort($domains);
+            ksort($sfs);
+
             $viewModel = [];
             $viewModel['current_route'] = self::ROUTE_TAGS;
             $viewModel['allTags'] = $this->repositoryService->getAllTags();
+            $viewModel['domains'] = $domains;
+            $viewModel['sfs'] = $sfs;
             $viewModel['messages'] = $messages;
             echo $this->twig->render('tags.html.twig', $viewModel);
         } catch (LoaderError|RuntimeError|SyntaxError|TechnicalException $e) {
@@ -81,7 +103,8 @@ class TagAdminController
             $tags = $tagsByProject[$projectName] ?? $project->getTags() ?? [];
             $items[] = [
                 'name' => $projectName,
-                'domain' => $project->getDomain(),
+                'domain' => $project->getDomain() ?? '',
+                'sf' => $project->getSf() ?? '',
                 'tags' => array_values($tags)
             ];
         }
@@ -116,10 +139,20 @@ class TagAdminController
             $html = '';
         }
 
+        $domainFilter = $filters['domain'] ?? 'all';
+        $allowedSfs = [];
+        foreach ($items as $item) {
+            if (($domainFilter === 'all' || $domainFilter === '' || $item['domain'] === $domainFilter) && !empty($item['sf'])) {
+                $allowedSfs[] = $item['sf'];
+            }
+        }
+        $allowedSfs = array_values(array_unique($allowedSfs));
+
         return json_encode([
             'success' => true,
             'html' => $html,
-            'totalRows' => $paginated['totalRows']
+            'totalRows' => $paginated['totalRows'],
+            'allowedSfs' => $allowedSfs
         ]);
     }
 

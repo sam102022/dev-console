@@ -70,6 +70,73 @@ class TagAdminControllerTest extends AbstractTestCase
         $this->assertEquals('<html>Tags Admin</html>', $output);
     }
 
+    public function testIndexRendersTagsViewWithDomainsAndSfs(): void
+    {
+        $project1 = new Project();
+        $project1->setName('api-orders');
+        $project1->setDomain('pdv');
+        $project1->setSf('buyers');
+
+        $project2 = new Project();
+        $project2->setName('flow-invoices');
+        $project2->setDomain('finance');
+        $project2->setSf('accounting');
+
+        $this->gitlabService->method('scan')->willReturn([$project1, $project2]);
+        $this->repositoryService->method('getAllTags')->willReturn(['paiement']);
+
+        $renderedContext = [];
+        $this->mockTwig->expects($this->once())
+            ->method('render')
+            ->with('tags.html.twig', $this->callback(function (array $context) use (&$renderedContext) {
+                $renderedContext = $context;
+                return true;
+            }))
+            ->willReturn('<html>Tags Page</html>');
+
+        $messages = [];
+        ob_start();
+        $this->controller->index($messages);
+        ob_end_clean();
+
+        $this->assertArrayHasKey('domains', $renderedContext);
+        $this->assertArrayHasKey('sfs', $renderedContext);
+        $this->assertArrayHasKey('pdv', $renderedContext['domains']);
+        $this->assertArrayHasKey('finance', $renderedContext['domains']);
+        $this->assertArrayHasKey('buyers', $renderedContext['sfs']);
+        $this->assertArrayHasKey('accounting', $renderedContext['sfs']);
+    }
+
+    public function testGetDatagridRowsReturnsDomainSfAndAllowedSfs(): void
+    {
+        $project1 = new Project();
+        $project1->setName('api-orders');
+        $project1->setDomain('pdv');
+        $project1->setSf('buyers');
+
+        $project2 = new Project();
+        $project2->setName('flow-invoices');
+        $project2->setDomain('finance');
+        $project2->setSf('accounting');
+
+        $this->gitlabService->method('scan')->willReturn([$project1, $project2]);
+        $this->repositoryService->method('getTagsByProject')->willReturn([]);
+
+        $this->mockTwig->method('render')->willReturn('<tr>rendered rows</tr>');
+
+        $_REQUEST['filter_domain'] = 'pdv';
+
+        $response = $this->controller->handleRequest(TagAdminController::ACTION_GET_DATAGRID_ROWS);
+        $data = json_decode($response, true);
+
+        $this->assertTrue($data['success']);
+        $this->assertEquals(1, $data['totalRows']);
+        $this->assertArrayHasKey('allowedSfs', $data);
+        $this->assertEquals(['buyers'], $data['allowedSfs']);
+
+        unset($_REQUEST['filter_domain']);
+    }
+
     public function testGetDatagridRowsReturnsJsonWithHtmlAndTotal(): void
     {
         $project1 = new Project();
