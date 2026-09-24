@@ -299,4 +299,47 @@ test.describe('Dev Console Authenticated Admin Flows', () => {
     // Check that there were no Alpine errors
     expect(alpineErrors).toEqual([]);
   });
+
+  test('User can open tag management modal, add a tag, and close it', async ({ page }) => {
+    await page.goto('/?page=tags');
+    const firstRow = page.locator('#projects-tbody tr.project-row').first();
+    await expect(firstRow).toBeVisible();
+
+    const projectName = await firstRow.getAttribute('data-project');
+    expect(projectName).toBeTruthy();
+
+    const manageBtn = firstRow.locator('.btn-manage-tags');
+    await manageBtn.click();
+
+    const modal = page.locator('.modal');
+    await expect(modal).toBeVisible({ timeout: 3000 });
+    await expect(modal.locator('.modal-title')).toContainText(projectName!);
+
+    // Add a unique test tag
+    const testTag = 'e2e-' + Date.now();
+    await modal.locator('input[type="text"]').fill(testTag);
+
+    const addResponsePromise = page.waitForResponse(
+      resp => resp.url().includes('action=addProjectTag') && resp.status() === 200
+    );
+    await modal.locator('button:has-text("Ajouter")').click();
+    await addResponsePromise;
+
+    // Verify tag badge exists in modal
+    await expect(modal.locator(`.tag-interactive-badge:has-text("${testTag}")`)).toBeVisible();
+
+    // Remove the test tag
+    const removeResponsePromise = page.waitForResponse(
+      resp => resp.url().includes('action=removeProjectTag') && resp.status() === 200
+    );
+    await modal.locator(`.tag-interactive-badge:has-text("${testTag}") .remove-icon`).click();
+    await removeResponsePromise;
+
+    // Verify tag badge removed
+    await expect(modal.locator(`.tag-interactive-badge:has-text("${testTag}")`)).not.toBeVisible();
+
+    // Close modal
+    await modal.locator('button:has-text("Fermer")').click();
+    await expect(modal).not.toBeVisible();
+  });
 });
