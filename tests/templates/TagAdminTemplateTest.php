@@ -69,6 +69,11 @@ class TagAdminTemplateTest extends AbstractTestCase
         $this->assertStringContainsString('<option value="checkout"></option>', $html);
         $this->assertStringContainsString('<option value="batch"></option>', $html);
         $this->assertStringContainsString('tagsDatagrid()', $html);
+        $this->assertStringContainsString('id="pagination-info"', $html);
+        $this->assertStringContainsString('aria-label="Page navigation"', $html);
+        $this->assertStringContainsString('getPagesToShow()', $html);
+        $this->assertStringNotContainsString('totalRowsText', $html);
+        $this->assertStringNotContainsString('paginationHtml', $html);
     }
 
     public function testTagsRowsEscapesSpecialCharactersSafely(): void

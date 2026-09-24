@@ -72,15 +72,28 @@
             <div>
                 <select id="rows_per_page" class="form-control form-control-sm d-inline-block w-auto" x-model="rowsPerPage" @change="currentPage = 1; fetchData()">
                     <option value="10">10 par page</option>
+                    <option value="15">15 par page</option>
                     <option value="25">25 par page</option>
                     <option value="50">50 par page</option>
-                    <option value="1000">Tous</option>
+                    <option value="1000">Tout afficher</option>
                 </select>
-                <span class="text-muted ml-2 small" x-text="totalRowsText"></span>
+                <span id="pagination-info" class="ml-2 text-muted small" x-text="'Affichage de ' + (totalRows === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1) + ' à ' + Math.min(currentPage * rowsPerPage, totalRows) + ' sur ' + totalRows"></span>
             </div>
-            <div>
-                <ul class="pagination pagination-sm mb-0" x-html="paginationHtml"></ul>
-            </div>
+            <nav aria-label="Page navigation" x-show="totalPages > 1">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item" :class="currentPage === 1 ? 'disabled' : ''">
+                        <a class="page-link" href="#" @click.prevent="setPage(currentPage - 1)">&laquo;</a>
+                    </li>
+                    <template x-for="p in getPagesToShow()">
+                        <li class="page-item" :class="p === currentPage ? 'active' : (p === '...' ? 'disabled' : '')">
+                            <a class="page-link" href="#" @click.prevent="p !== '...' && setPage(p)" x-text="p"></a>
+                        </li>
+                    </template>
+                    <li class="page-item" :class="currentPage === totalPages ? 'disabled' : ''">
+                        <a class="page-link" href="#" @click.prevent="setPage(currentPage + 1)">&raquo;</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </div>
 

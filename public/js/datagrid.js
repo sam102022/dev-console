@@ -202,6 +202,14 @@ function registerDatagrid() {
             return rangeWithDots;
         },
 
+        get totalRowsText() {
+            return 'Affichage de ' + (this.totalRows === 0 ? 0 : (this.currentPage - 1) * this.rowsPerPage + 1) + ' à ' + Math.min(this.currentPage * this.rowsPerPage, this.totalRows) + ' sur ' + this.totalRows;
+        },
+
+        get paginationHtml() {
+            return '';
+        },
+
         sortBy(col) {
             if (this.sortColumn === col) {
                 this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';

@@ -212,4 +212,25 @@ test.describe('Dev Console Authenticated Admin Flows', () => {
     // Verify user is removed from datagrid
     await expect(tableBody).not.toContainText(uniqueEmail);
   });
+
+  test('Tag Administration Page loads without Alpine errors', async ({ page }) => {
+    const alpineErrors: string[] = [];
+    page.on('pageerror', err => {
+      alpineErrors.push(err.message);
+    });
+    page.on('console', msg => {
+      if (msg.type() === 'error' && msg.text().includes('Alpine Expression Error')) {
+        alpineErrors.push(msg.text());
+      }
+    });
+
+    await page.goto('/?page=tags');
+    await expect(page.locator('#tags-card')).toBeVisible();
+
+    // Verify datagrid rows loaded
+    await expect(page.locator('#projects-tbody')).toBeVisible();
+
+    // Check that there were no Alpine errors
+    expect(alpineErrors).toEqual([]);
+  });
 });
