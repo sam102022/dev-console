@@ -110,12 +110,22 @@
                     </li>
 
                     {% if session.user_role == 'ROLE_ADMIN' %}
-                        <li class="nav-item">
-                            <a class="nav-link {% if current_route is defined and current_route == constant('App\\controller\\UserAdminController::ROUTE_USERS') %}active{% endif %}"
-                               href="?page=users">
-                                <i class="fas fa-users-cog mr-1"></i>
-                                Utilisateurs
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle {% if current_route is defined and (current_route == constant('App\\controller\\UserAdminController::ROUTE_USERS') or current_route == constant('App\\controller\\TagAdminController::ROUTE_TAGS')) %}active{% endif %}"
+                               href="#" id="adminDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-tools mr-1"></i>
+                                Administration
                             </a>
+                            <div class="dropdown-menu" aria-labelledby="adminDropdown">
+                                <a class="dropdown-item {% if current_route is defined and current_route == constant('App\\controller\\UserAdminController::ROUTE_USERS') %}active{% endif %}"
+                                   href="?page={{ constant('App\\controller\\UserAdminController::ROUTE_USERS') }}">
+                                    <i class="fas fa-users-cog mr-2"></i>Utilisateurs
+                                </a>
+                                <a class="dropdown-item {% if current_route is defined and current_route == constant('App\\controller\\TagAdminController::ROUTE_TAGS') %}active{% endif %}"
+                                   href="?page={{ constant('App\\controller\\TagAdminController::ROUTE_TAGS') }}">
+                                    <i class="fas fa-tags mr-2"></i>Gestion des tags
+                                </a>
+                            </div>
                         </li>
                     {% endif %}
 
