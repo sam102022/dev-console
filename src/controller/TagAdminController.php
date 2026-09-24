@@ -42,6 +42,7 @@ class TagAdminController
             $viewModel = [];
             $viewModel['current_route'] = self::ROUTE_TAGS;
             $viewModel['allTags'] = $this->repositoryService->getAllTags();
+            $viewModel['messages'] = $messages;
             echo $this->twig->render('tags.html.twig', $viewModel);
         } catch (LoaderError|RuntimeError|SyntaxError|TechnicalException $e) {
             $this->logger->error(UtilsLog::prefixLog(self::class, __FUNCTION__, __LINE__) . $e->getMessage());
@@ -135,10 +136,16 @@ class TagAdminController
             return json_encode(['success' => false, 'error' => 'Paramètres invalides.']);
         }
 
-        $this->repositoryService->addProjectTag($validated['projectName'], $validated['tag']);
-        $tags = $this->repositoryService->getTagsForProject($validated['projectName']);
-
-        return json_encode(['success' => true, 'tags' => $tags]);
+        try {
+            $this->repositoryService->addProjectTag($validated['projectName'], $validated['tag']);
+            $tags = $this->repositoryService->getTagsForProject($validated['projectName']);
+            http_response_code(200);
+            return json_encode(['success' => true, 'tags' => $tags]);
+        } catch (\Throwable $e) {
+            $this->logger->error(UtilsLog::prefixLog(self::class, __FUNCTION__, __LINE__) . $e->getMessage());
+            http_response_code(500);
+            return json_encode(['success' => false, 'error' => 'Erreur lors de l\'enregistrement du tag.']);
+        }
     }
 
     private function removeProjectTag(): string
@@ -154,10 +161,16 @@ class TagAdminController
             return json_encode(['success' => false, 'error' => 'Paramètres invalides.']);
         }
 
-        $this->repositoryService->removeProjectTag($validated['projectName'], $validated['tag']);
-        $tags = $this->repositoryService->getTagsForProject($validated['projectName']);
-
-        return json_encode(['success' => true, 'tags' => $tags]);
+        try {
+            $this->repositoryService->removeProjectTag($validated['projectName'], $validated['tag']);
+            $tags = $this->repositoryService->getTagsForProject($validated['projectName']);
+            http_response_code(200);
+            return json_encode(['success' => true, 'tags' => $tags]);
+        } catch (\Throwable $e) {
+            $this->logger->error(UtilsLog::prefixLog(self::class, __FUNCTION__, __LINE__) . $e->getMessage());
+            http_response_code(500);
+            return json_encode(['success' => false, 'error' => 'Erreur lors de la suppression du tag.']);
+        }
     }
 
     /**

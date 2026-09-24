@@ -121,6 +121,7 @@ class TagAdminControllerTest extends AbstractTestCase
         $response = $this->controller->handleRequest(TagAdminController::ACTION_ADD_PROJECT_TAG);
         $data = json_decode($response, true);
 
+        $this->assertEquals(403, http_response_code());
         $this->assertFalse($data['success']);
         $this->assertEquals('Accès réservé aux administrateurs.', $data['error']);
     }
@@ -132,8 +133,24 @@ class TagAdminControllerTest extends AbstractTestCase
         $response = $this->controller->handleRequest(TagAdminController::ACTION_ADD_PROJECT_TAG);
         $data = json_decode($response, true);
 
+        $this->assertEquals(400, http_response_code());
         $this->assertFalse($data['success']);
         $this->assertEquals('Paramètres invalides.', $data['error']);
+    }
+
+    public function testAddProjectTagTooShortOrTooLong(): void
+    {
+        // < 3 chars
+        $_POST = ['projectName' => 'api-orders', 'tag' => 'ab'];
+        $response = $this->controller->handleRequest(TagAdminController::ACTION_ADD_PROJECT_TAG);
+        $this->assertEquals(400, http_response_code());
+        $this->assertFalse(json_decode($response, true)['success']);
+
+        // > 50 chars
+        $_POST = ['projectName' => 'api-orders', 'tag' => str_repeat('a', 51)];
+        $response = $this->controller->handleRequest(TagAdminController::ACTION_ADD_PROJECT_TAG);
+        $this->assertEquals(400, http_response_code());
+        $this->assertFalse(json_decode($response, true)['success']);
     }
 
     public function testAddProjectTagSuccess(): void
@@ -153,8 +170,33 @@ class TagAdminControllerTest extends AbstractTestCase
         $response = $this->controller->handleRequest(TagAdminController::ACTION_ADD_PROJECT_TAG);
         $data = json_decode($response, true);
 
+        $this->assertEquals(200, http_response_code());
         $this->assertTrue($data['success']);
         $this->assertEquals(['paiement', 'nouveau-tag'], $data['tags']);
+    }
+
+    public function testRemoveProjectTagForbiddenForNonAdmin(): void
+    {
+        $_SESSION['user_role'] = 'ROLE_USER';
+
+        $response = $this->controller->handleRequest(TagAdminController::ACTION_REMOVE_PROJECT_TAG);
+        $data = json_decode($response, true);
+
+        $this->assertEquals(403, http_response_code());
+        $this->assertFalse($data['success']);
+        $this->assertEquals('Accès réservé aux administrateurs.', $data['error']);
+    }
+
+    public function testRemoveProjectTagValidationFailure(): void
+    {
+        $_POST = ['projectName' => '', 'tag' => 'test'];
+
+        $response = $this->controller->handleRequest(TagAdminController::ACTION_REMOVE_PROJECT_TAG);
+        $data = json_decode($response, true);
+
+        $this->assertEquals(400, http_response_code());
+        $this->assertFalse($data['success']);
+        $this->assertEquals('Paramètres invalides.', $data['error']);
     }
 
     public function testRemoveProjectTagSuccess(): void
@@ -174,6 +216,7 @@ class TagAdminControllerTest extends AbstractTestCase
         $response = $this->controller->handleRequest(TagAdminController::ACTION_REMOVE_PROJECT_TAG);
         $data = json_decode($response, true);
 
+        $this->assertEquals(200, http_response_code());
         $this->assertTrue($data['success']);
         $this->assertEquals([], $data['tags']);
     }
@@ -183,6 +226,7 @@ class TagAdminControllerTest extends AbstractTestCase
         $response = $this->controller->handleRequest('unknownAction');
         $data = json_decode($response, true);
 
+        $this->assertEquals(400, http_response_code());
         $this->assertFalse($data['success']);
         $this->assertStringContainsString('Action inconnue', $data['error']);
     }
