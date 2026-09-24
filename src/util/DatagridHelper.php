@@ -39,6 +39,23 @@ class DatagridHelper
                     }
                     continue;
                 }
+                if ($key === 'tag') {
+                    $tags = self::getPropertyValue($item, 'tags');
+                    if (!is_array($tags)) {
+                        return false;
+                    }
+                    $matchTag = false;
+                    foreach ($tags as $t) {
+                        if (stripos((string)$t, (string)$val) !== false) {
+                            $matchTag = true;
+                            break;
+                        }
+                    }
+                    if (!$matchTag) {
+                        return false;
+                    }
+                    continue;
+                }
                 if ($key === 'cloudGCP') {
                     $isGcp = (bool) $itemVal;
                     if ($val === 'oui' && !$isGcp) {
