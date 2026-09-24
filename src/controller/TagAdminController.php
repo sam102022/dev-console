@@ -39,26 +39,26 @@ class TagAdminController
     public function index(array &$messages): void
     {
         try {
-            try {
-                $projects = $this->gitlabService->scan() ?? [];
-            } catch (TechnicalException $e) {
-                $this->logger->error(UtilsLog::prefixLog(self::class, __FUNCTION__, __LINE__) . $e->getMessage());
-                $projects = [];
-            }
+            $projects = $this->gitlabService->scan() ?? [];
+        } catch (TechnicalException $e) {
+            $this->logger->error(UtilsLog::prefixLog(self::class, __FUNCTION__, __LINE__) . $e->getMessage());
+            $projects = [];
+        }
 
-            $domains = [];
-            $sfs = [];
-            foreach ($projects as $project) {
-                if ($project->getDomain()) {
-                    $domains[$project->getDomain()] = $project->getDomainName() ?: $project->getDomain();
-                }
-                if ($project->getSf()) {
-                    $sfs[$project->getSf()] = $project->getSf();
-                }
+        $domains = [];
+        $sfs = [];
+        foreach ($projects as $project) {
+            if ($project->getDomain()) {
+                $domains[$project->getDomain()] = $project->getDomainName() ?: $project->getDomain();
             }
-            ksort($domains);
-            ksort($sfs);
+            if ($project->getSf()) {
+                $sfs[$project->getSf()] = $project->getSf();
+            }
+        }
+        ksort($domains);
+        ksort($sfs);
 
+        try {
             $viewModel = [];
             $viewModel['current_route'] = self::ROUTE_TAGS;
             $viewModel['allTags'] = $this->repositoryService->getAllTags();
