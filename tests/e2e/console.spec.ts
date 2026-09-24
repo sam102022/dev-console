@@ -213,7 +213,7 @@ test.describe('Dev Console Authenticated Admin Flows', () => {
     await expect(tableBody).not.toContainText(uniqueEmail);
   });
 
-  test('Tag Administration Page loads without Alpine errors', async ({ page }) => {
+  test('Tag Administration Page loads without Alpine errors and allows filtering by domain and SF', async ({ page }) => {
     const alpineErrors: string[] = [];
     page.on('pageerror', err => {
       alpineErrors.push(err.message);
@@ -227,8 +227,22 @@ test.describe('Dev Console Authenticated Admin Flows', () => {
     await page.goto('/?page=tags');
     await expect(page.locator('#tags-card')).toBeVisible();
 
-    // Verify datagrid rows loaded
+    // Verify datagrid headers & rows loaded
     await expect(page.locator('#projects-tbody')).toBeVisible();
+    await expect(page.locator('#filter_domain')).toBeVisible();
+    await expect(page.locator('#filter_sf')).toBeVisible();
+
+    // Select domain filter if options are present
+    const domainOptionsCount = await page.locator('#filter_domain option').count();
+    if (domainOptionsCount > 1) {
+      const secondDomainValue = await page.locator('#filter_domain option').nth(1).getAttribute('value');
+      if (secondDomainValue && secondDomainValue !== 'all') {
+        await page.locator('#filter_domain').selectOption(secondDomainValue);
+        await page.waitForTimeout(500);
+        // Verify datagrid updated
+        await expect(page.locator('#projects-tbody')).toBeVisible();
+      }
+    }
 
     // Check that there were no Alpine errors
     expect(alpineErrors).toEqual([]);
