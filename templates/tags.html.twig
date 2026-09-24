@@ -44,27 +44,27 @@
                             <th></th>
                             <th>
                                 <div class="input-group input-group-sm">
-                                    <select id="filter_domain" class="form-control custom-select filter-input" x-model="filters.domain" @change="onFilterChange()">
+                                    <select id="filter_domain" class="form-control custom-select filter-input" x-model="filters.domain" @change="onFilterChange()" aria-label="Filtrer par domaine">
                                         <option value="all">Tous</option>
                                         {% for key, value in domains|default([]) %}
                                             <option value="{{ key }}">{{ value }}</option>
                                         {% endfor %}
                                     </select>
                                     <div class="input-group-append">
-                                        <button class="btn btn-outline-secondary" type="button" @click="filters.domain = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                        <button class="btn btn-outline-secondary" type="button" @click="filters.domain = 'all'; onFilterChange()" title="Effacer" aria-label="Effacer le filtre domaine"><i class="fa-solid fa-xmark"></i></button>
                                     </div>
                                 </div>
                             </th>
                             <th>
                                 <div class="input-group input-group-sm">
-                                    <select id="filter_sf" class="form-control custom-select filter-input" x-model="filters.sf" @change="onFilterChange()">
+                                    <select id="filter_sf" class="form-control custom-select filter-input" x-model="filters.sf" @change="onFilterChange()" aria-label="Filtrer par SF">
                                         <option value="all">Tous</option>
                                         {% for key, value in sfs|default([]) %}
                                             <option value="{{ key }}">{{ value }}</option>
                                         {% endfor %}
                                     </select>
                                     <div class="input-group-append">
-                                        <button class="btn btn-outline-secondary" type="button" @click="filters.sf = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                        <button class="btn btn-outline-secondary" type="button" @click="filters.sf = 'all'; onFilterChange()" title="Effacer" aria-label="Effacer le filtre SF"><i class="fa-solid fa-xmark"></i></button>
                                     </div>
                                 </div>
                             </th>

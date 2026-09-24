@@ -95,6 +95,7 @@ class TagAdminTemplateTest extends AbstractTestCase
             [
                 'name' => '<script>alert(1)</script>',
                 'domain' => 'pdv&co',
+                'sf' => 'orders<1>',
                 'tags' => ['tag<one>', 'tag"two"']
             ]
         ];
@@ -106,6 +107,19 @@ class TagAdminTemplateTest extends AbstractTestCase
 
         $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
         $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html);
+        $this->assertStringContainsString('pdv&amp;co', $html);
+        $this->assertStringContainsString('orders&lt;1&gt;', $html);
         $this->assertStringContainsString('&lt;one&gt;', $html);
+    }
+
+    public function testTagsRowsEmptyStateRendersColspanSix(): void
+    {
+        $html = self::$twig->render('common/_tags_rows.html.twig', [
+            'results' => [],
+            'offset' => 0
+        ]);
+
+        $this->assertStringContainsString('<td colspan="6" class="text-center text-muted py-4">', $html);
+        $this->assertStringContainsString('Aucun projet trouvé.', $html);
     }
 }
