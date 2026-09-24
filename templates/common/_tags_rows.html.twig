@@ -1,5 +1,5 @@
 {% for r in results %}
-    <tr class="project-row" data-project="{{ r.name }}">
+    <tr class="project-row" data-project="{{ r.name }}" data-tags="{{ (r.tags|default([]))|json_encode|e('html_attr') }}">
         <td class="text-muted" style="width: 50px;">{{ offset + loop.index }}</td>
         <td>
             <strong>{{ r.name }}</strong>
@@ -20,7 +20,7 @@
         </td>
         <td class="text-center" style="width: 160px;">
             <button type="button" class="btn btn-outline-primary btn-sm btn-manage-tags"
-                    @click="openManageModal('{{ r.name|escape('js') }}', {{ (r.tags|default([]))|json_encode|e('html_attr') }})">
+                    onclick="manageProjectTags(this)">
                 <i class="fas fa-tags mr-1"></i> Gérer les tags
             </button>
         </td>

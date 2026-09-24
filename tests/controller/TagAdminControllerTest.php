@@ -153,6 +153,14 @@ class TagAdminControllerTest extends AbstractTestCase
         $this->assertFalse(json_decode($response, true)['success']);
     }
 
+    public function testAddProjectTagSpecialCharactersForbidden(): void
+    {
+        $_POST = ['projectName' => 'api-orders', 'tag' => '<script>alert(1)</script>'];
+        $response = $this->controller->handleRequest(TagAdminController::ACTION_ADD_PROJECT_TAG);
+        $this->assertEquals(400, http_response_code());
+        $this->assertFalse(json_decode($response, true)['success']);
+    }
+
     public function testAddProjectTagSuccess(): void
     {
         $_POST = ['projectName' => 'api-orders', 'tag' => 'nouveau-tag'];

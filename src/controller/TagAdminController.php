@@ -195,6 +195,10 @@ class TagAdminController
             return null;
         }
 
+        if (!preg_match('/^[a-zA-Z0-9_\-\s]+$/u', $tag)) {
+            return null;
+        }
+
         return ['projectName' => $projectName, 'tag' => $tag];
     }
 }

@@ -46,6 +46,8 @@ class TagAdminTemplateTest extends AbstractTestCase
         $this->assertStringContainsString('checkout', $html);
         $this->assertStringContainsString('btn-manage-tags', $html);
         $this->assertStringContainsString('Gérer les tags', $html);
+        $this->assertStringContainsString('manageProjectTags(this)', $html);
+        $this->assertStringContainsString('data-tags="&#x5B;&quot;paiement&quot;,&quot;checkout&quot;&#x5D;"', $html);
     }
 
     public function testTagsPageRendersCardAndDatalist(): void
@@ -67,5 +69,25 @@ class TagAdminTemplateTest extends AbstractTestCase
         $this->assertStringContainsString('<option value="checkout"></option>', $html);
         $this->assertStringContainsString('<option value="batch"></option>', $html);
         $this->assertStringContainsString('tagsDatagrid()', $html);
+    }
+
+    public function testTagsRowsEscapesSpecialCharactersSafely(): void
+    {
+        $results = [
+            [
+                'name' => '<script>alert(1)</script>',
+                'domain' => 'pdv&co',
+                'tags' => ['tag<one>', 'tag"two"']
+            ]
+        ];
+
+        $html = self::$twig->render('common/_tags_rows.html.twig', [
+            'results' => $results,
+            'offset' => 0
+        ]);
+
+        $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
+        $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html);
+        $this->assertStringContainsString('&lt;one&gt;', $html);
     }
 }

@@ -838,25 +838,60 @@ function registerTagsDatagrid() {
                 const row = document.querySelector(`.project-row[data-project="${projectName}"]`);
                 if (!row) return;
 
+                row.setAttribute('data-tags', JSON.stringify(tags || []));
+
                 const tagsContainer = row.querySelector('.project-tags');
                 if (tagsContainer) {
+                    tagsContainer.innerHTML = '';
                     if (!tags || tags.length === 0) {
-                        tagsContainer.innerHTML = '<span class="text-muted font-italic small no-tags-placeholder">Aucun tag</span>';
+                        const emptySpan = document.createElement('span');
+                        emptySpan.className = 'text-muted font-italic small no-tags-placeholder';
+                        emptySpan.textContent = 'Aucun tag';
+                        tagsContainer.appendChild(emptySpan);
                     } else {
-                        tagsContainer.innerHTML = tags.map(t =>
-                            `<span class="badge badge-light border text-secondary" style="font-size: 0.75rem; padding: 3px 6px;"><i class="fa-solid fa-tag mr-1 text-muted"></i>${t}</span>`
-                        ).join(' ');
-                    }
-                }
+                        tags.forEach(t => {
+                            const badge = document.createElement('span');
+                            badge.className = 'badge badge-light border text-secondary';
+                            badge.style.fontSize = '0.75rem';
+                            badge.style.padding = '3px 6px';
+                            badge.style.marginRight = '4px';
 
-                const btn = row.querySelector('.btn-manage-tags');
-                if (btn) {
-                    btn.setAttribute('@click', `openManageModal('${projectName}', ${JSON.stringify(tags)})`);
+                            const icon = document.createElement('i');
+                            icon.className = 'fa-solid fa-tag mr-1 text-muted';
+                            badge.appendChild(icon);
+
+                            const text = document.createTextNode(t);
+                            badge.appendChild(text);
+
+                            tagsContainer.appendChild(badge);
+                        });
+                    }
                 }
             }
         };
     });
 }
+
+window.manageProjectTags = function(btn) {
+    const row = btn.closest('.project-row');
+    if (!row) return;
+    const projectName = row.getAttribute('data-project');
+    const tagsAttr = row.getAttribute('data-tags');
+    let tags = [];
+    try {
+        tags = JSON.parse(tagsAttr) || [];
+    } catch (e) {
+        tags = [];
+    }
+
+    const gridEl = document.getElementById('tags-card');
+    if (gridEl && typeof Alpine !== 'undefined') {
+        const data = Alpine.$data(gridEl);
+        if (data && data.openManageModal) {
+            data.openManageModal(projectName, tags);
+        }
+    }
+};
 
 if (window.Alpine) {
     registerTagsDatagrid();
