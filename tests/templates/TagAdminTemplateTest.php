@@ -32,6 +32,7 @@ class TagAdminTemplateTest extends AbstractTestCase
             [
                 'name' => 'api-orders',
                 'domain' => 'pdv',
+                'sf' => 'buyers',
                 'tags' => ['paiement', 'checkout']
             ]
         ];
@@ -42,6 +43,10 @@ class TagAdminTemplateTest extends AbstractTestCase
         ]);
 
         $this->assertStringContainsString('api-orders', $html);
+        $this->assertStringContainsString('class="col-domain"', $html);
+        $this->assertStringContainsString('pdv', $html);
+        $this->assertStringContainsString('class="col-sf"', $html);
+        $this->assertStringContainsString('buyers', $html);
         $this->assertStringContainsString('paiement', $html);
         $this->assertStringContainsString('checkout', $html);
         $this->assertStringContainsString('btn-manage-tags', $html);
@@ -55,6 +60,8 @@ class TagAdminTemplateTest extends AbstractTestCase
         $html = self::$twig->render('tags.html.twig', [
             'current_route' => TagAdminController::ROUTE_TAGS,
             'allTags' => ['paiement', 'checkout', 'batch'],
+            'domains' => ['pdv' => 'Point de vente'],
+            'sfs' => ['buyers' => 'buyers'],
             'session' => [
                 'user_id' => 1,
                 'user_role' => 'ROLE_ADMIN',
@@ -64,6 +71,12 @@ class TagAdminTemplateTest extends AbstractTestCase
 
         $this->assertStringContainsString('Gestion des Tags', $html);
         $this->assertStringContainsString('3 tag(s) existant(s)', $html);
+        $this->assertStringContainsString('id="filter_domain"', $html);
+        $this->assertStringContainsString('id="filter_sf"', $html);
+        $this->assertStringContainsString('sortBy(\'domain\')', $html);
+        $this->assertStringContainsString('sortBy(\'sf\')', $html);
+        $this->assertStringContainsString('<option value="pdv">Point de vente</option>', $html);
+        $this->assertStringContainsString('<option value="buyers">buyers</option>', $html);
         $this->assertStringContainsString('id="existing-tags-datalist"', $html);
         $this->assertStringContainsString('<option value="paiement"></option>', $html);
         $this->assertStringContainsString('<option value="checkout"></option>', $html);

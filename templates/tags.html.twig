@@ -34,12 +34,40 @@
                     <thead class="thead-dark">
                         <tr>
                             <th style="width: 50px;">#</th>
+                            <th><a class="sortable-header" @click.prevent="sortBy('domain')">Domaine <i :class="getSortIconClass('domain')" :style="getSortIconStyle('domain')"></i></a></th>
+                            <th><a class="sortable-header" @click.prevent="sortBy('sf')">SF <i :class="getSortIconClass('sf')" :style="getSortIconStyle('sf')"></i></a></th>
                             <th><a class="sortable-header" @click.prevent="sortBy('name')">Projet <i :class="getSortIconClass('name')" :style="getSortIconStyle('name')"></i></a></th>
                             <th>Tags associés</th>
                             <th class="text-center" style="width: 160px;">Actions</th>
                         </tr>
                         <tr>
                             <th></th>
+                            <th>
+                                <div class="input-group input-group-sm">
+                                    <select id="filter_domain" class="form-control custom-select filter-input" x-model="filters.domain" @change="onFilterChange()">
+                                        <option value="all">Tous</option>
+                                        {% for key, value in domains|default([]) %}
+                                            <option value="{{ key }}">{{ value }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" @click="filters.domain = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="input-group input-group-sm">
+                                    <select id="filter_sf" class="form-control custom-select filter-input" x-model="filters.sf" @change="onFilterChange()">
+                                        <option value="all">Tous</option>
+                                        {% for key, value in sfs|default([]) %}
+                                            <option value="{{ key }}">{{ value }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" @click="filters.sf = 'all'; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    </div>
+                                </div>
+                            </th>
                             <th>
                                 <div class="input-group input-group-sm">
                                     <input type="text" id="filter_name" class="form-control filter-input" x-model="filters.name" @input.debounce.300ms="onFilterChange()" placeholder="Filtrer par projet..." aria-label="Filtrer par projet">
