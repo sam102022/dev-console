@@ -18,7 +18,7 @@ class Project extends AbstractModel
     public ?string $mdmWorkloadVersion = null;
     public ?string $pathLivenessProbe = null;
     private string $webUrl;
-    private bool $archived;
+    private bool $archived = false;
     public array $urlHealthCheck = [];
     public array $urlActuatorInfo = [];
     public array $urlLogs = [];

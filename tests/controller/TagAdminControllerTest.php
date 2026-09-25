@@ -305,4 +305,55 @@ class TagAdminControllerTest extends AbstractTestCase
         $this->assertFalse($data['success']);
         $this->assertStringContainsString('Action inconnue', $data['error']);
     }
+
+    public function testGetDatagridRowsIncludesArchivedPropertyAndFiltersByArchived(): void
+    {
+        $project1 = new Project();
+        $project1->setName('api-active');
+        $project1->setDomain('pdv');
+        $project1->setSf('buyers');
+        $project1->setArchived(false);
+
+        $project2 = new Project();
+        $project2->setName('api-archived');
+        $project2->setDomain('pdv');
+        $project2->setSf('buyers');
+        $project2->setArchived(true);
+
+        $this->gitlabService->method('scan')->willReturn([$project1, $project2]);
+        $this->repositoryService->method('getTagsByProject')->willReturn([]);
+
+        $capturedContext = [];
+        $this->mockTwig->method('render')
+            ->willReturnCallback(function (string $template, array $context) use (&$capturedContext) {
+                $capturedContext = $context;
+                return '<tr>rendered rows</tr>';
+            });
+
+        // 1. Sans filtre : les 2 éléments sont renvoyés avec la clé 'archived'
+        $response = $this->controller->handleRequest(TagAdminController::ACTION_GET_DATAGRID_ROWS);
+        $data = json_decode($response, true);
+
+        $this->assertTrue($data['success']);
+        $this->assertEquals(2, $data['totalRows']);
+        $this->assertCount(2, $capturedContext['results']);
+        $this->assertFalse($capturedContext['results'][0]['archived']);
+        $this->assertTrue($capturedContext['results'][1]['archived']);
+
+        // 2. Filtre filter_archived = 'non'
+        $_REQUEST['filter_archived'] = 'non';
+        $response = $this->controller->handleRequest(TagAdminController::ACTION_GET_DATAGRID_ROWS);
+        $data = json_decode($response, true);
+        $this->assertEquals(1, $data['totalRows']);
+        $this->assertEquals('api-active', $capturedContext['results'][0]['name']);
+
+        // 3. Filtre filter_archived = 'oui'
+        $_REQUEST['filter_archived'] = 'oui';
+        $response = $this->controller->handleRequest(TagAdminController::ACTION_GET_DATAGRID_ROWS);
+        $data = json_decode($response, true);
+        $this->assertEquals(1, $data['totalRows']);
+        $this->assertEquals('api-archived', $capturedContext['results'][0]['name']);
+
+        unset($_REQUEST['filter_archived']);
+    }
 }
