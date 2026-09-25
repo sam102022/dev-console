@@ -33,7 +33,15 @@ class TagAdminTemplateTest extends AbstractTestCase
                 'name' => 'api-orders',
                 'domain' => 'pdv',
                 'sf' => 'buyers',
+                'archived' => true,
                 'tags' => ['paiement', 'checkout']
+            ],
+            [
+                'name' => 'api-catalog',
+                'domain' => 'pdv',
+                'sf' => 'catalog',
+                'archived' => false,
+                'tags' => []
             ]
         ];
 
@@ -47,6 +55,11 @@ class TagAdminTemplateTest extends AbstractTestCase
         $this->assertStringContainsString('pdv', $html);
         $this->assertStringContainsString('class="col-sf"', $html);
         $this->assertStringContainsString('buyers', $html);
+        $this->assertStringContainsString('class="col-archived"', $html);
+        $this->assertStringContainsString('data-value="oui"', $html);
+        $this->assertStringContainsString('data-value="non"', $html);
+        $this->assertStringContainsString('fa-box-archive text-danger', $html);
+        $this->assertStringContainsString('Projet archivé', $html);
         $this->assertStringContainsString('paiement', $html);
         $this->assertStringContainsString('checkout', $html);
         $this->assertStringContainsString('btn-manage-tags', $html);
@@ -75,6 +88,10 @@ class TagAdminTemplateTest extends AbstractTestCase
         $this->assertStringContainsString('id="filter_sf"', $html);
         $this->assertStringContainsString('sortBy(\'domain\')', $html);
         $this->assertStringContainsString('sortBy(\'sf\')', $html);
+        $this->assertStringContainsString('sortBy(\'archived\')', $html);
+        $this->assertStringContainsString('id="filter_archived"', $html);
+        $this->assertStringContainsString('<option value="non">Non</option>', $html);
+        $this->assertStringContainsString('<option value="oui">Oui</option>', $html);
         $this->assertStringContainsString('<option value="pdv">Point de vente</option>', $html);
         $this->assertStringContainsString('<option value="buyers">buyers</option>', $html);
         $this->assertStringContainsString('id="existing-tags-datalist"', $html);
@@ -112,14 +129,14 @@ class TagAdminTemplateTest extends AbstractTestCase
         $this->assertStringContainsString('&lt;one&gt;', $html);
     }
 
-    public function testTagsRowsEmptyStateRendersColspanSix(): void
+    public function testTagsRowsRendersEmptyColspanSeven(): void
     {
         $html = self::$twig->render('common/_tags_rows.html.twig', [
             'results' => [],
             'offset' => 0
         ]);
 
-        $this->assertStringContainsString('<td colspan="6" class="text-center text-muted py-4">', $html);
+        $this->assertStringContainsString('colspan="7"', $html);
         $this->assertStringContainsString('Aucun projet trouvé.', $html);
     }
 }

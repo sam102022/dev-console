@@ -6,6 +6,9 @@
         <td>
             <strong>{{ r.name }}</strong>
         </td>
+        <td class="col-archived" data-column="archived" data-value="{% if r.archived %}oui{% else %}non{% endif %}">
+            {% if r.archived %}<i class="fa-solid fa-box-archive text-danger mr-1" title="Projet archivé"></i>{% endif %}
+        </td>
         <td>
             <div class="project-tags d-flex flex-wrap align-items-center" style="gap: 4px;" data-project="{{ r.name }}">
                 {% for tag in r.tags|default([]) %}
@@ -26,7 +29,7 @@
     </tr>
 {% else %}
     <tr>
-        <td colspan="6" class="text-center text-muted py-4">
+        <td colspan="7" class="text-center text-muted py-4">
             <i class="fas fa-info-circle mr-1"></i> Aucun projet trouvé.
         </td>
     </tr>
