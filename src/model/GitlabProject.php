@@ -13,7 +13,7 @@ class GitlabProject extends AbstractModel
     private string $pathWithNamespace;
     private string $createdAt;
     private string $defaultBranch;
-    private string $webUrl;
+    private string $webUrl = '';
     private bool $archived;
 
     /**
