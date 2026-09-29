@@ -68,6 +68,45 @@ class TagAdminTemplateTest extends AbstractTestCase
         $this->assertStringContainsString('data-tags="&#x5B;&quot;paiement&quot;,&quot;checkout&quot;&#x5D;"', $html);
     }
 
+    public function testTagsRowsRendersGitlabLinkWhenWebUrlProvided(): void
+    {
+        $results = [
+            [
+                'name' => 'very-long-project-name-more-than-35-characters',
+                'domain' => 'pdv',
+                'sf' => 'buyers',
+                'archived' => true,
+                'webUrl' => 'https://gitlab.com/mdm/very-long-project-name-more-than-35-characters',
+                'tags' => ['tag1']
+            ],
+            [
+                'name' => 'api-catalog',
+                'domain' => 'pdv',
+                'sf' => 'catalog',
+                'archived' => false,
+                'webUrl' => '',
+                'tags' => []
+            ]
+        ];
+
+        $html = self::$twig->render('common/_tags_rows.html.twig', [
+            'results' => $results,
+            'offset' => 0
+        ]);
+
+        $this->assertStringContainsString('class="col-name"', $html);
+        $this->assertStringContainsString('https://gitlab.com/mdm/very-long-project-name-more-than-35-characters', $html);
+        $this->assertStringContainsString('class="url-link text-decoration-none"', $html);
+        $this->assertStringContainsString('target="_blank"', $html);
+        $this->assertStringContainsString('title="Voir le projet Gitlab archivé very-long-project-name-more-than-35-characters"', $html);
+        $this->assertStringContainsString('fa-brands fa-gitlab text-warning', $html);
+        $this->assertStringContainsString('very-long-project-name-more-than-35...', $html);
+
+        // Fallback sans lien pour le projet sans webUrl
+        $this->assertStringContainsString('api-catalog', $html);
+        $this->assertStringNotContainsString('href=""', $html);
+    }
+
     public function testTagsPageRendersCardAndDatalist(): void
     {
         $html = self::$twig->render('tags.html.twig', [
