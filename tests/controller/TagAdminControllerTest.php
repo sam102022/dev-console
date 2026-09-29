@@ -356,4 +356,35 @@ class TagAdminControllerTest extends AbstractTestCase
 
         unset($_REQUEST['filter_archived']);
     }
+
+    public function testGetDatagridRowsPassesWebUrlToTwig(): void
+    {
+        $project = new Project();
+        $project->setName('api-orders');
+        $project->setDomain('pdv');
+        $project->setSf('buyers');
+        $project->setWebUrl('https://gitlab.com/mdm/api-orders');
+
+        $this->gitlabService->method('scan')->willReturn([$project]);
+        $this->repositoryService->method('getTagsByProject')->willReturn([]);
+
+        $renderedContext = [];
+        $this->mockTwig->expects($this->once())
+            ->method('render')
+            ->with(
+                'common/_tags_rows.html.twig',
+                $this->callback(function (array $context) use (&$renderedContext) {
+                    $renderedContext = $context;
+                    return true;
+                })
+            )
+            ->willReturn('<tr>rendered rows</tr>');
+
+        $response = $this->controller->handleRequest(TagAdminController::ACTION_GET_DATAGRID_ROWS);
+        $data = json_decode($response, true);
+
+        $this->assertTrue($data['success']);
+        $this->assertNotEmpty($renderedContext['results']);
+        $this->assertEquals('https://gitlab.com/mdm/api-orders', $renderedContext['results'][0]['webUrl']);
+    }
 }
