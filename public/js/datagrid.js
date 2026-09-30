@@ -64,7 +64,7 @@ function registerDatagrid() {
                 const key = this.getFilterKey(input);
                 let val = params.get(key) || sessionStorage.getItem('app_filter_' + this.pageName + '_' + key);
                 if (val === null) {
-                    if (key === 'archived' && this.pageName === 'monitoring') {
+                    if (key === 'archived' && (this.pageName === 'monitoring' || this.pageName === 'tags')) {
                         val = 'non';
                     } else {
                         val = defaultFilters[key] || (input.tagName === 'SELECT' ? 'all' : '');
@@ -238,7 +238,7 @@ function registerDatagrid() {
 
         resetFilters() {
             Object.keys(this.filters).forEach(key => {
-                if (key === 'archived' && this.pageName === 'monitoring') {
+                if (key === 'archived' && (this.pageName === 'monitoring' || this.pageName === 'tags')) {
                     this.filters[key] = 'non';
                 } else {
                     const input = document.getElementById('filter_' + key) || document.getElementById('filter_project_' + key) || document.getElementById('filter_springboot_' + key) || document.getElementById('filter_springboot_version') || document.getElementById('filter_java_version') || document.getElementById('filter_mdm_version');

@@ -40,6 +40,7 @@
                             <th><a class="sortable-header" @click.prevent="sortBy('domain')">Domaine <i :class="getSortIconClass('domain')" :style="getSortIconStyle('domain')"></i></a></th>
                             <th><a class="sortable-header" @click.prevent="sortBy('sf')">SF <i :class="getSortIconClass('sf')" :style="getSortIconStyle('sf')"></i></a></th>
                             <th><a class="sortable-header" @click.prevent="sortBy('name')">Projet <i :class="getSortIconClass('name')" :style="getSortIconStyle('name')"></i></a></th>
+                            <th><a class="sortable-header" @click.prevent="sortBy('archived')">Archivé <i :class="getSortIconClass('archived')" :style="getSortIconStyle('archived')"></i></a></th>
                             <th>Tags associés</th>
                             <th class="text-center" style="width: 160px;">Actions</th>
                         </tr>
@@ -76,6 +77,18 @@
                                     <input type="text" id="filter_name" class="form-control filter-input" x-model="filters.name" @input.debounce.300ms="onFilterChange()" placeholder="Filtrer par projet..." aria-label="Filtrer par projet">
                                     <div class="input-group-append">
                                         <button class="btn btn-outline-secondary" type="button" @click="filters.name = ''; onFilterChange()" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+                                    </div>
+                                </div>
+                            </th>
+                            <th>
+                                <div class="input-group input-group-sm">
+                                    <select id="filter_archived" class="form-control custom-select filter-input" x-model="filters.archived" @change="onFilterChange()" aria-label="Filtrer par statut archivé">
+                                        <option value="all">Tous</option>
+                                        <option value="non">Non</option>
+                                        <option value="oui">Oui</option>
+                                    </select>
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" @click="filters.archived = 'all'; onFilterChange()" title="Effacer" aria-label="Effacer le filtre archivé"><i class="fa-solid fa-xmark"></i></button>
                                     </div>
                                 </div>
                             </th>

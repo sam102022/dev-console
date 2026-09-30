@@ -3,8 +3,24 @@
         <td class="text-muted" style="width: 50px;">{{ offset + loop.index }}</td>
         <td class="col-domain">{{ r.domain|default('') }}</td>
         <td class="col-sf">{{ r.sf|default('') }}</td>
-        <td>
-            <strong>{{ r.name }}</strong>
+        <td class="col-name">
+            {% set projectName = r.name|length > 35
+                ? r.name|slice(0, 35) ~ '...'
+                : r.name
+            %}
+            {% if r.webUrl is defined and r.webUrl != '' %}
+                <a href="{{ r.webUrl }}"
+                   class="url-link text-decoration-none"
+                   target="_blank"
+                   title="Voir le projet Gitlab{% if r.archived %} archivé{% endif %} {{ r.name }}">
+                    <i class="fa-brands fa-gitlab text-warning"></i> {{ projectName }}
+                </a>
+            {% else %}
+                {{ projectName }}
+            {% endif %}
+        </td>
+        <td class="col-archived" data-column="archived" data-value="{% if r.archived %}oui{% else %}non{% endif %}">
+            {% if r.archived %}<i class="fa-solid fa-box-archive text-danger mr-1" title="Projet archivé"></i>{% endif %}
         </td>
         <td>
             <div class="project-tags d-flex flex-wrap align-items-center" style="gap: 4px;" data-project="{{ r.name }}">
@@ -26,7 +42,7 @@
     </tr>
 {% else %}
     <tr>
-        <td colspan="6" class="text-center text-muted py-4">
+        <td colspan="7" class="text-center text-muted py-4">
             <i class="fas fa-info-circle mr-1"></i> Aucun projet trouvé.
         </td>
     </tr>

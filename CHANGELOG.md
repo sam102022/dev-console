@@ -4,6 +4,21 @@ Historique de tous les changements notables du projet dev-console
 
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
+## [1.12.0] - 30/09/2026
+
+### Added
+- **Colonne et filtre "Archivé" dans la gestion des tags :**
+  - Ajout de la colonne `Archivé` avec indicateur visuel (icône boîte d'archive rouge) dans le tableau d'administration des tags (`/?page=tags`).
+  - Ajout du filtre par statut d'archivage (Tous / Actifs uniquement / Archivés uniquement) avec valeur par défaut configurée sur "Actifs uniquement".
+  - Prise en compte de la propriété `archived` dans `TagAdminController` et transmission à `DatagridHelper`.
+- **Lien GitLab sur le nom du projet dans la gestion des tags :**
+  - Rendu cliquable du nom du projet vers le dépôt GitLab distant (`target="_blank"`), aligné sur la vue Monitoring.
+  - Ajout de l'icône GitLab (`fa-brands fa-gitlab text-warning`), de l'infobulle descriptive et de la troncature à 35 caractères (`slice(0, 35) ~ '...'`).
+  - Repli textuel simple lorsque `webUrl` n'est pas renseigné ou vide.
+
+### Fixed
+- **Initialisation par défaut de `webUrl` :** initialisation de `$webUrl = ''` dans `Project` et `GitlabProject` pour sécuriser l'accès aux propriétés typées non initialisées.
+
 ## [1.11.0] - 24/09/2026
 
 ### Added

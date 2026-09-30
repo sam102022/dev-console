@@ -17,8 +17,8 @@ class Project extends AbstractModel
     public ?string $subscriptionName = null;
     public ?string $mdmWorkloadVersion = null;
     public ?string $pathLivenessProbe = null;
-    private string $webUrl;
-    private bool $archived;
+    private string $webUrl = '';
+    private bool $archived = false;
     public array $urlHealthCheck = [];
     public array $urlActuatorInfo = [];
     public array $urlLogs = [];

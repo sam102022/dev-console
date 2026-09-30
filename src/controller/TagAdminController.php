@@ -105,6 +105,8 @@ class TagAdminController
                 'name' => $projectName,
                 'domain' => $project->getDomain() ?? '',
                 'sf' => $project->getSf() ?? '',
+                'archived' => $project->isArchived(),
+                'webUrl' => $project->getWebUrl(),
                 'tags' => array_values($tags)
             ];
         }
