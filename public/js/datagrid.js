@@ -90,6 +90,36 @@ function registerDatagrid() {
                 }
             });
 
+            // Click and keyboard delegation for quick-filter links on domain and sf
+            const handleQuickFilter = (quickFilterEl) => {
+                const field = quickFilterEl.getAttribute('data-filter-field');
+                const val = quickFilterEl.getAttribute('data-filter-value');
+                if (field === 'domain') {
+                    this.filterByDomain(val);
+                } else if (field === 'sf') {
+                    const domain = quickFilterEl.getAttribute('data-filter-domain');
+                    this.filterBySf(val, domain);
+                }
+            };
+
+            document.addEventListener('click', (e) => {
+                const quickFilterEl = e.target.closest('.quick-filter-link');
+                if (quickFilterEl) {
+                    e.preventDefault();
+                    handleQuickFilter(quickFilterEl);
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    const quickFilterEl = e.target.closest('.quick-filter-link');
+                    if (quickFilterEl) {
+                        e.preventDefault();
+                        handleQuickFilter(quickFilterEl);
+                    }
+                }
+            });
+
             // Sync initial state and do first fetch
             this.syncFiltersToUI();
             this.fetchData();
@@ -583,6 +613,21 @@ function registerDatagrid() {
         filterByTag(tag) {
             this.filters.name = tag;
             this.onFilterChange();
+        },
+
+        filterByDomain(domain) {
+            if (!domain) return;
+            this.filters.domain = domain;
+            this.onFilterChange();
+        },
+
+        filterBySf(sf, domain = null) {
+            if (!sf) return;
+            if (domain) {
+                this.filters.domain = domain;
+            }
+            this.filters.sf = sf;
+            this.onFilterChange();
         }
     });
     Alpine.data('datagrid', window.datagrid);
@@ -743,6 +788,26 @@ window.filterByTag = function(tag) {
         if (alpineData) {
             alpineData.filters.name = tag;
             alpineData.onFilterChange();
+        }
+    }
+};
+
+window.filterByDomain = function(domain) {
+    const cardEl = document.getElementById('projects-card') || document.querySelector('[x-data*="datagrid"]');
+    if (cardEl && typeof Alpine !== 'undefined') {
+        const alpineData = Alpine.$data(cardEl);
+        if (alpineData && typeof alpineData.filterByDomain === 'function') {
+            alpineData.filterByDomain(domain);
+        }
+    }
+};
+
+window.filterBySf = function(sf, domain) {
+    const cardEl = document.getElementById('projects-card') || document.querySelector('[x-data*="datagrid"]');
+    if (cardEl && typeof Alpine !== 'undefined') {
+        const alpineData = Alpine.$data(cardEl);
+        if (alpineData && typeof alpineData.filterBySf === 'function') {
+            alpineData.filterBySf(sf, domain);
         }
     }
 };

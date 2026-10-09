@@ -342,4 +342,55 @@ test.describe('Dev Console Authenticated Admin Flows', () => {
     await modal.locator('button:has-text("Fermer")').click();
     await expect(modal).not.toBeVisible();
   });
+
+  test('User can quickly filter by domain and sf by clicking on row values', async ({ page }) => {
+    await expect(page.locator('#projects-table')).toBeVisible();
+
+    // Attendre qu'au moins une ligne soit chargée
+    const firstDomainLink = page.locator('.quick-filter-link[data-filter-field="domain"]').first();
+    await expect(firstDomainLink).toBeVisible({ timeout: 10000 });
+    await expect(firstDomainLink).toHaveAttribute('data-filter-value', /.+/);
+
+    const domainValue = (await firstDomainLink.getAttribute('data-filter-value')) || '';
+
+    // Clic sur le domaine avec attente de la réponse AJAX
+    const domainResponsePromise = page.waitForResponse(
+      resp => resp.url().includes('action=getDatagridRows') && resp.status() === 200
+    );
+    await firstDomainLink.click();
+    await domainResponsePromise;
+
+    // Vérifier que le sélecteur #filter_domain a pris la valeur et l'URL
+    const domainSelect = page.locator('#filter_domain');
+    await expect(domainSelect).toHaveValue(domainValue, { timeout: 5000 });
+    await expect(page).toHaveURL(new RegExp(`domain=${encodeURIComponent(domainValue)}`));
+
+    // Vérifier que les lignes affichées correspondent au domaine
+    const firstRowDomain = page.locator('#projects-tbody tr .col-domain').first();
+    await expect(firstRowDomain).toHaveText(domainValue);
+
+    // Tester le clic sur une SF
+    const firstSfLink = page.locator('.quick-filter-link[data-filter-field="sf"]').first();
+    if (await firstSfLink.count() > 0) {
+      const sfValue = (await firstSfLink.getAttribute('data-filter-value')) || '';
+      const sfDomain = (await firstSfLink.getAttribute('data-filter-domain')) || '';
+
+      const sfResponsePromise = page.waitForResponse(
+        resp => resp.url().includes('action=getDatagridRows') && resp.status() === 200
+      );
+      await firstSfLink.click();
+      await sfResponsePromise;
+
+      const sfSelect = page.locator('#filter_sf');
+      await expect(sfSelect).toHaveValue(sfValue, { timeout: 5000 });
+      await expect(page).toHaveURL(new RegExp(`sf=${encodeURIComponent(sfValue)}`));
+
+      if (sfDomain) {
+        await expect(domainSelect).toHaveValue(sfDomain);
+      }
+
+      const firstRowSf = page.locator('#projects-tbody tr .col-sf').first();
+      await expect(firstRowSf).toHaveText(sfValue);
+    }
+  });
 });

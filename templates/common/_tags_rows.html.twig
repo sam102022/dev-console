@@ -1,8 +1,16 @@
 {% for r in results %}
     <tr class="project-row" data-project="{{ r.name }}" data-tags="{{ (r.tags|default([]))|json_encode|e('html_attr') }}">
         <td class="text-muted" style="width: 50px;">{{ offset + loop.index }}</td>
-        <td class="col-domain">{{ r.domain|default('') }}</td>
-        <td class="col-sf">{{ r.sf|default('') }}</td>
+        <td class="col-domain">
+            {% if r.domain is defined and r.domain != '' %}
+                <span class="quick-filter-link text-primary" data-filter-field="domain" data-filter-value="{{ r.domain }}" role="button" tabindex="0" title="Filtrer par le domaine {{ r.domain }}">{{ r.domain }}</span>
+            {% endif %}
+        </td>
+        <td class="col-sf">
+            {% if r.sf is defined and r.sf != '' %}
+                <span class="quick-filter-link text-primary" data-filter-field="sf" data-filter-value="{{ r.sf }}" data-filter-domain="{{ r.domain|default('') }}" role="button" tabindex="0" title="Filtrer par la sous-fonctionnalité {{ r.sf }}">{{ r.sf }}</span>
+            {% endif %}
+        </td>
         <td class="col-name">
             {% set projectName = r.name|length > 35
                 ? r.name|slice(0, 35) ~ '...'
