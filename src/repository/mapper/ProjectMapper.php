@@ -33,6 +33,7 @@ class ProjectMapper
         $projectEntity->setUrlsRundeck($data['urlsRundeck'] ?? []);
         $projectEntity->setUrlsDeploymentGcp($data['urlsDeploymentGcp'] ?? []);
         $projectEntity->setTags($data['tags'] ?? []);
+        $projectEntity->setExtraHosts($data['extraHosts'] ?? []);
 
         return $projectEntity;
     }
@@ -62,6 +63,7 @@ class ProjectMapper
         $project->setUrlsRundeck($data['urlsRundeck'] ?? []);
         $project->setUrlsDeploymentGcp($data['urlsDeploymentGcp'] ?? []);
         $project->setTags($data['tags'] ?? []);
+        $project->setExtraHosts($data['extraHosts'] ?? []);
 
         return $project;
     }
@@ -91,6 +93,7 @@ class ProjectMapper
         $project->setUrlsRundeck($entity->getUrlsRundeck());
         $project->setUrlsDeploymentGcp($entity->getUrlsDeploymentGcp());
         $project->setTags($entity->getTags());
+        $project->setExtraHosts($entity->getExtraHosts());
 
         return $project;
     }
@@ -119,7 +122,8 @@ class ProjectMapper
             $project->getPathLivenessProbe(),
             $project->getUrlsRundeck(),
             $project->getUrlsDeploymentGcp(),
-            $project->getTags()
+            $project->getTags(),
+            $project->getExtraHosts()
         );
     }
 
@@ -148,6 +152,7 @@ class ProjectMapper
             'urlsRundeck' => $projectEntity->getUrlsRundeck(),
             'urlsDeploymentGcp' => $projectEntity->getUrlsDeploymentGcp(),
             'tags' => $projectEntity->getTags(),
+            'extraHosts' => $projectEntity->getExtraHosts(),
         ];
     }
 }

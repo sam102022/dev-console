@@ -34,7 +34,13 @@ class ProjectMapperTest extends AbstractTestCase
             'urlPubsubs' => [],
             'urlsRundeck' => [],
             'urlsDeploymentGcp' => [],
-            'tags' => ['paiement', 'checkout']
+            'tags' => ['paiement', 'checkout'],
+            'extraHosts' => [
+                'dev' => [
+                    'data' => ['api-store-stock.dev.mdm-int.net'],
+                    'management-api' => ['management-api-store-stock.dev.mdm-int.net'],
+                ],
+            ],
         ];
     }
 
@@ -96,5 +102,21 @@ class ProjectMapperTest extends AbstractTestCase
         $entity = new ProjectEntity();
         $entity->setTags([' ALPHA ', 'Beta', 'alpha', '', 'GAMMA']);
         $this->assertEquals(['alpha', 'beta', 'gamma'], $entity->getTags());
+    }
+
+    final public function testExtraHostsMapping(): void
+    {
+        $data = $this->getSampleProjectData();
+        $project = ProjectMapper::projectFromArray($data);
+        $this->assertEquals($data['extraHosts'], $project->getExtraHosts());
+
+        $entity = ProjectMapper::toEntity($project);
+        $this->assertEquals($data['extraHosts'], $entity->getExtraHosts());
+
+        $recreatedProject = ProjectMapper::fromEntity($entity);
+        $this->assertEquals($data['extraHosts'], $recreatedProject->getExtraHosts());
+
+        $array = ProjectMapper::toArray($entity);
+        $this->assertEquals($data['extraHosts'], $array['extraHosts']);
     }
 }

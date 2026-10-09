@@ -27,6 +27,7 @@ class Project extends AbstractModel
     public array $urlsRundeck = [];
     public array $urlsDeploymentGcp = [];
     public array $tags = [];
+    public array $extraHosts = [];
 
     /**
      * @return string
@@ -361,11 +362,22 @@ class Project extends AbstractModel
         return $this;
     }
 
+    public function getExtraHosts(): array
+    {
+        return $this->extraHosts;
+    }
+
+    public function setExtraHosts(array $extraHosts): self
+    {
+        $this->extraHosts = $extraHosts;
+        return $this;
+    }
+
     public static function build(string  $name, ?string $serviceName, ?string $domain, ?string $domainName, ?string $sf, bool $cloudGCP,
                                  ?string $springBoot, ?string $java, ?string $techno, ?string $subscriptionName, string $webUrl,
                                  bool    $archived, array $urlHealthCheck, array $urlActuatorInfo, array $urlLogs, array $urlFronts, array $urlPubsubs,
                                  ?string $mdmWorkloadVersion = null, ?string $pathLivenessProbe = null, array $urlsRundeck = [], array $urlsDeploymentGcp = [],
-                                 array   $tags = []): self
+                                 array   $tags = [], array $extraHosts = []): self
     {
         $project = new self();
         $project->setName($name);
@@ -390,6 +402,7 @@ class Project extends AbstractModel
         $project->setUrlsRundeck($urlsRundeck);
         $project->setUrlsDeploymentGcp($urlsDeploymentGcp);
         $project->setTags($tags);
+        $project->setExtraHosts($extraHosts);
         return $project;
     }
 

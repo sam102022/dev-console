@@ -27,6 +27,7 @@ class ProjectEntity
     private array $urlsRundeck = [];
     private array $urlsDeploymentGcp = [];
     private array $tags = [];
+    private array $extraHosts = [];
 
     public function getName(): string
     {
@@ -274,6 +275,16 @@ class ProjectEntity
         return $this;
     }
 
+    public function getExtraHosts(): array
+    {
+        return $this->extraHosts;
+    }
+
+    public function setExtraHosts(array $extraHosts): void
+    {
+        $this->extraHosts = $extraHosts;
+    }
+
     public static function build(
         string  $name,
         ?string $serviceName,
@@ -296,7 +307,8 @@ class ProjectEntity
         ?string $pathLivenessProbe = null,
         array   $urlsRundeck = [],
         array   $urlsDeploymentGcp = [],
-        array   $tags = []
+        array   $tags = [],
+        array   $extraHosts = []
     ): self
     {
         $project = new self();
@@ -322,6 +334,7 @@ class ProjectEntity
         $project->setWebUrl($webUrl);
         $project->setArchived($archived);
         $project->setTags($tags);
+        $project->setExtraHosts($extraHosts);
         return $project;
     }
 }
