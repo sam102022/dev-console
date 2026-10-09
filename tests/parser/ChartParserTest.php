@@ -57,4 +57,87 @@ YAML,
     {
         $this->assertEquals($expectedVersion, $this->parser->parseChartYaml($content));
     }
+
+    public static function valuesYamlContentProvider(): array
+    {
+        return [
+            'valid values with both data and management-api extraHosts' => [
+                'content' => <<<YAML
+mdm-workload:
+  config:
+    deployment:
+      container:
+        env:
+  istioVirtualServices:
+    data:
+      extraHosts:
+        - api-store-stock.dev.mdm-int.net
+    management-api:
+      extraHosts:
+        - management-api-store-stock.dev.mdm-int.net
+YAML,
+                'expected' => [
+                    'data' => ['api-store-stock.dev.mdm-int.net'],
+                    'management-api' => ['management-api-store-stock.dev.mdm-int.net'],
+                ],
+            ],
+            'values with only management-api extraHosts' => [
+                'content' => <<<YAML
+mdm-workload:
+  istioVirtualServices:
+    management-api:
+      extraHosts:
+        - management-api-only.dev.mdm-int.net
+YAML,
+                'expected' => [
+                    'data' => [],
+                    'management-api' => ['management-api-only.dev.mdm-int.net'],
+                ],
+            ],
+            'values with only data extraHosts' => [
+                'content' => <<<YAML
+mdm-workload:
+  istioVirtualServices:
+    data:
+      extraHosts:
+        - api-data-only.dev.mdm-int.net
+YAML,
+                'expected' => [
+                    'data' => ['api-data-only.dev.mdm-int.net'],
+                    'management-api' => [],
+                ],
+            ],
+            'values without istioVirtualServices' => [
+                'content' => <<<YAML
+mdm-workload:
+  config:
+    deployment: {}
+YAML,
+                'expected' => [
+                    'data' => [],
+                    'management-api' => [],
+                ],
+            ],
+            'empty content' => [
+                'content' => '',
+                'expected' => [
+                    'data' => [],
+                    'management-api' => [],
+                ],
+            ],
+            'malformed yaml content' => [
+                'content' => "mdm-workload: [unclosed",
+                'expected' => [
+                    'data' => [],
+                    'management-api' => [],
+                ],
+            ],
+        ];
+    }
+
+    #[DataProvider('valuesYamlContentProvider')]
+    final public function testParseValuesYaml(string $content, array $expected): void
+    {
+        $this->assertEquals($expected, $this->parser->parseValuesYaml($content));
+    }
 }
