@@ -21,17 +21,17 @@ class ScanCommand
     /**
      * Nom de la commande.
      */
-    public const NAME = 'ScanCommand';
+    public const string NAME = 'ScanCommand';
 
     /**
      * Code de résultat pour une exécution réussie.
      */
-    public const RESULT_OK = 1;
+    public const int RESULT_OK = 1;
 
     /**
      * Code de résultat pour une exécution échouée.
      */
-    public const RESULT_KO = -1;
+    public const int RESULT_KO = -1;
 
     /**
      * @var Logger L'instance du logger pour cette classe.
@@ -78,18 +78,23 @@ class ScanCommand
         }
         //$userId = (int) $input['userId'];
 
-        $this->log->debug(UtilsLog::prefixLog(self::class, __FUNCTION__, __LINE__) .
-            "Scan des projets gitlab...");
+        $sf = isset($input['sf']) && trim((string)$input['sf']) !== '' ? trim((string)$input['sf']) : null;
+
+        $logMsg = $sf !== null
+            ? "Scan des projets gitlab pour le système fonctionnel '$sf'..."
+            : "Scan des projets gitlab...";
+        $this->log->debug(UtilsLog::prefixLog(self::class, __FUNCTION__, __LINE__) . $logMsg);
 
         try {
-            $projects = $this->gitlabService->scan();
+            $projects = $this->gitlabService->scan($sf, true);
 
-            if ($projects === null) {
+            if ($projects === null || empty($projects)) {
                 $msg = 'Aucun projets trouvés';
                 $this->log->error(UtilsLog::prefixLog(self::class, __FUNCTION__, __LINE__) . $msg);
                 return;
             }
             $output['result'] = self::RESULT_OK;
+            $output['projectsCount'] = count($projects);
         } catch (TechnicalException $e) {
             $msg = 'Erreur lors du scan des projets gitlab';
             $output['errors'][LEVEL_LOG_ERROR][] = $msg;

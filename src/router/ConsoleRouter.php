@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\router;
 
 use App\command\ScanSymfonyCommand;
+use Exception;
 use Symfony\Component\Console\Application;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\ConsoleOutput;
@@ -24,6 +25,7 @@ class ConsoleRouter
      * Distribue la requête de la console au composant Symfony Console.
      *
      * @param array $argv Les arguments de la ligne de commande.
+     * @throws Exception
      */
     public function dispatch(array $argv): void
     {
