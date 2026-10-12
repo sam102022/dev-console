@@ -80,4 +80,41 @@ class ChartParser
             'management-api' => $extractHosts($istio['management-api'] ?? null),
         ];
     }
+
+    /**
+     * Analyse le contenu d'un fichier values.yaml ou values-<env>.yaml pour extraire le probes.basePath.
+     *
+     * @param string|null $content Le contenu YAML du fichier de values.
+     * @return string|null Le basePath normalisé (ex: "/v2"), ou null s'il n'est pas défini.
+     */
+    public function parseProbesBasePath(?string $content): ?string
+    {
+        if ($content === null || trim($content) === '') {
+            return null;
+        }
+
+        try {
+            $parsed = YamlParser::parse($content);
+        } catch (\Throwable) {
+            return null;
+        }
+
+        if (!is_array($parsed)) {
+            return null;
+        }
+
+        $basePath = $parsed['mdm-workload']['config']['deployment']['container']['probes']['basePath'] ?? null;
+        if (!is_string($basePath)) {
+            return null;
+        }
+
+        $trimmed = trim($basePath);
+        if ($trimmed === '' || $trimmed === '/') {
+            return null;
+        }
+
+        $normalized = '/' . trim($trimmed, '/');
+
+        return $normalized;
+    }
 }
