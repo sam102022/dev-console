@@ -41,6 +41,12 @@ class ProjectMapperTest extends AbstractTestCase
                     'management-api' => ['management-api-store-stock.dev.mdm-int.net'],
                 ],
             ],
+            'basePaths' => [
+                'dev' => '/v2',
+                'rec' => '/v2',
+                'pp' => '/v2',
+                'prod' => '/v2',
+            ],
         ];
     }
 
@@ -51,6 +57,7 @@ class ProjectMapperTest extends AbstractTestCase
 
         $this->assertEquals('api-orders', $entity->getName());
         $this->assertEquals(['paiement', 'checkout'], $entity->getTags());
+        $this->assertEquals(['dev' => '/v2', 'rec' => '/v2', 'pp' => '/v2', 'prod' => '/v2'], $entity->getBasePaths());
     }
 
     final public function testProjectFromArray(): void
@@ -60,6 +67,7 @@ class ProjectMapperTest extends AbstractTestCase
 
         $this->assertEquals('api-orders', $project->getName());
         $this->assertEquals(['paiement', 'checkout'], $project->getTags());
+        $this->assertEquals(['dev' => '/v2', 'rec' => '/v2', 'pp' => '/v2', 'prod' => '/v2'], $project->getBasePaths());
     }
 
     final public function testFromEntity(): void
@@ -70,6 +78,7 @@ class ProjectMapperTest extends AbstractTestCase
 
         $this->assertEquals('api-orders', $project->getName());
         $this->assertEquals(['paiement', 'checkout'], $project->getTags());
+        $this->assertEquals(['dev' => '/v2', 'rec' => '/v2', 'pp' => '/v2', 'prod' => '/v2'], $project->getBasePaths());
     }
 
     final public function testToEntity(): void
@@ -80,6 +89,7 @@ class ProjectMapperTest extends AbstractTestCase
 
         $this->assertEquals('api-orders', $entity->getName());
         $this->assertEquals(['paiement', 'checkout'], $entity->getTags());
+        $this->assertEquals(['dev' => '/v2', 'rec' => '/v2', 'pp' => '/v2', 'prod' => '/v2'], $entity->getBasePaths());
     }
 
     final public function testToArray(): void
@@ -91,6 +101,8 @@ class ProjectMapperTest extends AbstractTestCase
         $this->assertEquals('api-orders', $result['name']);
         $this->assertArrayHasKey('tags', $result);
         $this->assertEquals(['paiement', 'checkout'], $result['tags']);
+        $this->assertArrayHasKey('basePaths', $result);
+        $this->assertEquals(['dev' => '/v2', 'rec' => '/v2', 'pp' => '/v2', 'prod' => '/v2'], $result['basePaths']);
     }
 
     final public function testTagNormalization(): void
@@ -118,5 +130,21 @@ class ProjectMapperTest extends AbstractTestCase
 
         $array = ProjectMapper::toArray($entity);
         $this->assertEquals($data['extraHosts'], $array['extraHosts']);
+    }
+
+    final public function testBasePathsMapping(): void
+    {
+        $data = $this->getSampleProjectData();
+        $project = ProjectMapper::projectFromArray($data);
+        $this->assertEquals($data['basePaths'], $project->getBasePaths());
+
+        $entity = ProjectMapper::toEntity($project);
+        $this->assertEquals($data['basePaths'], $entity->getBasePaths());
+
+        $recreatedProject = ProjectMapper::fromEntity($entity);
+        $this->assertEquals($data['basePaths'], $recreatedProject->getBasePaths());
+
+        $array = ProjectMapper::toArray($entity);
+        $this->assertEquals($data['basePaths'], $array['basePaths']);
     }
 }
