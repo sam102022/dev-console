@@ -195,15 +195,22 @@ class MonitoringUtils
             }
         }
 
-        if($project->getPathLivenessProbe()) {
+        if ($project->getPathLivenessProbe()) {
             $uriActuator = $project->getPathLivenessProbe();
-        }
-        else {
-            $uriActuator = '';
-            if (str_starts_with($projectName, 'api')) {
-                $uriActuator .= '/v1';
+        } else {
+            $basePaths = $project->getBasePaths();
+            $basePath = ($env !== null && !empty($basePaths[$env->value]))
+                ? $basePaths[$env->value]
+                : null;
+
+            $prefix = '';
+            if ($basePath !== null) {
+                $prefix = $basePath;
+            } elseif (str_starts_with($projectName, 'api')) {
+                $prefix = '/v1';
             }
-            $uriActuator .= '/actuator/' . $actuatorEndpoint->value;
+
+            $uriActuator = $prefix . '/actuator/' . $actuatorEndpoint->value;
         }
 
         $urlHealthCheck = "https://management-$projectName.$domain$uriActuator";
