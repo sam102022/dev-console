@@ -169,7 +169,8 @@ final class RepositoryServiceTest extends AbstractTestCase
                 'urlFronts' => [],
                 'urlPubsubs' => [],
                 'urlsRundeck' => [],
-                'urlsDeploymentGcp' => []
+                'urlsDeploymentGcp' => [],
+                'basePaths' => ['dev' => '/v2', 'prod' => '/v2']
             ]
         ];
 
@@ -182,11 +183,13 @@ final class RepositoryServiceTest extends AbstractTestCase
         $this->assertEquals('proj-a', $loadedProjects[0]['name']);
         $this->assertTrue($loadedProjects[0]['cloudGCP']);
         $this->assertEquals(['dev' => 'http://dev'], $loadedProjects[0]['urlHealthCheck']);
+        $this->assertEquals(['dev' => '/v2', 'prod' => '/v2'], $loadedProjects[0]['basePaths']);
 
         // Find single project by name
         $foundProj = $service->findProjectByName('proj-a');
         $this->assertNotNull($foundProj);
         $this->assertEquals('service-a', $foundProj['serviceName']);
+        $this->assertEquals(['dev' => '/v2', 'prod' => '/v2'], $foundProj['basePaths']);
 
         // Find non-existent project
         $this->assertNull($service->findProjectByName('non-existent'));

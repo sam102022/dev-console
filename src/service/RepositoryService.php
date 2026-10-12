@@ -82,7 +82,8 @@ class RepositoryService
                 urlFronts TEXT,
                 urlPubsubs TEXT,
                 urlsRundeck TEXT,
-                urlsDeploymentGcp TEXT
+                urlsDeploymentGcp TEXT,
+                basePaths TEXT
             );
             CREATE INDEX IF NOT EXISTS idx_projects_archived ON projects(archived);
             CREATE INDEX IF NOT EXISTS idx_projects_domain ON projects(domain);
@@ -147,6 +148,12 @@ class RepositoryService
             $this->pdo->exec("ALTER TABLE users ADD COLUMN remember_token TEXT");
         } catch (\PDOException $e) {
             // Column already exists, ignore
+        }
+
+        try {
+            $this->pdo->exec("ALTER TABLE projects ADD COLUMN basePaths TEXT");
+        } catch (\Throwable) {
+            // Ignorer si la colonne existe déjà
         }
 
         $stmt = $this->pdo->query("SELECT COUNT(*) FROM users");
@@ -370,11 +377,11 @@ class RepositoryService
                 INSERT OR REPLACE INTO projects (
                     name, serviceName, domain, domainName, sf, cloudGCP, springBoot, java, techno,
                     subscriptionName, mdmWorkloadVersion, pathLivenessProbe, webUrl, archived,
-                    urlHealthCheck, urlActuatorInfo, urlLogs, urlFronts, urlPubsubs, urlsRundeck, urlsDeploymentGcp
+                    urlHealthCheck, urlActuatorInfo, urlLogs, urlFronts, urlPubsubs, urlsRundeck, urlsDeploymentGcp, basePaths
                 ) VALUES (
                     :name, :serviceName, :domain, :domainName, :sf, :cloudGCP, :springBoot, :java, :techno,
                     :subscriptionName, :mdmWorkloadVersion, :pathLivenessProbe, :webUrl, :archived,
-                    :urlHealthCheck, :urlActuatorInfo, :urlLogs, :urlFronts, :urlPubsubs, :urlsRundeck, :urlsDeploymentGcp
+                    :urlHealthCheck, :urlActuatorInfo, :urlLogs, :urlFronts, :urlPubsubs, :urlsRundeck, :urlsDeploymentGcp, :basePaths
                 )
             ");
 
@@ -400,7 +407,8 @@ class RepositoryService
                     ':urlFronts' => json_encode($proj['urlFronts'] ?? []),
                     ':urlPubsubs' => json_encode($proj['urlPubsubs'] ?? []),
                     ':urlsRundeck' => json_encode($proj['urlsRundeck'] ?? []),
-                    ':urlsDeploymentGcp' => json_encode($proj['urlsDeploymentGcp'] ?? [])
+                    ':urlsDeploymentGcp' => json_encode($proj['urlsDeploymentGcp'] ?? []),
+                    ':basePaths' => json_encode($proj['basePaths'] ?? [])
                 ]);
             }
             $this->pdo->commit();
@@ -420,11 +428,11 @@ class RepositoryService
             INSERT INTO projects (
                 name, serviceName, domain, domainName, sf, cloudGCP, springBoot, java, techno,
                 subscriptionName, mdmWorkloadVersion, pathLivenessProbe, webUrl, archived,
-                urlHealthCheck, urlActuatorInfo, urlLogs, urlFronts, urlPubsubs, urlsRundeck, urlsDeploymentGcp
+                urlHealthCheck, urlActuatorInfo, urlLogs, urlFronts, urlPubsubs, urlsRundeck, urlsDeploymentGcp, basePaths
             ) VALUES (
                 :name, :serviceName, :domain, :domainName, :sf, :cloudGCP, :springBoot, :java, :techno,
                 :subscriptionName, :mdmWorkloadVersion, :pathLivenessProbe, :webUrl, :archived,
-                :urlHealthCheck, :urlActuatorInfo, :urlLogs, :urlFronts, :urlPubsubs, :urlsRundeck, :urlsDeploymentGcp
+                :urlHealthCheck, :urlActuatorInfo, :urlLogs, :urlFronts, :urlPubsubs, :urlsRundeck, :urlsDeploymentGcp, :basePaths
             ) ON CONFLICT(name) DO UPDATE SET
                 serviceName = excluded.serviceName,
                 domain = excluded.domain,
@@ -445,7 +453,8 @@ class RepositoryService
                 urlFronts = excluded.urlFronts,
                 urlPubsubs = excluded.urlPubsubs,
                 urlsRundeck = excluded.urlsRundeck,
-                urlsDeploymentGcp = excluded.urlsDeploymentGcp
+                urlsDeploymentGcp = excluded.urlsDeploymentGcp,
+                basePaths = excluded.basePaths
         ");
 
         $stmt->execute([
@@ -469,7 +478,8 @@ class RepositoryService
             ':urlFronts' => json_encode($proj['urlFronts'] ?? []),
             ':urlPubsubs' => json_encode($proj['urlPubsubs'] ?? []),
             ':urlsRundeck' => json_encode($proj['urlsRundeck'] ?? []),
-            ':urlsDeploymentGcp' => json_encode($proj['urlsDeploymentGcp'] ?? [])
+            ':urlsDeploymentGcp' => json_encode($proj['urlsDeploymentGcp'] ?? []),
+            ':basePaths' => json_encode($proj['basePaths'] ?? [])
         ]);
     }
 
@@ -492,6 +502,7 @@ class RepositoryService
             $row['urlPubsubs'] = json_decode($row['urlPubsubs'] ?? '[]', true);
             $row['urlsRundeck'] = json_decode($row['urlsRundeck'] ?? '[]', true);
             $row['urlsDeploymentGcp'] = json_decode($row['urlsDeploymentGcp'] ?? '[]', true);
+            $row['basePaths'] = json_decode($row['basePaths'] ?? '[]', true);
             $projects[] = $row;
         }
         return $projects;
@@ -515,6 +526,7 @@ class RepositoryService
             $row['urlPubsubs'] = json_decode($row['urlPubsubs'] ?? '[]', true);
             $row['urlsRundeck'] = json_decode($row['urlsRundeck'] ?? '[]', true);
             $row['urlsDeploymentGcp'] = json_decode($row['urlsDeploymentGcp'] ?? '[]', true);
+            $row['basePaths'] = json_decode($row['basePaths'] ?? '[]', true);
             return $row;
         }
 
