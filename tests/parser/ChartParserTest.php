@@ -221,6 +221,17 @@ mdm-workload:
 YAML,
                 'expected' => null,
             ],
+            'values with multiple slashes basePath' => [
+                'content' => <<<YAML
+mdm-workload:
+  config:
+    deployment:
+      container:
+        probes:
+          basePath: "///"
+YAML,
+                'expected' => null,
+            ],
             'empty content' => [
                 'content' => '',
                 'expected' => null,

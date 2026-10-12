@@ -108,13 +108,11 @@ class ChartParser
             return null;
         }
 
-        $trimmed = trim($basePath);
-        if ($trimmed === '' || $trimmed === '/') {
+        $trimmed = trim(trim($basePath), '/');
+        if ($trimmed === '') {
             return null;
         }
 
-        $normalized = '/' . trim($trimmed, '/');
-
-        return $normalized;
+        return '/' . $trimmed;
     }
 }
