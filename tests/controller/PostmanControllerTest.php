@@ -120,6 +120,18 @@ class PostmanControllerTest extends AbstractTestCase
         );
     }
 
+    final public function testHandleRequestBlockedWhenNotLoggedIn(): void
+    {
+        unset($_SESSION['user_id']);
+        $response = $this->controller->handleRequest(ACTION_POSTMAN_WORKSPACES);
+
+        $this->assertEquals(403, http_response_code());
+        $this->assertEquals(
+            json_encode(['error' => 'Clé API Postman manquante. Veuillez la configurer dans Mon compte > Paramètres.']),
+            $response
+        );
+    }
+
     final public function testHandleRequestFailsCreateEnvironmentWithoutWorkspace(): void
     {
         $_SESSION['user_id'] = 1;

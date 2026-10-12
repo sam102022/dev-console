@@ -65,7 +65,7 @@ class PostmanController
             return false;
         }
         $user = $this->repositoryService->findUserById((int)$userId);
-        return !empty(trim((string)($user['postman_api_key'] ?? '')));
+        return trim((string)($user['postman_api_key'] ?? '')) !== '';
     }
 
     private function render(array $messages): void
