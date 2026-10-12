@@ -435,4 +435,64 @@ class GitlabServiceTest extends AbstractTestCase
         $this->assertCount(1, $results);
         $this->assertEquals('project-a', $results[0]->getName());
     }
+
+    final public function testScanHydratesBasePathsWithValuesAndEnvOverride(): void
+    {
+        $this->projectRepository->method('findAll')->willThrowException(new TechnicalException("Le cache est vide"));
+
+        $projectEntity = GitlabProjectEntityFixtures::getGitlabProjectEntityA();
+        $this->gitLabRepository->method('findAll')->willReturn([$projectEntity]);
+
+        $this->client->method('getFileAsync')
+            ->willReturnCallback(function ($id, $path, $raw, $branch) {
+                $content = null;
+                if ($path === 'chart/Chart.yaml') {
+                    $content = 'dependencies: [{name: mdm-workload, version: 1.5.0}]';
+                }
+                if ($path === 'chart/values.yaml') {
+                    $content = <<<YAML
+mdm-workload:
+  config:
+    deployment:
+      container:
+        probes:
+          basePath: "/v2"
+YAML;
+                }
+                if ($path === 'chart/values-dev.yaml') {
+                    $content = <<<YAML
+mdm-workload:
+  config:
+    deployment:
+      container:
+        probes:
+          basePath: "/v3"
+YAML;
+                }
+                return \GuzzleHttp\Promise\Create::promiseFor($content);
+            });
+
+        $this->chartParser->method('parseChartYaml')->willReturn('1.5.0');
+        $this->chartParser->method('parseProbesBasePath')
+            ->willReturnCallback(function (?string $content) {
+                if ($content !== null && str_contains($content, '"/v3"')) return '/v3';
+                if ($content !== null && str_contains($content, '"/v2"')) return '/v2';
+                return null;
+            });
+
+        $savedProjects = [];
+        $this->projectRepository->expects($this->once())
+            ->method('updateAll')
+            ->willReturnCallback(function (array $projects) use (&$savedProjects) {
+                $savedProjects = $projects;
+            });
+
+        $results = $this->service->scan();
+
+        $this->assertCount(1, $results);
+        $this->assertEquals('/v3', $results[0]->getBasePaths()['dev']);
+        $this->assertEquals('/v2', $results[0]->getBasePaths()['rec']);
+        $this->assertEquals('/v2', $results[0]->getBasePaths()['pp']);
+        $this->assertEquals('/v2', $results[0]->getBasePaths()['prod']);
+    }
 }

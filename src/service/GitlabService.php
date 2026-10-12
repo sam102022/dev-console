@@ -250,7 +250,11 @@ class GitlabService
             'package' => $this->client->getFileAsync($id, 'package.json', true, $branch),
             'app_yml' => $this->client->getFileAsync($id, 'src/main/resources/application.yml', true, $branch),
             'app_yaml' => $this->client->getFileAsync($id, 'src/main/resources/application.yaml', true, $branch),
+            'values' => $this->client->getFileAsync($id, 'chart/values.yaml', true, $branch),
             'values_dev' => $this->client->getFileAsync($id, 'chart/values-dev.yaml', true, $branch),
+            'values_rec' => $this->client->getFileAsync($id, 'chart/values-rec.yaml', true, $branch),
+            'values_pp' => $this->client->getFileAsync($id, 'chart/values-pp.yaml', true, $branch),
+            'values_prod' => $this->client->getFileAsync($id, 'chart/values-prod.yaml', true, $branch),
         ];
         
         $results = \GuzzleHttp\Promise\Utils::settle($promises)->wait();
@@ -262,7 +266,11 @@ class GitlabService
             'package' => $results['package']['state'] === 'fulfilled' ? $results['package']['value'] : null,
             'app_yml' => $results['app_yml']['state'] === 'fulfilled' ? $results['app_yml']['value'] : null,
             'app_yaml' => $results['app_yaml']['state'] === 'fulfilled' ? $results['app_yaml']['value'] : null,
+            'values' => $results['values']['state'] === 'fulfilled' ? $results['values']['value'] : null,
             'values_dev' => $results['values_dev']['state'] === 'fulfilled' ? $results['values_dev']['value'] : null,
+            'values_rec' => $results['values_rec']['state'] === 'fulfilled' ? $results['values_rec']['value'] : null,
+            'values_pp' => $results['values_pp']['state'] === 'fulfilled' ? $results['values_pp']['value'] : null,
+            'values_prod' => $results['values_prod']['state'] === 'fulfilled' ? $results['values_prod']['value'] : null,
         ];
 
         $pathInfo = $this->extractPathInfo($gitLabProject);
@@ -271,6 +279,15 @@ class GitlabService
         $projectName = $gitLabProject->getName();
         $techno = $this->getTechno($projectName, $files);
         $subscriptionName = $this->getSubscriptionName($files);
+
+        $commonBasePath = $this->chartParser->parseProbesBasePath($files['values']);
+        $basePaths = [];
+        foreach (EnumEnvironment::cases() as $env) {
+            $effectiveBasePath = $this->chartParser->parseProbesBasePath($files['values_' . $env->value]) ?? $commonBasePath;
+            if ($effectiveBasePath !== null) {
+                $basePaths[$env->value] = $effectiveBasePath;
+            }
+        }
 
         $data = [
             'name' => $projectName,
@@ -285,6 +302,7 @@ class GitlabService
             'archived' => $gitLabProject->isArchived(),
             'mdmWorkloadVersion' => $deploymentInfo['mdmWorkloadVersion'],
             'pathLivenessProbe' => $deploymentInfo['pathLivenessProbe'],
+            'basePaths' => $basePaths,
             'urlHealthCheck' => [],
             'urlActuatorInfo' => [],
             'urlLogs' => [],
