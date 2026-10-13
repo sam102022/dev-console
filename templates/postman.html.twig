@@ -34,8 +34,6 @@
             </div>
         {% endif %}
 
-        <div id="output" class="alert alert-secondary d-none"></div>
-
         <div class="position-relative">
             {% if not has_postman_api_key %}
                 <div class="position-absolute w-100 h-100 d-flex flex-column align-items-center justify-content-center"
@@ -56,6 +54,7 @@
                             <h6 class="mb-0">Créer un Workspace</h6>
                         </div>
                         <div class="card-body">
+                            <div id="workspaceOutput" class="alert d-none mb-3"></div>
                             <input id="workspaceName" class="form-control mb-2" placeholder="Nom du workspace">
                             <input id="workspaceDesc" class="form-control mb-3" placeholder="Description">
                             <button class="btn btn-primary btn-sm" onclick="createWorkspace(this)">Créer</button>
@@ -69,6 +68,7 @@
                             <h6 class="mb-0">Créer un Environnement</h6>
                         </div>
                         <div class="card-body">
+                            <div id="envOutput" class="alert d-none mb-3"></div>
                             <input id="envName" class="form-control mb-2" placeholder="Nom de l'environnement">
                             <textarea id="envVars" class="form-control mb-2" rows="3"
                                     placeholder='Variables JSON, ex: {"base_url":"https://dev.api.com","api_key":"123"}'></textarea>
@@ -89,6 +89,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-4">
+                            <div id="openapiOutput" class="alert d-none mb-3"></div>
                             <input type="text" id="titleOpenApi" class="form-control mb-2" value="" placeholder="Titre OpenAPI">
                             <input type="file" id="openapiFile" class="form-control mb-2">
                             <select id="workspaceIdOpenApi" class="form-control mb-3" required>
