@@ -1,4 +1,3 @@
-const output = document.getElementById('output');
 const workspaceList = document.getElementById('workspaceList');
 
 // 💡 Helper pour gérer les états de chargement des boutons (avec spinners)
@@ -16,24 +15,35 @@ function setLoading(btn, isLoading, loadingText = "Chargement...") {
     }
 }
 
-// 📢 Afficher des messages formatés élégamment
-function showMessage(msg, type = 'secondary') {
-    output.className = `mt-4 alert alert-${type} alert-dismissible fade show`;
-    output.innerHTML = `
-        <i class="fas ${type === 'success' ? 'fa-check-circle' : (type === 'danger' ? 'fa-exclamation-triangle' : 'fa-info-circle')} mr-2"></i>
+// 📢 Helper pour nettoyer un message dans un conteneur dédié
+function clearMessage(targetId) {
+    const el = document.getElementById(targetId);
+    if (!el) return;
+    el.className = 'alert d-none mb-3';
+    el.innerHTML = '';
+}
+
+// 📢 Afficher des messages formatés élégamment dans un conteneur dédié
+function showMessage(targetId, msg, type = 'secondary') {
+    const el = document.getElementById(targetId);
+    if (!el) return;
+    const icon = type === 'success' ? 'fa-check-circle' : (type === 'danger' ? 'fa-exclamation-triangle' : 'fa-info-circle');
+    el.className = `alert alert-${type} alert-dismissible fade show mb-3`;
+    el.innerHTML = `
+        <i class="fas ${icon} mr-2"></i>
         <span>${msg}</span>
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
         </button>
     `;
-    output.classList.remove('d-none');
 }
 
 // ➕ Créer un workspace
 async function createWorkspace(btn) {
+    clearMessage('workspaceOutput');
     const name = document.getElementById('workspaceName').value.trim();
     const description = document.getElementById('workspaceDesc').value.trim();
-    if (!name) return showMessage("Le nom du workspace est obligatoire", "warning");
+    if (!name) return showMessage('workspaceOutput', "Le nom du workspace est obligatoire", "warning");
 
     setLoading(btn, true, "Création du workspace...");
 
@@ -56,7 +66,7 @@ async function createWorkspace(btn) {
 
         const wsName = data.workspace?.name || name;
         const wsId = data.workspace?.id || "N/A";
-        showMessage(`Le workspace <strong>${wsName}</strong> a été créé avec succès (ID: ${wsId}).`, 'success');
+        showMessage('workspaceOutput', `Le workspace <strong>${wsName}</strong> a été créé avec succès (ID: ${wsId}).`, 'success');
 
         // Création par défaut des 5 environnements
         const envNames = ['dev', 'local', 'pre-prod', 'prod', 'recette'];
@@ -75,7 +85,7 @@ async function createWorkspace(btn) {
 
     } catch (error) {
         console.error(error);
-        showMessage(`Échec de la création du workspace : ${error.message}`, 'danger');
+        showMessage('workspaceOutput', `Échec de la création du workspace : ${error.message}`, 'danger');
     } finally {
         setLoading(btn, false);
     }
@@ -83,11 +93,13 @@ async function createWorkspace(btn) {
 
 // 🌍 Gérer la soumission du formulaire d'environnement
 async function beforeCreateEnvironment(btn) {
+    clearMessage('envOutput');
     const name = document.getElementById('envName').value.trim();
     const workspaceId = document.getElementById('workspaceIdEnv').value.trim();
     const vars = document.getElementById('envVars').value.trim();
 
-    if (!name || !vars) return showMessage("Nom et variables obligatoires", "warning");
+    if (!name || !vars) return showMessage('envOutput', "Nom et variables obligatoires", "warning");
+    if (!workspaceId) return showMessage('envOutput', "Workspace obligatoire", "warning");
 
     setLoading(btn, true, "Création de l'environnement...");
 
@@ -99,7 +111,7 @@ async function beforeCreateEnvironment(btn) {
             throw new Error(data.error);
         }
 
-        showMessage(`L'environnement <strong>${name}</strong> a été configuré avec succès !`, 'success');
+        showMessage('envOutput', `L'environnement <strong>${name}</strong> a été configuré avec succès !`, 'success');
         
         // Réinitialiser le formulaire
         document.getElementById('envName').value = '';
@@ -110,7 +122,7 @@ async function beforeCreateEnvironment(btn) {
 
     } catch (error) {
         console.error(error);
-        showMessage(`Échec de la création de l'environnement : ${error.message}`, 'danger');
+        showMessage('envOutput', `Échec de la création de l'environnement : ${error.message}`, 'danger');
     } finally {
         setLoading(btn, false);
     }
@@ -140,6 +152,7 @@ async function createEnvironment(name, vars, workspaceId) {
 
 // 📦 Import OpenAPI
 async function importOpenApi(btn) {
+    clearMessage('openapiOutput');
     const nameCollectionInput = document.getElementById('titleOpenApi');
     // Correction de bug : nameCollection doit être déclaré avec "let" pour pouvoir être réassigné
     let nameCollection = nameCollectionInput.value.trim();
@@ -155,7 +168,10 @@ async function importOpenApi(btn) {
     }
 
     if (!content || content.trim() === '') {
-        return showMessage("Veuillez sélectionner un fichier OpenAPI ou un contrat GitLab", "warning");
+        return showMessage('openapiOutput', "Veuillez sélectionner un fichier OpenAPI ou un contrat GitLab", "warning");
+    }
+    if (!workspaceId) {
+        return showMessage('openapiOutput', "Veuillez sélectionner un workspace", "warning");
     }
 
     setLoading(btn, true, "Importation de l'OpenAPI...");
@@ -188,7 +204,7 @@ async function importOpenApi(btn) {
             throw new Error(data.error);
         }
 
-        showMessage(`Le contrat OpenAPI <strong>${nameCollection}</strong> a été importé avec succès sous forme de collection !`, 'success');
+        showMessage('openapiOutput', `Le contrat OpenAPI <strong>${nameCollection}</strong> a été importé avec succès sous forme de collection !`, 'success');
         
         // Réinitialiser les champs d'import
         document.getElementById('titleOpenApi').value = '';
@@ -200,7 +216,7 @@ async function importOpenApi(btn) {
     
     } catch (error) {
         console.error(error);
-        showMessage(`Échec de l'importation de l'OpenAPI : ${error.message}`, 'danger');
+        showMessage('openapiOutput', `Échec de l'importation de l'OpenAPI : ${error.message}`, 'danger');
     } finally {
         setLoading(btn, false);
     }
