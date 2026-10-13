@@ -377,7 +377,7 @@ async function initWorkspacesList() {
     ["workspaceIdEnv", "workspaceIdOpenApi"].forEach(id => {
         const list1 = document.getElementById(id);
         if (list1) {
-            list1.innerHTML = `<option value="">Sélectionnez un workspace (optionnel)</option>` + workspacesHtml;
+            list1.innerHTML = `<option value="">Sélectionnez un workspace (obligatoire)</option>` + workspacesHtml;
         }
     });
 }
