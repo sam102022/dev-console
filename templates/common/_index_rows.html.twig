@@ -2,8 +2,16 @@
 {% for r in results %}
     <tr class="project-row">
         <td class="col-index text-muted font-weight-bold">{{ loop.index0 + offset + 1 }}</td>
-        <td class="col-domain" data-value="{{ r.domain }}">{{ r.domain }}</td>
-        <td class="col-sf" data-value="{{ r.sf }}">{{ r.sf }}</td>
+        <td class="col-domain" data-value="{{ r.domain }}">
+            {% if r.domain is defined and r.domain != '' %}
+                <span class="quick-filter-link text-primary" data-filter-field="domain" data-filter-value="{{ r.domain }}" role="button" tabindex="0" title="Filtrer par le domaine {{ r.domain }}">{{ r.domain }}</span>
+            {% endif %}
+        </td>
+        <td class="col-sf" data-value="{{ r.sf }}">
+            {% if r.sf is defined and r.sf != '' %}
+                <span class="quick-filter-link text-primary" data-filter-field="sf" data-filter-value="{{ r.sf }}" data-filter-domain="{{ r.domain|default('') }}" role="button" tabindex="0" title="Filtrer par la sous-fonctionnalité {{ r.sf }}">{{ r.sf }}</span>
+            {% endif %}
+        </td>
         <td class="col-name">
             {% if r.webUrl is defined and r.webUrl != '' %}
                 <a href="{{ r.webUrl }}"

@@ -299,4 +299,200 @@ class GitlabServiceTest extends AbstractTestCase
         $result = $this->service->buildNewRelicUrl($projectMock, $env);
         $this->assertEquals($expectedUrl, $result);
     }
+
+    final public function testGetProjectsWithForceRefreshesFromGitlabApi(): void
+    {
+        $cachedEntities = [GitlabProjectEntityFixtures::getGitlabProjectEntityA()];
+        $apiProjects = [
+            [
+                'id' => 10,
+                'description' => 'Fresh Project',
+                'name' => 'fresh-project',
+                'name_with_namespace' => 'Core / Dev / Point de Vente / receipt / fresh-project',
+                'path' => 'fresh-project',
+                'path_with_namespace' => 'core/dev/pdv/receipt/fresh-project',
+                'created_at' => '2026-01-01',
+                'default_branch' => 'main',
+                'web_url' => 'http://url/fresh',
+                'archived' => false
+            ]
+        ];
+
+        // Même si le cache existe, force=true doit interroger l'API GitLab et mettre à jour le repository
+        $this->gitLabRepository->method('findAll')->willReturn($cachedEntities);
+        $this->client->expects($this->once())->method('getAllProjects')->with('group/path')->willReturn($apiProjects);
+        $this->gitLabRepository->expects($this->once())->method('updateAll');
+
+        $result = $this->service->getProjects('group/path', true);
+        $this->assertCount(1, $result);
+        $this->assertEquals('fresh-project', $result[0]->getName());
+    }
+
+    final public function testScanWithForceUpdatesGitlabAndProjectRepositories(): void
+    {
+        $existingProjectEntities = [ProjectEntityFixtures::getProjectAEntity()];
+        $this->projectRepository->method('findAll')->willReturn($existingProjectEntities);
+
+        $apiProjects = [
+            [
+                'id' => 1,
+                'description' => 'Project A',
+                'name' => 'project-a',
+                'name_with_namespace' => 'Core / Dev / Point de Vente / sf / project-a',
+                'path' => 'project-a',
+                'path_with_namespace' => 'core/dev/pdv/sf/project-a',
+                'created_at' => '2026-01-01',
+                'default_branch' => 'main',
+                'web_url' => 'http://url/a',
+                'archived' => false
+            ]
+        ];
+        // Quand force=true, l'API GitLab doit être interrogée et les repositories mis à jour
+        $this->client->expects($this->once())->method('getAllProjects')->willReturn($apiProjects);
+        $this->gitLabRepository->expects($this->once())->method('updateAll');
+        $this->projectRepository->expects($this->once())->method('updateAll');
+
+        $this->client->method('getFileAsync')->willReturn(\GuzzleHttp\Promise\Create::promiseFor(null));
+
+        $results = $this->service->scan(force: true);
+
+        $this->assertNotNull($results);
+        $this->assertCount(1, $results);
+        $this->assertEquals('project-a', $results[0]->getName());
+    }
+
+    final public function testScanWithSelectiveSfOnlyScansMatchingProjectsAndMergesCache(): void
+    {
+        $existingOtherSf = ProjectEntityFixtures::getProjectBEntity(); // sf = 'f'
+        $existingOldReceipt = ProjectEntityFixtures::getProjectAEntity(); // sf = 'sf'
+
+        $this->projectRepository->method('findAll')->willReturn([$existingOtherSf, $existingOldReceipt]);
+
+        $apiProjects = [
+            [
+                'id' => 10,
+                'description' => 'Receipt Project',
+                'name' => 'project-receipt',
+                'name_with_namespace' => 'Core / Dev / Point de Vente / receipt / project-receipt',
+                'path' => 'project-receipt',
+                'path_with_namespace' => 'core/dev/pdv/receipt/project-receipt',
+                'created_at' => '2026-01-01',
+                'default_branch' => 'main',
+                'web_url' => 'http://url/receipt',
+                'archived' => false
+            ],
+            [
+                'id' => 20,
+                'description' => 'Other Project',
+                'name' => 'project-other',
+                'name_with_namespace' => 'Core / Dev / Point de Vente / f / project-other',
+                'path' => 'project-other',
+                'path_with_namespace' => 'core/dev/pdv/f/project-other',
+                'created_at' => '2026-01-01',
+                'default_branch' => 'main',
+                'web_url' => 'http://url/other',
+                'archived' => false
+            ]
+        ];
+
+        $this->client->method('getAllProjects')->willReturn($apiProjects);
+
+        // getFileAsync ne doit être appelé QUE pour le projet du SF 'receipt' (id 10), JAMAIS pour 'f' (id 20)
+        $this->client->expects($this->atLeastOnce())
+            ->method('getFileAsync')
+            ->willReturnCallback(function($id, $path, $raw, $branch) {
+                $this->assertEquals(10, $id, 'Seuls les fichiers des projets du SF sélectionné doivent être scannés');
+                return \GuzzleHttp\Promise\Create::promiseFor(null);
+            });
+
+        // Le cache sauvegardé doit fusionner le projet préservé (project-b) et le nouveau projet scanné (project-receipt)
+        $this->projectRepository->expects($this->once())
+            ->method('updateAll')
+            ->with($this->callback(function (array $entities) {
+                $names = array_map(fn($e) => $e->getName(), $entities);
+                return in_array('project-b', $names, true) && in_array('project-receipt', $names, true);
+            }));
+
+        $results = $this->service->scan(sf: 'receipt', force: true);
+
+        $this->assertNotNull($results);
+        $this->assertCount(1, $results);
+        $this->assertEquals('project-receipt', $results[0]->getName());
+        $this->assertEquals('receipt', $results[0]->getSf());
+    }
+
+    final public function testScanWithoutForceFiltersBySfFromCache(): void
+    {
+        $projectReceipt = ProjectEntityFixtures::getProjectAEntity(); // sf = 'sf'
+        $projectOther = ProjectEntityFixtures::getProjectBEntity();   // sf = 'f'
+
+        $this->projectRepository->method('findAll')->willReturn([$projectReceipt, $projectOther]);
+        $this->client->expects($this->never())->method('getAllProjects');
+
+        $results = $this->service->scan(sf: 'sf', force: false);
+
+        $this->assertNotNull($results);
+        $this->assertCount(1, $results);
+        $this->assertEquals('project-a', $results[0]->getName());
+    }
+
+    final public function testScanHydratesBasePathsWithValuesAndEnvOverride(): void
+    {
+        $this->projectRepository->method('findAll')->willThrowException(new TechnicalException("Le cache est vide"));
+
+        $projectEntity = GitlabProjectEntityFixtures::getGitlabProjectEntityA();
+        $this->gitLabRepository->method('findAll')->willReturn([$projectEntity]);
+
+        $this->client->method('getFileAsync')
+            ->willReturnCallback(function ($id, $path, $raw, $branch) {
+                $content = null;
+                if ($path === 'chart/Chart.yaml') {
+                    $content = 'dependencies: [{name: mdm-workload, version: 1.5.0}]';
+                }
+                if ($path === 'chart/values.yaml') {
+                    $content = <<<YAML
+mdm-workload:
+  config:
+    deployment:
+      container:
+        probes:
+          basePath: "/v2"
+YAML;
+                }
+                if ($path === 'chart/values-dev.yaml') {
+                    $content = <<<YAML
+mdm-workload:
+  config:
+    deployment:
+      container:
+        probes:
+          basePath: "/v3"
+YAML;
+                }
+                return \GuzzleHttp\Promise\Create::promiseFor($content);
+            });
+
+        $this->chartParser->method('parseChartYaml')->willReturn('1.5.0');
+        $this->chartParser->method('parseProbesBasePath')
+            ->willReturnCallback(function (?string $content) {
+                if ($content !== null && str_contains($content, '"/v3"')) return '/v3';
+                if ($content !== null && str_contains($content, '"/v2"')) return '/v2';
+                return null;
+            });
+
+        $savedProjects = [];
+        $this->projectRepository->expects($this->once())
+            ->method('updateAll')
+            ->willReturnCallback(function (array $projects) use (&$savedProjects) {
+                $savedProjects = $projects;
+            });
+
+        $results = $this->service->scan();
+
+        $this->assertCount(1, $results);
+        $this->assertEquals('/v3', $results[0]->getBasePaths()['dev']);
+        $this->assertEquals('/v2', $results[0]->getBasePaths()['rec']);
+        $this->assertEquals('/v2', $results[0]->getBasePaths()['pp']);
+        $this->assertEquals('/v2', $results[0]->getBasePaths()['prod']);
+    }
 }

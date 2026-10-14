@@ -46,6 +46,28 @@ class MonitoringUtilsTest extends TestCase
                 [],
                 'https://management-api-my-project.dev.mdm-int.net/v1/actuator/health'
             ],
+            'API project with custom basePath /v2' => [
+                ProjectFixtures::getMonitoringProject('api-orders', true)
+                    ->setBasePaths(['dev' => '/v2']),
+                EnumEnvironment::DEV,
+                [],
+                'https://management-api-orders.dev.mdm-int.net/v2/actuator/health'
+            ],
+            'Non-API project with custom basePath /v2' => [
+                ProjectFixtures::getMonitoringProject('my-service', true)
+                    ->setBasePaths(['dev' => '/v2']),
+                EnumEnvironment::DEV,
+                [],
+                'https://management-my-service.dev.mdm-int.net/v2/actuator/health'
+            ],
+            'API project with custom basePath and custom pathLivenessProbe' => [
+                ProjectFixtures::getMonitoringProject('api-orders', true)
+                    ->setBasePaths(['dev' => '/v2'])
+                    ->setPathLivenessProbe('/custom/health'),
+                EnumEnvironment::DEV,
+                [],
+                'https://management-api-orders.dev.mdm-int.net/custom/health'
+            ],
         ];
     }
 
@@ -89,6 +111,13 @@ class MonitoringUtilsTest extends TestCase
                 EnumEnvironment::DEV,
                 [],
                 'https://management-api-my-project.dev.mdm-int.net/v1/actuator/info'
+            ],
+            'API project with custom basePath /v2' => [
+                ProjectFixtures::getMonitoringProject('api-orders', true)
+                    ->setBasePaths(['dev' => '/v2']),
+                EnumEnvironment::DEV,
+                [],
+                'https://management-api-orders.dev.mdm-int.net/v2/actuator/info'
             ],
         ];
     }

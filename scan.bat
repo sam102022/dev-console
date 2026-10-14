@@ -1,1 +1,1 @@
-php bin\console.php ScanCommand
+php bin\console.php ScanCommand %*

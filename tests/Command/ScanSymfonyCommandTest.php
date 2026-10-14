@@ -57,4 +57,46 @@ class ScanSymfonyCommandTest extends AbstractTestCase
             ],
         ];
     }
+
+    public function testExecuteCommandWithSfOption(): void
+    {
+        $capturedInput = [];
+        $scanCommandMock = $this->createMock(ScanCommand::class);
+        $scanCommandMock->expects($this->once())
+            ->method('execute')
+            ->willReturnCallback(function(array $input, array &$output) use (&$capturedInput) {
+                $capturedInput = $input;
+                $output['result'] = ScanCommand::RESULT_OK;
+                $output['projectsCount'] = 5;
+            });
+
+        $command = new ScanSymfonyCommand($scanCommandMock);
+        $tester = new CommandTester($command);
+
+        $status = $tester->execute(['--sf' => 'receipt']);
+
+        $this->assertEquals(Command::SUCCESS, $status);
+        $this->assertEquals(['sf' => 'receipt'], $capturedInput);
+        $this->assertStringContainsString('Scan terminé avec succès !', $tester->getDisplay());
+    }
+
+    public function testExecuteCommandWithShortSfOption(): void
+    {
+        $capturedInput = [];
+        $scanCommandMock = $this->createMock(ScanCommand::class);
+        $scanCommandMock->expects($this->once())
+            ->method('execute')
+            ->willReturnCallback(function(array $input, array &$output) use (&$capturedInput) {
+                $capturedInput = $input;
+                $output['result'] = ScanCommand::RESULT_OK;
+            });
+
+        $command = new ScanSymfonyCommand($scanCommandMock);
+        $tester = new CommandTester($command);
+
+        $status = $tester->execute(['-s' => 'stores']);
+
+        $this->assertEquals(Command::SUCCESS, $status);
+        $this->assertEquals(['sf' => 'stores'], $capturedInput);
+    }
 }

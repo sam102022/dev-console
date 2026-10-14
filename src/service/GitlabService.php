@@ -63,16 +63,17 @@ class GitlabService
      * Scan les projets gitlab
      *
      * @param string|null $pathGroup Le chemin du groupe GitLab à scanner (ex: 'core/dev/pdv').
+     * @param bool $force Force la récupération depuis l'API GitLab même si le cache existe.
      * @return GitlabProject[]
      * @throws TechnicalException
      */
-    public function getProjects(?string $pathGroup): array
+    public function getProjects(?string $pathGroup, bool $force = false): array
     {
         $gitlabProjects = [];
         try {
-            $gitLabProjectsEntities = $this->gitLabRepository->findAll();
+            $gitLabProjectsEntities = $force ? null : $this->gitLabRepository->findAll();
             if (empty($gitLabProjectsEntities)) {
-                $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "Le cache des projets est vide, récupération depuis l'API GitLab.");
+                $this->logger->info(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . "Récupération des projets depuis l'API GitLab.");
                 $gitLabProjectsData = $this->client->getAllProjects($pathGroup);
                 $entities = [];
                 foreach ($gitLabProjectsData as $gitlabProject) {
@@ -81,7 +82,7 @@ class GitlabService
                 }
 
                 $this->gitLabRepository->updateAll($entities);
-                $gitLabProjectsEntities = $this->gitLabRepository->findAll() ?? [];
+                $gitLabProjectsEntities = $force ? $entities : ($this->gitLabRepository->findAll() ?? $entities);
             }
             foreach ($gitLabProjectsEntities as $gitLabProjectsEntity) {
                 $gitlabProjects[] = GitlabProjectMapper::toModel($gitLabProjectsEntity);
@@ -137,18 +138,60 @@ class GitlabService
     /**
      * Scan les projets gitlab
      *
+     * @param string|null $sf Système fonctionnel optionnel pour scanner sélectivement
+     * @param bool $force Force le scan et la mise à jour depuis l'API GitLab
      * @return Project[]|null
      * @throws TechnicalException
      */
-    public function scan(): ?array
+    public function scan(?string $sf = null, bool $force = false): ?array
     {
-        $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . 'debut scan');
+        $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . 'debut scan (force=' . ($force ? 'true' : 'false') . ', sf=' . ($sf ?? 'all') . ')');
 
-        try {
-            $projectEntities = $this->projectRepository->findAll();
-        } catch (TechnicalException $e) {
-            $projectEntities = $this->initProjects();
-            $this->projectRepository->updateAll($projectEntities);
+        if ($force) {
+            $scannedEntities = $this->initProjects(true, $sf);
+
+            if ($sf !== null) {
+                try {
+                    $existingEntities = $this->projectRepository->findAll();
+                } catch (TechnicalException) {
+                    $existingEntities = [];
+                }
+
+                // Conserver tous les projets des autres SFs
+                $preservedEntities = array_filter(
+                    $existingEntities,
+                    static fn(ProjectEntity $p) => strcasecmp($p->getSf() ?? '', $sf) !== 0
+                );
+
+                $allEntities = array_merge($preservedEntities, $scannedEntities);
+            } else {
+                $allEntities = $scannedEntities;
+            }
+
+            usort($allEntities, static function (ProjectEntity $a, ProjectEntity $b) {
+                $sfComparison = ($a->getSf() ?? '') <=> ($b->getSf() ?? '');
+                if ($sfComparison !== 0) {
+                    return $sfComparison;
+                }
+                return $a->getName() <=> $b->getName();
+            });
+
+            $this->projectRepository->updateAll($allEntities);
+            $projectEntities = ($sf !== null) ? $scannedEntities : $allEntities;
+        } else {
+            try {
+                $projectEntities = $this->projectRepository->findAll();
+            } catch (TechnicalException) {
+                $projectEntities = $this->initProjects(false, null);
+                $this->projectRepository->updateAll($projectEntities);
+            }
+
+            if ($sf !== null) {
+                $projectEntities = array_values(array_filter(
+                    $projectEntities,
+                    static fn(ProjectEntity $p) => strcasecmp($p->getSf() ?? '', $sf) === 0
+                ));
+            }
         }
 
         $tagsByProject = $this->projectRepository->getTagsByProject();
@@ -207,7 +250,11 @@ class GitlabService
             'package' => $this->client->getFileAsync($id, 'package.json', true, $branch),
             'app_yml' => $this->client->getFileAsync($id, 'src/main/resources/application.yml', true, $branch),
             'app_yaml' => $this->client->getFileAsync($id, 'src/main/resources/application.yaml', true, $branch),
+            'values' => $this->client->getFileAsync($id, 'chart/values.yaml', true, $branch),
             'values_dev' => $this->client->getFileAsync($id, 'chart/values-dev.yaml', true, $branch),
+            'values_rec' => $this->client->getFileAsync($id, 'chart/values-rec.yaml', true, $branch),
+            'values_pp' => $this->client->getFileAsync($id, 'chart/values-pp.yaml', true, $branch),
+            'values_prod' => $this->client->getFileAsync($id, 'chart/values-prod.yaml', true, $branch),
         ];
         
         $results = \GuzzleHttp\Promise\Utils::settle($promises)->wait();
@@ -219,7 +266,11 @@ class GitlabService
             'package' => $results['package']['state'] === 'fulfilled' ? $results['package']['value'] : null,
             'app_yml' => $results['app_yml']['state'] === 'fulfilled' ? $results['app_yml']['value'] : null,
             'app_yaml' => $results['app_yaml']['state'] === 'fulfilled' ? $results['app_yaml']['value'] : null,
+            'values' => $results['values']['state'] === 'fulfilled' ? $results['values']['value'] : null,
             'values_dev' => $results['values_dev']['state'] === 'fulfilled' ? $results['values_dev']['value'] : null,
+            'values_rec' => $results['values_rec']['state'] === 'fulfilled' ? $results['values_rec']['value'] : null,
+            'values_pp' => $results['values_pp']['state'] === 'fulfilled' ? $results['values_pp']['value'] : null,
+            'values_prod' => $results['values_prod']['state'] === 'fulfilled' ? $results['values_prod']['value'] : null,
         ];
 
         $pathInfo = $this->extractPathInfo($gitLabProject);
@@ -228,6 +279,15 @@ class GitlabService
         $projectName = $gitLabProject->getName();
         $techno = $this->getTechno($projectName, $files);
         $subscriptionName = $this->getSubscriptionName($files);
+
+        $commonBasePath = $this->chartParser->parseProbesBasePath($files['values']);
+        $basePaths = [];
+        foreach (EnumEnvironment::cases() as $env) {
+            $effectiveBasePath = $this->chartParser->parseProbesBasePath($files['values_' . $env->value]) ?? $commonBasePath;
+            if ($effectiveBasePath !== null) {
+                $basePaths[$env->value] = $effectiveBasePath;
+            }
+        }
 
         $data = [
             'name' => $projectName,
@@ -242,6 +302,7 @@ class GitlabService
             'archived' => $gitLabProject->isArchived(),
             'mdmWorkloadVersion' => $deploymentInfo['mdmWorkloadVersion'],
             'pathLivenessProbe' => $deploymentInfo['pathLivenessProbe'],
+            'basePaths' => $basePaths,
             'urlHealthCheck' => [],
             'urlActuatorInfo' => [],
             'urlLogs' => [],
@@ -402,13 +463,18 @@ class GitlabService
     }
 
     /**
+     * @param bool $forceGitlab Force la mise à jour des projets depuis l'API GitLab
+     * @param string|null $sf Système fonctionnel optionnel pour restreindre le scan
      * @return ProjectEntity[]
      * @throws TechnicalException
      */
-    private function initProjects(): array
+    private function initProjects(bool $forceGitlab = false, ?string $sf = null): array
     {
-        $this->logger->info("Le cache des projets Java est vide, scan en cours...");
-        $gitlabProjects = $this->getProjects($this->appConfig->getParamConfig()->getParamGitLab()->getGitlabPathGroupDefault());
+        $this->logger->info("Initialisation / scan des projets Java...");
+        $gitlabProjects = $this->getProjects(
+            $this->appConfig->getParamConfig()->getParamGitLab()->getGitlabPathGroupDefault(),
+            $forceGitlab
+        );
         $this->logger->debug(UtilsLog::prefixLog(__CLASS__, __METHOD__, __LINE__) . ' nb gitlab projects:' . count($gitlabProjects));
 
         $excludeDomains = $this->appConfig->getParamConfig()->getParamGitLab()->getExcludeDomains();
@@ -430,6 +496,11 @@ class GitlabService
             }
             
             if ($isDomainExcluded) {
+                continue;
+            }
+
+            // Filtrage sélectif par système fonctionnel (SF)
+            if ($sf !== null && strcasecmp($pathInfo['sf'] ?? '', $sf) !== 0) {
                 continue;
             }
 

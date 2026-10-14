@@ -78,4 +78,54 @@ class ScanCommandTest extends AbstractTestCase
             ],
         ];
     }
+
+    final public function testExecutePassesNullAndForceTrueWhenNoSfGiven(): void
+    {
+        $this->gitlabServiceMock->expects($this->once())
+            ->method('scan')
+            ->with(null, true)
+            ->willReturn([['id' => 1, 'name' => 'Project 1']]);
+
+        $command = new ScanCommand($this->gitlabServiceMock, $this->loggerFactoryMocked);
+
+        $input = [];
+        $output = [];
+        $command->execute($input, $output);
+
+        $this->assertSame(ScanCommand::RESULT_OK, $output['result']);
+        $this->assertSame(1, $output['projectsCount'] ?? null);
+    }
+
+    final public function testExecutePassesSfAndForceTrueWhenSfGiven(): void
+    {
+        $this->gitlabServiceMock->expects($this->once())
+            ->method('scan')
+            ->with('receipt', true)
+            ->willReturn([['id' => 10, 'name' => 'receipt-project']]);
+
+        $command = new ScanCommand($this->gitlabServiceMock, $this->loggerFactoryMocked);
+
+        $input = ['sf' => 'receipt'];
+        $output = [];
+        $command->execute($input, $output);
+
+        $this->assertSame(ScanCommand::RESULT_OK, $output['result']);
+        $this->assertSame(1, $output['projectsCount'] ?? null);
+    }
+
+    final public function testExecuteReturnsKoWhenEmptyProjectsReturned(): void
+    {
+        $this->gitlabServiceMock->expects($this->once())
+            ->method('scan')
+            ->with('unknown-sf', true)
+            ->willReturn([]);
+
+        $command = new ScanCommand($this->gitlabServiceMock, $this->loggerFactoryMocked);
+
+        $input = ['sf' => 'unknown-sf'];
+        $output = [];
+        $command->execute($input, $output);
+
+        $this->assertSame(ScanCommand::RESULT_KO, $output['result']);
+    }
 }

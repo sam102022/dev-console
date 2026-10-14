@@ -7,6 +7,7 @@ use App\context\IndexContext;
 use App\exception\TechnicalException;
 use App\factory\LoggerFactory;
 use App\service\PostmanService;
+use App\service\RepositoryService;
 use App\util\UtilsLog;
 use App\viewModel\IndexViewModelFactory;
 use Monolog\Logger;
@@ -26,18 +27,21 @@ class PostmanController
     private readonly Logger $logger;
 
     /**
-     * Constructeur de la classe AdminController.
+     * Constructeur de la classe PostmanController.
      *
      * @param IndexViewModelFactory $viewModelFactory Usine pour créer le modèle de vue de public.
      * @param PostmanService $postmanService Service Postman.
      * @param IndexContext $context Le contexte de la session public.
      * @param Environment $twig L'environnement Twig pour le rendu des templates.
+     * @param RepositoryService $repositoryService Service de gestion des données.
+     * @param LoggerFactory $loggerFactory Fabrique de loggers.
      */
     public function __construct(
         private readonly IndexViewModelFactory $viewModelFactory,
         private readonly PostmanService $postmanService,
         private readonly IndexContext          $context,
         private readonly Environment           $twig,
+        private readonly RepositoryService     $repositoryService,
         LoggerFactory                          $loggerFactory
     )
     {
@@ -54,11 +58,22 @@ class PostmanController
         $this->render($messages);
     }
 
+    private function hasUserPostmanApiKey(): bool
+    {
+        $userId = $_SESSION['user_id'] ?? null;
+        if ($userId === null) {
+            return false;
+        }
+        $user = $this->repositoryService->findUserById((int)$userId);
+        return trim((string)($user['postman_api_key'] ?? '')) !== '';
+    }
+
     private function render(array $messages): void
     {
         try {
             $viewModel = $this->viewModelFactory->build($this->context, $messages);
             $viewModel['current_route'] = self::ROUTE_POSTMAN;
+            $viewModel['has_postman_api_key'] = $this->hasUserPostmanApiKey();
             echo $this->twig->render(
                 'postman.html.twig',
                 $viewModel
@@ -70,6 +85,11 @@ class PostmanController
 
     public function handleRequest(string $action, ?string $rawInput = null): string
     {
+        if (!$this->hasUserPostmanApiKey()) {
+            http_response_code(403);
+            return json_encode(['error' => 'Clé API Postman manquante. Veuillez la configurer dans Mon compte > Paramètres.']);
+        }
+
         $rawInput = $rawInput ?? file_get_contents("php://input");
         $input = json_decode($rawInput, true) ?? [];
 
@@ -88,16 +108,26 @@ class PostmanController
                     break;
 
                 case ACTION_POSTMAN_CREATE_ENVIRONMENT:
+                    $workspaceId = trim((string)($input['workspaceId'] ?? ''));
+                    if ($workspaceId === '') {
+                        http_response_code(400);
+                        return json_encode(['error' => 'Le workspace est obligatoire.']);
+                    }
                     $response = $this->postmanService->createEnvironment(
-                        $input['workspaceId'] ?? '',
+                        $workspaceId,
                         $input['name'] ?? '',
                         $input['variables'] ?? []
                     );
                     break;
 
                 case ACTION_POSTMAN_IMPORT_OPENAPI:
+                    $workspaceId = trim((string)($input['workspaceId'] ?? ''));
+                    if ($workspaceId === '') {
+                        http_response_code(400);
+                        return json_encode(['error' => 'Le workspace est obligatoire.']);
+                    }
                     $response = $this->postmanService->importOpenApi(
-                        $input['workspaceId'] ?? '',
+                        $workspaceId,
                         $input['fileContent'] ?? ''
                     );
                     break;

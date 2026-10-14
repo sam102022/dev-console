@@ -3,8 +3,10 @@ declare(strict_types=1);
 
 namespace App\command;
 
+use Exception;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 /**
@@ -14,8 +16,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class ScanSymfonyCommand extends Command
 {
-    protected static $defaultName = 'ScanCommand';
-    protected static $defaultDescription = 'Scan des projets GitLab';
+    protected static string $defaultName = 'ScanCommand';
+    protected static string $defaultDescription = 'Scan des projets GitLab';
 
     public function __construct(
         private readonly ScanCommand $scanCommand
@@ -26,12 +28,21 @@ class ScanSymfonyCommand extends Command
     protected function configure(): void
     {
         $this->setName('ScanCommand')
-             ->setDescription('Scan des projets GitLab');
+             ->setDescription('Scan des projets GitLab')
+             ->addOption('sf', 's', InputOption::VALUE_OPTIONAL, 'Système fonctionnel (SF) à scanner sélectivement', null);
     }
 
+    /**
+     * @throws Exception
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $arrInput = [];
+        $sf = $input->getOption('sf');
+        if ($sf !== null && trim((string)$sf) !== '') {
+            $arrInput['sf'] = trim((string)$sf);
+        }
+
         $arrOutput = [];
         $this->scanCommand->execute($arrInput, $arrOutput);
 
